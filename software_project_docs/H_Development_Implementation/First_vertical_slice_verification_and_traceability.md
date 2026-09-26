@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-005  
 **Document Type:** Implementation verification and traceability record  
-**Version:** 0.1  
+**Version:** 0.2  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering / Quality  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `First_vertical_slice_definition.md`, `Product_backlog.md`, `../F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../F_Requirements_Analysis/Use_cases.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** None  
+**Supersedes:** Version 0.1  
 **Superseded By:** None  
 **Storage Location:** `software_project_docs/H_Development_Implementation/First_vertical_slice_verification_and_traceability.md`  
 **Access Permissions:** Repository access controls  
@@ -54,8 +54,7 @@ The implementation milestones used as evidence are:
 | `DEV-205` | issue/evidence linkage | CI `36277625604` |
 | `DEV-206` | attention view/governed drill-through | CI `36278067339` |
 | `DEV-207` | durable issue consequence/outbox/recovery | CI `36279181900` |
-
-`DEV-208` consolidates those implementation results into one controlled traceability record and reruns the full production verification gate on the final documentation head.
+| `DEV-208` | consolidated traceability/verification record | CI `36279763189` — passed before closure-status update; PR #29 reruns the exact final documentation head before merge |
 
 ## Requirement and use-case traceability
 
@@ -90,8 +89,8 @@ The numbered criteria below are the acceptance criteria from `NBEOS-H-004`.
 | `FV-AC-08` | issuing a newer revision preserves prior issued revision/evidence | atomic issue/supersession behavior with immutable issue evidence | `WorkProductIssuePersistenceTests.cs`; DEV-205 CI | **Verified** |
 | `FV-AC-09` | API failures use stable RFC 9457 semantics and do not leak stack traces/secrets | DEV-108 ASP.NET Core API host/problem-details baseline and verified request context boundary | `tests/NuBlox.Api.Tests/` plus production verifier | **Verified for platform/API contract boundary** |
 | `FV-AC-10` | material operations produce authoritative audit evidence plus correlated technical telemetry | `NuBlox.Audit` and `NuBlox.Observability` are structurally separate production primitives; Work Product decision/issue evidence is authoritative | audit/observability suites plus Work Product evidence tests | **Verified for implemented first-slice material events** |
-| `FV-AC-11` | clean-checkout CI verifies unit/API/PostgreSQL/tenant-negative/lifecycle-negative paths | one deterministic `scripts/verify-production.sh` entry point used by `Production foundation` | CI evidence for DEV-202–207 and DEV-208 final-head run | **Verified** |
-| `FV-AC-12` | requirement → design/ADR → code → test traceability is recorded | this controlled document plus updated F-section RTM | document review + DEV-208 final-head CI | **Verified by DEV-208** |
+| `FV-AC-11` | clean-checkout CI verifies unit/API/PostgreSQL/tenant-negative/lifecycle-negative paths | one deterministic `scripts/verify-production.sh` entry point used by `Production foundation` | CI evidence for DEV-202–207 plus DEV-208 CI `36279763189`; exact closure head verified by PR #29 before merge | **Verified** |
+| `FV-AC-12` | requirement → design/ADR → code → test traceability is recorded | this controlled document plus updated F-section RTM | document review + DEV-208 CI `36279763189`; exact closure head verified by PR #29 before merge | **Verified by DEV-208** |
 
 ## Architecture-to-code traceability
 
@@ -161,16 +160,18 @@ Later programme work must still validate and/or extend:
 
 These are controlled future scope, not failures of DEV-208.
 
-## DEV-208 completion criteria
+## DEV-208 completion position
 
-`DEV-208` is complete when:
+The DEV-208 evidence set now satisfies the controlled completion criteria:
 
-1. this record maps first-slice requirements/use cases to accepted architecture and implementation;
+1. first-slice requirements/use cases are mapped to accepted architecture and implementation;
 2. all 12 `NBEOS-H-004` acceptance criteria have named verification evidence and status;
 3. source/test paths and prior CI evidence are recorded;
-4. the F-section RTM is updated to acknowledge live architecture/design/code/test evidence;
-5. the final `DEV-208` branch passes the same `Production foundation` verification used by product code;
-6. the resulting pull request is merged to `main` and `Product_backlog.md` records the final CI evidence.
+4. the F-section RTM acknowledges live architecture/design/code/test evidence;
+5. CI `36279763189` passed the full production verification path after the traceability record and RTM reconciliation were introduced;
+6. PR #29 reruns the same gate on the exact closure-status head before merge.
+
+DEV-208 is considered complete only when PR #29's exact closure-status head is green and merged to `main`.
 
 ## References
 
@@ -189,3 +190,4 @@ These are controlled future scope, not failures of DEV-208.
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1 | 2026-09-27 | NuBlox Product / Engineering / Quality | Established consolidated first-slice requirement → ADR/design → code → test → CI traceability for DEV-208 |
+| 0.2 | 2026-09-27 | NuBlox Product / Engineering / Quality | Recorded successful DEV-208 production verification evidence from CI run 36279763189 and defined exact-head closure verification through PR #29 |
