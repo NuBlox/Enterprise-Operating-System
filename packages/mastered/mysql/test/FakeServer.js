@@ -1,52 +1,60 @@
-var Buffer       = require('safe-buffer').Buffer;
-var EventEmitter = require('events').EventEmitter;
-var Net          = require('net');
-var Util         = require('util');
-var common       = require('./common');
-var PacketWriter = require(common.lib + '/protocol/PacketWriter');
-var Parser       = require(common.lib + '/protocol/Parser');
-var Packets      = require(common.lib + '/protocol/packets');
-var Charsets     = require(common.lib + '/protocol/constants/charsets');
-var ClientConstants = require(common.lib + '/protocol/constants/client');
-var Errors       = require(common.lib + '/protocol/constants/errors');
-var Types        = require(common.lib + '/protocol/constants/types');
-var tls          = require('tls');
+// An experimental fake MySQL server for tricky integration tests. Expanded
+// as needed.
+
+var Buffer          = require('safe-buffer').Buffer;
+var common          = require('./common');
+var Charsets        = common.Charsets;
+var ClientConstants = common.ClientConstants;
+var Crypto          = require('crypto');
+var Net             = require('net');
+var tls             = require('tls');
+var Packets         = common.Packets;
+var PacketWriter    = common.PacketWriter;
+var Parser          = common.Parser;
+var Types           = common.Types;
+var Errors          = common.Errors;
+var EventEmitter    = require('events').EventEmitter;
+var Util            = require('util');
 
 module.exports = FakeServer;
 Util.inherits(FakeServer, EventEmitter);
 function FakeServer(options) {
   EventEmitter.call(this);
 
-  this._options = options || {};
-  this._server  = Net.createServer(this._handleConnection.bind(this));
-  this._port    = null;
+  this._connections = [];
+  this._options     = options || {};
+  this._server      = null;
 }
 
-FakeServer.prototype.address = function address() {
-  return this._server.address();
+FakeServer.prototype.listen = function(port, cb) {
+  this._server = Net.createServer(this._handleConnection.bind(this));
+  this._server.listen(port, cb);
 };
 
-FakeServer.prototype.destroy = function destroy() {
-  this._server.close();
+FakeServer.prototype.port = function() {
+  return this._server.address().port;
 };
 
-FakeServer.prototype.listen = function listen(port, callback) {
-  var self = this;
-  this._server.listen(port, function (err) {
-    if (!err) {
-      self._port = self._server.address().port;
-    }
-    if (callback) callback(err);
-  });
-};
-
-FakeServer.prototype.port = function port() {
-  return this._port;
-};
-
-FakeServer.prototype._handleConnection = function _handleConnection(socket) {
+FakeServer.prototype._handleConnection = function(socket) {
   var connection = new FakeConnection(this, socket);
-  this.emit('connection', connection);
+
+  if (!this.emit('connection', connection)) {
+    connection.handshake();
+  }
+
+  this._connections.push(connection);
+};
+
+FakeServer.prototype.destroy = function() {
+  if (this._server._handle) {
+    // close server if listening
+    this._server.close();
+  }
+
+  // destroy all connections
+  this._connections.forEach(function(connection) {
+    connection.destroy();
+  });
 };
 
 Util.inherits(FakeConnection, EventEmitter);
@@ -100,11 +108,12 @@ FakeConnection.prototype.handshake = function(options) {
   var packetOptions = common.extend({
     scrambleBuff1       : Buffer.from('1020304050607080', 'hex'),
     scrambleBuff2       : Buffer.from('0102030405060708090A0B0C', 'hex'),
-    serverCapabilities1 : 512,
+    serverCapabilities1 : 512, // only 1 flag, PROTOCOL_41
     protocol41          : true
   }, this._handshakeOptions);
 
   this._handshakeInitializationPacket = new Packets.HandshakeInitializationPacket(packetOptions);
+
   this._sendPacket(this._handshakeInitializationPacket);
 };
 
@@ -149,7 +158,7 @@ FakeConnection.prototype._sendPacket = function(packet) {
   this._stream.write(writer.toBuffer(this._parser));
 };
 
-FakeConnection.prototype._handleData = function _handleData(buffer) {
+FakeConnection.prototype._handleData = function(buffer) {
   this._parser.write(buffer);
 };
 
@@ -186,7 +195,10 @@ FakeConnection.prototype._handleQueryPacket = function _handleQueryPacket(packet
   }
 
   if ((match = /^SELECT CURRENT_USER\(\);?$/i.exec(sql))) {
-    this._sendPacket(new Packets.ResultSetHeaderPacket({fieldCount: 1}));
+    this._sendPacket(new Packets.ResultSetHeaderPacket({
+      fieldCount: 1
+    }));
+
     this._sendPacket(new Packets.FieldPacket({
       catalog    : 'def',
       charsetNr  : Charsets.UTF8_GENERAL_CI,
@@ -194,11 +206,13 @@ FakeConnection.prototype._handleQueryPacket = function _handleQueryPacket(packet
       protocol41 : true,
       type       : Types.VARCHAR
     }));
+
     this._sendPacket(new Packets.EofPacket());
 
     var writer = new PacketWriter();
     writer.writeLengthCodedString((this.user || '') + '@localhost');
     this._socket.write(writer.toBuffer(this._parser));
+
     this._sendPacket(new Packets.EofPacket());
     this._parser.resetPacketNumber();
     return;
@@ -209,7 +223,10 @@ FakeConnection.prototype._handleQueryPacket = function _handleQueryPacket(packet
     var time = sec * 1000;
 
     setTimeout(function () {
-      conn._sendPacket(new Packets.ResultSetHeaderPacket({fieldCount: 1}));
+      conn._sendPacket(new Packets.ResultSetHeaderPacket({
+        fieldCount: 1
+      }));
+
       conn._sendPacket(new Packets.FieldPacket({
         catalog    : 'def',
         charsetNr  : Charsets.UTF8_GENERAL_CI,
@@ -217,11 +234,13 @@ FakeConnection.prototype._handleQueryPacket = function _handleQueryPacket(packet
         protocol41 : true,
         type       : Types.LONG
       }));
+
       conn._sendPacket(new Packets.EofPacket());
 
       var writer = new PacketWriter();
       writer.writeLengthCodedString(0);
       conn._socket.write(writer.toBuffer(conn._parser));
+
       conn._sendPacket(new Packets.EofPacket());
       conn._parser.resetPacketNumber();
     }, time);
@@ -230,12 +249,16 @@ FakeConnection.prototype._handleQueryPacket = function _handleQueryPacket(packet
 
   if ((match = /^SELECT \* FROM stream LIMIT ([0-9]+);?$/i.exec(sql))) {
     var num = match[1];
+
     this._writePacketStream(num);
     return;
   }
 
   if ((match = /^SHOW STATUS LIKE 'Ssl_cipher';?$/i.exec(sql))) {
-    this._sendPacket(new Packets.ResultSetHeaderPacket({fieldCount: 2}));
+    this._sendPacket(new Packets.ResultSetHeaderPacket({
+      fieldCount: 2
+    }));
+
     this._sendPacket(new Packets.FieldPacket({
       catalog    : 'def',
       charsetNr  : Charsets.UTF8_GENERAL_CI,
@@ -243,6 +266,7 @@ FakeConnection.prototype._handleQueryPacket = function _handleQueryPacket(packet
       protocol41 : true,
       type       : Types.VARCHAR
     }));
+
     this._sendPacket(new Packets.FieldPacket({
       catalog    : 'def',
       charsetNr  : Charsets.UTF8_GENERAL_CI,
@@ -250,12 +274,14 @@ FakeConnection.prototype._handleQueryPacket = function _handleQueryPacket(packet
       protocol41 : true,
       type       : Types.VARCHAR
     }));
+
     this._sendPacket(new Packets.EofPacket());
 
     var writer = new PacketWriter();
     writer.writeLengthCodedString('Ssl_cipher');
     writer.writeLengthCodedString(this._cipher ? this._cipher.name : '');
     this._stream.write(writer.toBuffer(this._parser));
+
     this._sendPacket(new Packets.EofPacket());
     this._parser.resetPacketNumber();
     return;
@@ -341,24 +367,40 @@ FakeConnection.prototype._determinePacket = function _determinePacket(packetHead
     }
 
     this._expectedNextPacket = null;
+
     return Packet;
   }
 
-  var firstByte = this._parser.peak();
+  if (packetHeader.length === 0) {
+    return Packets.EmptyPacket;
+  }
 
+  var firstByte = this._parser.peak();
   switch (firstByte) {
-    case 0x01: return Packets.AuthSwitchResponsePacket;
+    case 0x01: return Packets.ComQuitPacket;
     case 0x03: return Packets.ComQueryPacket;
     case 0x0e: return Packets.ComPingPacket;
     case 0x11: return Packets.ComChangeUserPacket;
-    default:   return Packets.ComQuitPacket;
+    default:
+      throw new Error('Unknown packet, first byte: ' + firstByte);
   }
+};
+
+FakeConnection.prototype.destroy = function() {
+  this._socket.destroy();
 };
 
 FakeConnection.prototype._writePacketStream = function _writePacketStream(count) {
   var remaining = count;
+  var timer = setInterval(writeRow.bind(this), 20);
 
-  this._sendPacket(new Packets.ResultSetHeaderPacket({fieldCount: 2}));
+  this._socket.on('close', cleanup);
+  this._socket.on('error', cleanup);
+
+  this._sendPacket(new Packets.ResultSetHeaderPacket({
+    fieldCount: 2
+  }));
+
   this._sendPacket(new Packets.FieldPacket({
     catalog    : 'def',
     charsetNr  : Charsets.UTF8_GENERAL_CI,
@@ -366,16 +408,33 @@ FakeConnection.prototype._writePacketStream = function _writePacketStream(count)
     protocol41 : true,
     type       : Types.LONG
   }));
+
   this._sendPacket(new Packets.FieldPacket({
     catalog    : 'def',
     charsetNr  : Charsets.UTF8_GENERAL_CI,
-    name       : 'value',
+    name       : 'title',
     protocol41 : true,
     type       : Types.VARCHAR
   }));
+
   this._sendPacket(new Packets.EofPacket());
 
-  while (remaining > 0) {
+  function cleanup() {
+    clearInterval(timer);
+  }
+
+  function writeRow() {
+    if (remaining === 0) {
+      cleanup();
+
+      this._socket.removeListener('close', cleanup);
+      this._socket.removeListener('error', cleanup);
+
+      this._sendPacket(new Packets.EofPacket());
+      this._parser.resetPacketNumber();
+      return;
+    }
+
     remaining -= 1;
 
     var num = count - remaining;
@@ -384,22 +443,23 @@ FakeConnection.prototype._writePacketStream = function _writePacketStream(count)
     writer.writeLengthCodedString('Row #' + num);
     this._socket.write(writer.toBuffer(this._parser));
   }
-
-  this._sendPacket(new Packets.EofPacket());
-  this._parser.resetPacketNumber();
 };
 
 if (tls.TLSSocket) {
+  // 0.11+ environment
   FakeConnection.prototype._startTLS = function _startTLS() {
+    // halt parser
     this._parser.pause();
     this._socket.removeAllListeners('data');
 
+    // socket <-> encrypted
     var secureContext = tls.createSecureContext(common.getSSLConfig(this._server._options.ssl));
     var secureSocket  = new tls.TLSSocket(this._socket, {
       secureContext : secureContext,
       isServer      : true
     });
 
+    // cleartext <-> protocol
     secureSocket.on('data', this._handleData.bind(this));
     this._stream = secureSocket;
 
@@ -408,6 +468,7 @@ if (tls.TLSSocket) {
       conn._cipher = this.getCipher();
     });
 
+    // resume
     var parser = this._parser;
     process.nextTick(function() {
       var buffer = parser._buffer.slice(parser._offset);
@@ -417,7 +478,32 @@ if (tls.TLSSocket) {
     });
   };
 } else {
+  // pre-0.11 environment
   FakeConnection.prototype._startTLS = function _startTLS() {
-    throw new Error('TLS not supported by this version of node');
+    // halt parser
+    this._parser.pause();
+    this._socket.removeAllListeners('data');
+
+    // inject secure pair
+    var credentials = Crypto.createCredentials(common.getSSLConfig());
+    var securePair = tls.createSecurePair(credentials, true);
+    this._socket.pipe(securePair.encrypted);
+    this._stream = securePair.cleartext;
+    securePair.cleartext.on('data', this._handleData.bind(this));
+    securePair.encrypted.pipe(this._socket);
+
+    var conn = this;
+    securePair.on('secure', function () {
+      conn._cipher = securePair.cleartext.getCipher();
+    });
+
+    // resume
+    var parser = this._parser;
+    process.nextTick(function() {
+      var buffer = parser._buffer.slice(parser._offset);
+      parser._offset = parser._buffer.length;
+      parser.resume();
+      securePair.encrypted.write(buffer);
+    });
   };
 }
