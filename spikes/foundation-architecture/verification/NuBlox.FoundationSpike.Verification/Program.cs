@@ -12,6 +12,7 @@ var connectionString = Environment.GetEnvironmentVariable("NUBLOX_SPIKE_CONNECTI
 
 var factory = new PostgresTransactionalSessionFactory(connectionString);
 var subjects = new SubjectModule();
+var subjectHistory = new SubjectHistoryModule();
 var work = new WorkModule();
 var decisions = new DecisionModule();
 var audit = new AuditModule();
@@ -99,8 +100,109 @@ Ensure(
     "Rolled-back work record still exists.");
 
 Console.WriteLine("PASS: rollback removed all partial module writes.");
+
+Console.WriteLine("SPIKE-002: verifying business-effective history and as-of reconstruction...");
+
+var historySubjectId = SubjectId.New();
+var initialEffective = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+var renameEffective = new DateTimeOffset(2025, 6, 1, 0, 0, 0, TimeSpan.Zero);
+
+await using (var session = await factory.OpenAsync())
+{
+    historySubjectId = await subjects.CreateAsync(
+        session,
+        customerA,
+        "Historical subject");
+
+    await subjectHistory.InitialiseAsync(
+        session,
+        customerA,
+        historySubjectId,
+        "Original Name",
+        initialEffective,
+        "Initial effective version");
+
+    await session.CommitAsync();
+}
+
+await using (var session = await factory.OpenAsync())
+{
+    await subjectHistory.ChangeNameAsync(
+        session,
+        customerA,
+        historySubjectId,
+        "Renamed Subject",
+        renameEffective,
+        "Approved rename");
+
+    await session.CommitAsync();
+}
+
+var originalAsOf = await GetNameAsOfAsync(
+    factory,
+    subjectHistory,
+    customerA,
+    historySubjectId,
+    new DateTimeOffset(2025, 3, 1, 0, 0, 0, TimeSpan.Zero));
+
+var renamedAsOf = await GetNameAsOfAsync(
+    factory,
+    subjectHistory,
+    customerA,
+    historySubjectId,
+    new DateTimeOffset(2025, 7, 1, 0, 0, 0, TimeSpan.Zero));
+
+Ensure(originalAsOf is not null, "Original as-of version was not found.");
+Ensure(originalAsOf.DisplayName == "Original Name", "Original as-of query returned the wrong name.");
+Ensure(originalAsOf.EffectiveFrom == initialEffective, "Original effective-from value was not preserved.");
+Ensure(originalAsOf.EffectiveTo == renameEffective, "Original version was not closed at the rename effective date.");
+Ensure(originalAsOf.RecordedAt > renameEffective, "Technical recorded-at timestamp was not distinct from historical business-effective time.");
+
+Ensure(renamedAsOf is not null, "Renamed as-of version was not found.");
+Ensure(renamedAsOf.DisplayName == "Renamed Subject", "Later as-of query returned the wrong name.");
+Ensure(renamedAsOf.EffectiveFrom == renameEffective, "Renamed effective-from value was not preserved.");
+Ensure(renamedAsOf.EffectiveTo is null, "Current version should remain open-ended.");
+
+Console.WriteLine("PASS: as-of queries reconstruct different business-effective states while preserving technical recording time.");
+
+Console.WriteLine("SPIKE-002: verifying overlapping effective periods are rejected by the database...");
+
+var overlapRejected = false;
+await using (var session = await factory.OpenAsync())
+{
+    try
+    {
+        await using var command = session.Connection.CreateCommand();
+        command.Transaction = session.Transaction;
+        command.CommandText = """
+            INSERT INTO subjects.business_subject_names
+                (customer_id, subject_id, effective_from, effective_to, display_name, change_reason)
+            VALUES
+                (@customer_id, @subject_id, @effective_from, @effective_to, @display_name, @change_reason);
+            """;
+        command.AddParameter("customer_id", customerA.Value);
+        command.AddParameter("subject_id", historySubjectId.Value);
+        command.AddParameter("effective_from", new DateTime(2025, 5, 1, 0, 0, 0, DateTimeKind.Utc));
+        command.AddParameter("effective_to", new DateTime(2025, 8, 1, 0, 0, 0, DateTimeKind.Utc));
+        command.AddParameter("display_name", "Invalid overlapping version");
+        command.AddParameter("change_reason", "Overlap test");
+
+        await command.ExecuteNonQueryAsync();
+        await session.RollbackAsync();
+    }
+    catch (Exception exception)
+    {
+        overlapRejected = true;
+        await session.RollbackAsync();
+        Console.WriteLine($"Expected overlap rejection: {exception.GetType().Name}");
+    }
+}
+
+Ensure(overlapRejected, "Overlapping effective-dated subject state was not rejected.");
+Console.WriteLine("PASS: database exclusion constraint rejected overlapping effective periods.");
+
 Console.WriteLine();
-Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED.");
+Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED (SPIKE-001 + SPIKE-002). ");
 
 return;
 
@@ -130,4 +232,21 @@ static async Task<bool> ExistsAsync(
     await session.RollbackAsync();
 
     return result is true;
+}
+
+static async Task<SubjectNameVersion?> GetNameAsOfAsync(
+    ITransactionalSessionFactory factory,
+    SubjectHistoryModule subjectHistory,
+    CustomerId customerId,
+    SubjectId subjectId,
+    DateTimeOffset effectiveAt)
+{
+    await using var session = await factory.OpenAsync();
+    var version = await subjectHistory.GetAsOfAsync(
+        session,
+        customerId,
+        subjectId,
+        effectiveAt);
+    await session.RollbackAsync();
+    return version;
 }
