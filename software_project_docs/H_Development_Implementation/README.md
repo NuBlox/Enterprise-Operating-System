@@ -9,13 +9,14 @@ The corresponding reusable templates are maintained under [`../../software_proje
 | ID | Document | Status | Version |
 |---|---|---|---|
 | `NBEOS-H-001` | [Development plan](Development_plan.md) | Draft | 0.1 |
-| `NBEOS-H-002` | [Product backlog](Product_backlog.md) | Draft | 0.12 |
+| `NBEOS-H-002` | [Product backlog](Product_backlog.md) | Draft | 0.18 |
 | `NBEOS-H-003` | [Dependency management document](Dependency_management_document.md) | Draft | 0.4 |
 | `NBEOS-H-004` | [First vertical slice definition](First_vertical_slice_definition.md) | Draft | 0.1 |
+| `NBEOS-H-005` | [First vertical slice verification and traceability](First_vertical_slice_verification_and_traceability.md) | Draft | 0.1 |
 
 ## Production foundation status
 
-The controlled production foundation is physically separate from disposable spikes and now includes:
+The controlled production foundation is physically separate from disposable spikes and includes:
 
 ```text
 src/NuBlox.Kernel/
@@ -24,6 +25,7 @@ src/NuBlox.Audit/
 src/NuBlox.Observability/
 src/NuBlox.Persistence.PostgreSql/
 src/NuBlox.Api/
+src/NuBlox.WorkProducts.*
         ↓
 tests/*
         ↓
@@ -60,11 +62,9 @@ GitHub Actions runs the identical production verifier with PostgreSQL 18.6 avail
 
 `DEV-201` selects **Governed Work Product — Create, Review, Approve and Issue** as the first representative production workflow.
 
-The controlled definition is [`First_vertical_slice_definition.md`](First_vertical_slice_definition.md).
+The controlled implementation definition is [`First_vertical_slice_definition.md`](First_vertical_slice_definition.md).
 
-The slice is deliberately work-product-type neutral so the same core model can later support documents, drawings, models, specifications, reports, submissions and other governed outputs across functional governance, functional delivery and built-environment domains without prematurely hard-coding the full enterprise taxonomy.
-
-The next implementation sequence is:
+Implementation has progressed through:
 
 ```text
 DEV-202 governed Work Product + Revision records/persistence
@@ -82,9 +82,13 @@ DEV-207 durable downstream consequence
 DEV-208 consolidated traceability/verification
 ```
 
+The consolidated requirement → ADR/design → code → test → CI record is [`First_vertical_slice_verification_and_traceability.md`](First_vertical_slice_verification_and_traceability.md).
+
+The slice remains deliberately work-product-type neutral so the same core model can later support documents, drawings, models, specifications, reports, submissions and other governed outputs across functional governance, functional delivery and built-environment domains without prematurely hard-coding the full enterprise taxonomy.
+
 ## Development rule
 
-The spike code remains disposable experimental code. It is not the production application and must not be copied into the production codebase by momentum. Proven patterns are reimplemented through the accepted ADRs, controlled product requirements, module ownership, production tests and normal security/quality gates.
+The spike code remains disposable experimental code. It is not the production application and must not be copied into the production codebase by momentum. Proven patterns are reimplemented through accepted ADRs, controlled product requirements, module ownership, production tests and normal security/quality gates.
 
 The first vertical slice is an implementation/validation baseline. Draft/Candidate requirements remain subject to controlled business/customer validation and refinement; implementation must not silently convert every candidate requirement into permanent product semantics.
 
@@ -96,3 +100,4 @@ The first vertical slice is an implementation/validation baseline. Draft/Candida
 - [`Product_backlog.md`](Product_backlog.md)
 - [`Dependency_management_document.md`](Dependency_management_document.md)
 - [`First_vertical_slice_definition.md`](First_vertical_slice_definition.md)
+- [`First_vertical_slice_verification_and_traceability.md`](First_vertical_slice_verification_and_traceability.md)
