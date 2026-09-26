@@ -32,10 +32,16 @@ Each working document records:
 | `NBEOS-A-005` | [Customer research summary](A_Enterprise_Pre_Project/Customer_research_summary.md) | Draft | 0.1 |
 | `NBEOS-A-006` | [Business case](A_Enterprise_Pre_Project/Business_case.md) | Draft | 0.1 |
 | `NBEOS-A-007` | [Feasibility study](A_Enterprise_Pre_Project/Feasibility_study.md) | Draft | 0.1 |
+| `NBEOS-A-008` | [Cost-benefit analysis](A_Enterprise_Pre_Project/Cost-benefit_analysis.md) | Draft | 0.1 |
+| `NBEOS-A-009` | [Enterprise risk register](A_Enterprise_Pre_Project/Enterprise_risk_register.md) | Draft | 0.1 |
+| `NBEOS-A-010` | [Compliance / regulatory register](A_Enterprise_Pre_Project/Compliance__regulatory_register.md) | Draft | 0.1 |
+| `NBEOS-A-011` | [Security classification policy](A_Enterprise_Pre_Project/Security_classification_policy.md) | Draft | 0.1 |
+| `NBEOS-A-012` | [Enterprise architecture principles](A_Enterprise_Pre_Project/Enterprise_architecture_principles.md) | Draft | 0.1 |
+| `NBEOS-A-013` | [Data governance policy](A_Enterprise_Pre_Project/Data_governance_policy.md) | Draft | 0.1 |
 
 ## Current programme position
 
-The initial product and investment hypotheses are now documented but **not approved**.
+The programme now has a controlled Draft baseline for product intent, market positioning, customer-evidence requirements, business/feasibility case, cost/benefit structure, strategic risk, compliance, security classification, architecture principles and data governance.
 
 The strongest current product hypothesis is that NuBlox can create value by reducing the operational divide between:
 
@@ -47,20 +53,22 @@ delivering the work through which it creates value
 
 The current launch-market hypothesis is UK mid-market multidisciplinary built-environment consultancies and project-services firms. This remains subject to direct customer validation.
 
+No Draft document is an approved product, architecture or investment baseline yet.
+
 ## Next controlled documents
 
 The next Enterprise / Pre-Project documents should be developed in dependency order:
 
-1. `Cost-benefit_analysis.md`
-2. `ROI__NPV__IRR__payback_analysis.md`
-3. `Total_cost_of_ownership_TCO_model.md`
-4. `Enterprise_risk_register.md`
-5. `Compliance__regulatory_register.md`
-6. `Security_classification_policy.md`
-7. `Enterprise_architecture_principles.md`
-8. `Data_governance_policy.md`
-9. `Product roadmap / portfolio roadmap`
-10. `Funding approval / investment memo`
+1. `ROI__NPV__IRR__payback_analysis.md`
+2. `Total_cost_of_ownership_TCO_model.md`
+3. `Business_model_canvas__lean_canvas.md`
+4. `Portfolio_roadmap.md`
+5. `Benefits_map__benefits_dependency_network.md`
+6. `Benefits_realisation_plan.md`
+7. `Stakeholder_map.md`
+8. `Budget__funding_model.md`
+9. `Funding_approval__investment_memo.md`
+10. `Programme_charter.md`
 
 Primary customer research should proceed in parallel and update `NBEOS-A-005` as evidence is collected.
 
