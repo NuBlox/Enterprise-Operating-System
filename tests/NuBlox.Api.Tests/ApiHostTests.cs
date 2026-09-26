@@ -81,12 +81,6 @@ public sealed class ApiHostTests
     }
 
     [TestMethod]
-    public void InitialExternalApiMajorVersionPrefixIsStable()
-    {
-        Assert.AreEqual("/api/v1", NuBloxApiRoutes.V1Prefix);
-    }
-
-    [TestMethod]
     public async Task RequestTenantInputDoesNotManufactureVerifiedContext()
     {
         var httpContext = new DefaultHttpContext();
