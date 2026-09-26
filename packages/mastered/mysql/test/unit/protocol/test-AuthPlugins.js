@@ -23,6 +23,11 @@ for (var i = 0; i < expected.length; i++) {
 
 assert.deepStrictEqual(token, expected);
 assert.deepStrictEqual(AuthPlugins.calculateCachingSha2Token('', scramble), Buffer.alloc(0));
+assert.throws(function () {
+  AuthPlugins.calculateCachingSha2Token(password, Buffer.alloc(19));
+}, function (err) {
+  return err.code === 'AUTH_PLUGIN_PROTOCOL_ERROR';
+});
 
 var caching = AuthPlugins.create('caching_sha2_password', {
   password                : password,
@@ -37,12 +42,12 @@ assert.throws(function () {
 });
 
 var pair = Crypto.generateKeyPairSync('rsa', {
-  modulusLength: 2048,
-  publicKeyEncoding: {
+  modulusLength      : 2048,
+  publicKeyEncoding  : {
     type   : 'spki',
     format : 'pem'
   },
-  privateKeyEncoding: {
+  privateKeyEncoding : {
     type   : 'pkcs8',
     format : 'pem'
   }
@@ -82,8 +87,8 @@ assert.throws(function () {
 
 var customSteps = [];
 var custom = AuthPlugins.create('custom_auth', {
-  ssl: {},
-  authPlugins: {
+  ssl         : {},
+  authPlugins : {
     custom_auth: function customAuthFactory(context) {
       assert.strictEqual(context.pluginName, 'custom_auth');
       assert.strictEqual(context.secure, true);
