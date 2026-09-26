@@ -42,9 +42,9 @@ public sealed class WorkProductPersistenceTests
         await ApplyMigrationsAsync(dataSource);
         await using var connection = await dataSource.OpenConnectionAsync();
 
-        Assert.AreEqual(4L, await ScalarInt64Async(connection, "SELECT count(*) FROM nublox_meta.schema_migrations;"));
+        Assert.AreEqual(5L, await ScalarInt64Async(connection, "SELECT count(*) FROM nublox_meta.schema_migrations;"));
         Assert.AreEqual(1L, await ScalarInt64Async(connection, "SELECT count(*) FROM pg_namespace WHERE nspname = 'work_products';"));
-        Assert.AreEqual(4L, await ScalarInt64Async(connection, "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'work_products';"));
+        Assert.AreEqual(5L, await ScalarInt64Async(connection, "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'work_products';"));
     }
 
     [TestMethod]
