@@ -175,7 +175,9 @@ public sealed record WorkProductRevision
         PrincipalId createdByPrincipalId,
         DateTimeOffset createdAtUtc,
         PrincipalId? submittedByPrincipalId,
-        DateTimeOffset? submittedAtUtc)
+        DateTimeOffset? submittedAtUtc,
+        PrincipalId? issuedByPrincipalId,
+        DateTimeOffset? issuedAtUtc)
     {
         Id = id;
         TenantId = tenantId;
@@ -187,6 +189,8 @@ public sealed record WorkProductRevision
         CreatedAtUtc = createdAtUtc;
         SubmittedByPrincipalId = submittedByPrincipalId;
         SubmittedAtUtc = submittedAtUtc;
+        IssuedByPrincipalId = issuedByPrincipalId;
+        IssuedAtUtc = issuedAtUtc;
     }
 
     public WorkProductRevisionId Id { get; }
@@ -199,6 +203,8 @@ public sealed record WorkProductRevision
     public DateTimeOffset CreatedAtUtc { get; }
     public PrincipalId? SubmittedByPrincipalId { get; }
     public DateTimeOffset? SubmittedAtUtc { get; }
+    public PrincipalId? IssuedByPrincipalId { get; }
+    public DateTimeOffset? IssuedAtUtc { get; }
 
     public static WorkProductRevision CreateInitial(WorkProduct workProduct)
     {
@@ -213,6 +219,8 @@ public sealed record WorkProductRevision
             workProduct.CreatedByPrincipalId,
             workProduct.CreatedAtUtc,
             null,
+            null,
+            null,
             null);
     }
 
@@ -222,7 +230,6 @@ public sealed record WorkProductRevision
         {
             throw new InvalidOperationException($"Only a Draft revision can be submitted for review; current state is {State}.");
         }
-
         if (submittedAtUtc == default) throw new ArgumentException("Submission timestamp is required.", nameof(submittedAtUtc));
 
         return new WorkProductRevision(
@@ -235,7 +242,54 @@ public sealed record WorkProductRevision
             CreatedByPrincipalId,
             CreatedAtUtc,
             actorPrincipalId,
-            submittedAtUtc.ToUniversalTime());
+            submittedAtUtc.ToUniversalTime(),
+            null,
+            null);
+    }
+
+    public WorkProductRevision Issue(PrincipalId actorPrincipalId, DateTimeOffset issuedAtUtc)
+    {
+        if (State != WorkProductRevisionState.Approved)
+        {
+            throw new InvalidOperationException($"Only an Approved revision can be issued; current state is {State}.");
+        }
+        if (issuedAtUtc == default) throw new ArgumentException("Issue timestamp is required.", nameof(issuedAtUtc));
+
+        return new WorkProductRevision(
+            Id,
+            TenantId,
+            WorkProductId,
+            RevisionNumber,
+            TitleSnapshot,
+            WorkProductRevisionState.Issued,
+            CreatedByPrincipalId,
+            CreatedAtUtc,
+            SubmittedByPrincipalId,
+            SubmittedAtUtc,
+            actorPrincipalId,
+            issuedAtUtc.ToUniversalTime());
+    }
+
+    public WorkProductRevision Supersede()
+    {
+        if (State != WorkProductRevisionState.Issued)
+        {
+            throw new InvalidOperationException($"Only an Issued revision can be superseded; current state is {State}.");
+        }
+
+        return new WorkProductRevision(
+            Id,
+            TenantId,
+            WorkProductId,
+            RevisionNumber,
+            TitleSnapshot,
+            WorkProductRevisionState.Superseded,
+            CreatedByPrincipalId,
+            CreatedAtUtc,
+            SubmittedByPrincipalId,
+            SubmittedAtUtc,
+            IssuedByPrincipalId,
+            IssuedAtUtc);
     }
 
     public static WorkProductRevision Restore(
@@ -248,7 +302,9 @@ public sealed record WorkProductRevision
         PrincipalId createdByPrincipalId,
         DateTimeOffset createdAtUtc,
         PrincipalId? submittedByPrincipalId = null,
-        DateTimeOffset? submittedAtUtc = null)
+        DateTimeOffset? submittedAtUtc = null,
+        PrincipalId? issuedByPrincipalId = null,
+        DateTimeOffset? issuedAtUtc = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(revisionNumber);
         if (string.IsNullOrWhiteSpace(titleSnapshot)) throw new ArgumentException("Revision title cannot be empty.", nameof(titleSnapshot));
@@ -256,9 +312,24 @@ public sealed record WorkProductRevision
         {
             throw new ArgumentException("Submission actor and timestamp must either both be present or both be absent.");
         }
+        if ((issuedByPrincipalId is null) != (issuedAtUtc is null))
+        {
+            throw new ArgumentException("Issue actor and timestamp must either both be present or both be absent.");
+        }
         if (state != WorkProductRevisionState.Draft && submittedAtUtc is null)
         {
             throw new ArgumentException("A non-Draft revision requires submission evidence.", nameof(submittedAtUtc));
+        }
+        if (state is WorkProductRevisionState.Issued or WorkProductRevisionState.Superseded)
+        {
+            if (issuedAtUtc is null)
+            {
+                throw new ArgumentException("An Issued or Superseded revision requires issue evidence.", nameof(issuedAtUtc));
+            }
+        }
+        else if (issuedAtUtc is not null)
+        {
+            throw new ArgumentException("Issue evidence is only valid for Issued or Superseded revisions.", nameof(issuedAtUtc));
         }
 
         return new WorkProductRevision(
@@ -271,7 +342,9 @@ public sealed record WorkProductRevision
             createdByPrincipalId,
             createdAtUtc.ToUniversalTime(),
             submittedByPrincipalId,
-            submittedAtUtc?.ToUniversalTime());
+            submittedAtUtc?.ToUniversalTime(),
+            issuedByPrincipalId,
+            issuedAtUtc?.ToUniversalTime());
     }
 }
 
