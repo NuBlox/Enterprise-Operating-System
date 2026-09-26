@@ -15,9 +15,28 @@ public sealed record SubmitWorkProductForReviewCommand(
     PrincipalId ActorPrincipalId,
     PrincipalId ReviewerPrincipalId);
 
+public sealed record RecordReviewDecisionCommand(
+    TenantId TenantId,
+    WorkProductId WorkProductId,
+    ReviewRequestId ReviewRequestId,
+    PrincipalId ActorPrincipalId,
+    ReviewDecisionOutcome Outcome,
+    string? Rationale = null);
+
 public sealed record WorkProductRecord(WorkProduct WorkProduct, WorkProductRevision CurrentRevision);
 
 public sealed record ReviewSubmission(WorkProductRevision Revision, ReviewRequest ReviewRequest);
+
+public sealed record ReviewRequestAssignment(
+    ReviewRequestId ReviewRequestId,
+    TenantId TenantId,
+    WorkProductRevisionId WorkProductRevisionId,
+    PrincipalId RequestedPrincipalId);
+
+public sealed record ReviewDecisionResult(
+    WorkProductRevision Revision,
+    ReviewRequestAssignment Assignment,
+    ReviewDecision Decision);
 
 public interface IWorkProductRepository
 {
@@ -31,6 +50,15 @@ public interface IWorkProductRepository
     Task SubmitForReviewAsync(
         ReviewSubmission submission,
         CancellationToken cancellationToken = default);
+
+    Task<ReviewRequestAssignment?> FindOpenReviewRequestAsync(
+        TenantId tenantId,
+        ReviewRequestId reviewRequestId,
+        CancellationToken cancellationToken = default);
+
+    Task ApplyReviewDecisionAsync(
+        ReviewDecisionResult result,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IWorkProductAccessEvaluator
@@ -41,10 +69,28 @@ public interface IWorkProductAccessEvaluator
         CancellationToken cancellationToken = default);
 }
 
+public interface IWorkProductDecisionAuthorityEvaluator
+{
+    ValueTask<bool> HasDecisionAuthorityAsync(
+        WorkProductRecord record,
+        ReviewRequestAssignment assignment,
+        PrincipalId actorPrincipalId,
+        ReviewDecisionOutcome outcome,
+        CancellationToken cancellationToken = default);
+}
+
 public sealed class WorkProductAccessDeniedException : Exception
 {
     public WorkProductAccessDeniedException()
-        : base("The Principal is not permitted to submit this Work Product for review.")
+        : base("The Principal is not permitted to perform this Work Product action.")
+    {
+    }
+}
+
+public sealed class WorkProductAuthorityDeniedException : Exception
+{
+    public WorkProductAuthorityDeniedException()
+        : base("The Principal does not hold the required business authority for this decision.")
     {
     }
 }
@@ -71,15 +117,26 @@ public sealed class WorkProductApplicationService
 {
     private readonly IWorkProductRepository _repository;
     private readonly IWorkProductAccessEvaluator _accessEvaluator;
+    private readonly IWorkProductDecisionAuthorityEvaluator _authorityEvaluator;
     private readonly ISystemClock _clock;
 
     public WorkProductApplicationService(
         IWorkProductRepository repository,
         IWorkProductAccessEvaluator accessEvaluator,
         ISystemClock clock)
+        : this(repository, accessEvaluator, new DenyDecisionAuthorityEvaluator(), clock)
+    {
+    }
+
+    public WorkProductApplicationService(
+        IWorkProductRepository repository,
+        IWorkProductAccessEvaluator accessEvaluator,
+        IWorkProductDecisionAuthorityEvaluator authorityEvaluator,
+        ISystemClock clock)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _accessEvaluator = accessEvaluator ?? throw new ArgumentNullException(nameof(accessEvaluator));
+        _authorityEvaluator = authorityEvaluator ?? throw new ArgumentNullException(nameof(authorityEvaluator));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
@@ -88,7 +145,6 @@ public sealed class WorkProductApplicationService
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
-
         var workProduct = WorkProduct.Create(
             command.TenantId,
             command.Title,
@@ -98,7 +154,6 @@ public sealed class WorkProductApplicationService
             _clock.UtcNow);
         var revision = WorkProductRevision.CreateInitial(workProduct);
         var record = new WorkProductRecord(workProduct, revision);
-
         await _repository.AddAsync(record, cancellationToken).ConfigureAwait(false);
         return record;
     }
@@ -114,17 +169,9 @@ public sealed class WorkProductApplicationService
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(command);
+        var record = await RequireRecordAsync(command.TenantId, command.WorkProductId, cancellationToken).ConfigureAwait(false);
 
-        var record = await _repository.FindAsync(
-            command.TenantId,
-            command.WorkProductId,
-            cancellationToken).ConfigureAwait(false)
-            ?? throw new KeyNotFoundException("The Work Product was not found in the verified Tenant context.");
-
-        if (!await _accessEvaluator.CanSubmitForReviewAsync(
-            record,
-            command.ActorPrincipalId,
-            cancellationToken).ConfigureAwait(false))
+        if (!await _accessEvaluator.CanSubmitForReviewAsync(record, command.ActorPrincipalId, cancellationToken).ConfigureAwait(false))
         {
             throw new WorkProductAccessDeniedException();
         }
@@ -145,8 +192,80 @@ public sealed class WorkProductApplicationService
             command.ActorPrincipalId,
             submittedRevision.SubmittedAtUtc!.Value);
         var submission = new ReviewSubmission(submittedRevision, reviewRequest);
-
         await _repository.SubmitForReviewAsync(submission, cancellationToken).ConfigureAwait(false);
         return submission;
+    }
+
+    public async Task<ReviewDecisionResult> RecordReviewDecisionAsync(
+        RecordReviewDecisionCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        var record = await RequireRecordAsync(command.TenantId, command.WorkProductId, cancellationToken).ConfigureAwait(false);
+        var assignment = await _repository.FindOpenReviewRequestAsync(
+            command.TenantId,
+            command.ReviewRequestId,
+            cancellationToken).ConfigureAwait(false)
+            ?? throw new KeyNotFoundException("The open Review Request was not found in the verified Tenant context.");
+
+        if (assignment.WorkProductRevisionId != record.CurrentRevision.Id
+            || assignment.RequestedPrincipalId != command.ActorPrincipalId)
+        {
+            throw new WorkProductAccessDeniedException();
+        }
+
+        if (!await _authorityEvaluator.HasDecisionAuthorityAsync(
+            record,
+            assignment,
+            command.ActorPrincipalId,
+            command.Outcome,
+            cancellationToken).ConfigureAwait(false))
+        {
+            throw new WorkProductAuthorityDeniedException();
+        }
+
+        ReviewDecision decision;
+        WorkProductRevision decidedRevision;
+        try
+        {
+            decision = ReviewDecision.Create(
+                command.TenantId,
+                command.ReviewRequestId,
+                record.CurrentRevision,
+                command.Outcome,
+                command.ActorPrincipalId,
+                _clock.UtcNow,
+                command.Rationale);
+            decidedRevision = decision.ApplyTo(record.CurrentRevision);
+        }
+        catch (InvalidOperationException exception)
+        {
+            throw new WorkProductStateConflictException(exception.Message);
+        }
+
+        var result = new ReviewDecisionResult(decidedRevision, assignment, decision);
+        await _repository.ApplyReviewDecisionAsync(result, cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
+    private async Task<WorkProductRecord> RequireRecordAsync(
+        TenantId tenantId,
+        WorkProductId workProductId,
+        CancellationToken cancellationToken) =>
+        await _repository.FindAsync(tenantId, workProductId, cancellationToken).ConfigureAwait(false)
+        ?? throw new KeyNotFoundException("The Work Product was not found in the verified Tenant context.");
+
+    private sealed class DenyDecisionAuthorityEvaluator : IWorkProductDecisionAuthorityEvaluator
+    {
+        public ValueTask<bool> HasDecisionAuthorityAsync(
+            WorkProductRecord record,
+            ReviewRequestAssignment assignment,
+            PrincipalId actorPrincipalId,
+            ReviewDecisionOutcome outcome,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(false);
+        }
     }
 }
