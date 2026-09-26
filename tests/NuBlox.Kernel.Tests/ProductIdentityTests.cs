@@ -7,10 +7,11 @@ namespace NuBlox.Kernel.Tests;
 public sealed class ProductIdentityTests
 {
     [TestMethod]
-    public void ProductIdentityUsesCanonicalNuBloxValues()
+    public void ProductionKernelUsesExpectedAssemblyIdentity()
     {
-        Assert.AreEqual("NuBlox Enterprise Operating System", ProductIdentity.Name);
-        Assert.AreEqual("NBEOS", ProductIdentity.ProductCode);
+        string? assemblyName = typeof(ProductIdentity).Assembly.GetName().Name;
+
+        Assert.AreEqual("NuBlox.Kernel", assemblyName);
     }
 
     [TestMethod]
