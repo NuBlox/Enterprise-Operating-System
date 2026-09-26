@@ -36,10 +36,10 @@ rawConnection = {
 
     return queryObject;
   },
-  destroy: function destroy() {},
-  escape: function escape(value) { return String(value); },
-  escapeId: function escapeId(value) { return String(value); },
-  format: function format(sql) { return sql; }
+  destroy  : function destroy() {},
+  escape   : function escape(value) { return String(value); },
+  escapeId : function escapeId(value) { return String(value); },
+  format   : function format(sql) { return sql; }
 };
 
 var connection = new PromiseConnection(rawConnection, global.Promise);
