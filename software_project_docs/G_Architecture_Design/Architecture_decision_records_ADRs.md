@@ -3,7 +3,7 @@
 **Section:** G_Architecture_Design  
 **Document ID:** NBEOS-G-005  
 **Document Type:** Architecture decision records (ADR register)  
-**Version:** 0.6  
+**Version:** 0.7  
 **Status:** Draft  
 **Author / Owner:** NuBlox Architecture  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Architecture_vision.md`, `Architecture_definition.md`, `Solution_architecture_document.md`  
-**Supersedes:** Version 0.5  
+**Supersedes:** Version 0.6  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
 **Storage Location:** `software_project_docs/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
@@ -43,7 +43,7 @@ Maintain the authoritative register of material architecture decisions. Individu
 |---|---|---|---|---|
 | [`ADR-001`](adr/ADR-001-cohesive-modular-application.md) | Initial application decomposition | Start as a cohesive modular application with explicit module/data ownership; extract services only when evidence justifies it | ACCEPTED | Integrity, evolving semantics, delivery/ops complexity |
 | [`ADR-002`](adr/ADR-002-transactional-relational-primary-persistence.md) | Primary persistence model | Transactional relational persistence is the primary authoritative model; database product/provider remains separate | ACCEPTED | Relationships, consistency, querying, history, migration |
-| `ADR-003` | Durable asynchronous processing | Use durable jobs/messages and transactional-outbox-or-equivalent for external/long-running work | PROPOSED | Reliability, retry, reconciliation, no silent loss |
+| [`ADR-003`](adr/ADR-003-durable-asynchronous-processing.md) | Durable asynchronous processing | Commit required external/independently retried consequences as transactional durable intents; deliver at least once with recoverable claims, idempotency and reconciliation | ACCEPTED | Reliability, retry, reconciliation, no silent loss |
 | `ADR-004` | Binary content/work-product storage | Keep business metadata/state separate from binary/object content where appropriate | PROPOSED | Scale, content lifecycle, specialist-system coexistence |
 | `ADR-005` | Configuration/extensibility model | Typed/governed configuration should extend domain semantics rather than universal generic-object runtime | PROPOSED | Integrity, supportability, upgradeability |
 | `ADR-006` | Information authority | Every material integration/domain boundary must declare authoritative source/update rights | PROPOSED | Data integrity, reconciliation, BR-004 |
@@ -71,6 +71,7 @@ The accepted decisions now establish:
 cohesive modular application
 + module-owned data / persistence boundaries
 + transactional relational authoritative persistence
++ transactional durable asynchronous intents / outbox-or-equivalent
 + PostgreSQL 18 initial primary provider
 + layered tenant-aware logical data model
 + .NET 10 LTS / C# server and core runtime
@@ -82,7 +83,7 @@ cohesive modular application
 + expand/migrate/contract release and schema evolution
 ```
 
-These decisions deliberately do **not** select an identity-provider vendor, frontend framework, cloud provider, monitoring backend/vendor or final enterprise authority-source taxonomy.
+These decisions deliberately do **not** select an identity-provider vendor, frontend framework, cloud provider, message-broker product, monitoring backend/vendor or final enterprise authority-source taxonomy.
 
 ## ADR approval requirements
 
@@ -103,6 +104,7 @@ Before an ADR is Accepted it should include:
 IMPLEMENTATION FOUNDATION ACCEPTED:
 ADR-001 decomposition
 ADR-002 persistence model
+ADR-003 durable asynchronous consequences
 ADR-007 tenant isolation
 ADR-008 identity boundary
 ADR-009 business authority boundary
@@ -120,10 +122,11 @@ PostgreSQL persistence/migrations
 OpenTelemetry telemetry
 business audit boundary
 contextual authority evaluation
+durable consequence/outbox processing
 complete CI quality gates
 ```
 
-Domain/process decisions such as ADR-003, ADR-005, ADR-010, ADR-015 and ADR-019 are promoted as the relevant product slice requires them.
+Remaining domain/process decisions such as ADR-005, ADR-010, ADR-015 and ADR-019 are promoted as the relevant product slice requires them.
 
 ## Individual ADR location
 
@@ -155,3 +158,4 @@ The register remains the authoritative index/status view.
 | 0.4 | 2026-09-26 | NuBlox Architecture | Accepted ADR-008 federated application identity, ADR-011 HTTP API standards and ADR-017 module-owned data boundaries |
 | 0.5 | 2026-09-26 | NuBlox Architecture | Accepted ADR-016 OpenTelemetry observability, ADR-018 business audit evidence, ADR-020 release/schema evolution and ADR-021 PostgreSQL 18 provider |
 | 0.6 | 2026-09-26 | NuBlox Architecture | Accepted ADR-009 contextual business authority with permission/authority separation and attributable authority references for governed decisions |
+| 0.7 | 2026-09-26 | NuBlox Architecture | Accepted ADR-003 transactional durable asynchronous intents with recoverable claims, at-least-once delivery, idempotency and reconciliation |
