@@ -21,7 +21,7 @@ Each working document records:
 - storage location and access permissions;
 - change history and Git audit trail.
 
-## Current Enterprise / Pre-Project baseline
+## Enterprise / Pre-Project baseline
 
 | ID | Document | Status | Version |
 |---|---|---|---|
@@ -49,23 +49,41 @@ Each working document records:
 | `NBEOS-A-022` | [Funding approval / investment memo](A_Enterprise_Pre_Project/Funding_approval__investment_memo.md) | Draft | 0.1 |
 | `NBEOS-A-023` | [Programme charter](A_Enterprise_Pre_Project/Programme_charter.md) | Draft | 0.1 |
 
+## Project Initiation baseline
+
+| ID | Document | Status | Version |
+|---|---|---|---|
+| `NBEOS-D-001` | [Project charter](D_Project_Initiation/Project_charter.md) | Draft | 0.1 |
+| `NBEOS-D-002` | [Project brief](D_Project_Initiation/Project_brief.md) | Draft | 0.1 |
+| `NBEOS-D-003` | [Project initiation document (PID)](D_Project_Initiation/Project_initiation_document_PID.md) | Draft | 0.1 |
+| `NBEOS-D-004` | [High-level scope statement](D_Project_Initiation/High-level_scope_statement.md) | Draft | 0.1 |
+| `NBEOS-D-005` | [Objectives and success criteria](D_Project_Initiation/Objectives_and_success_criteria.md) | Draft | 0.1 |
+| `NBEOS-D-006` | [Stakeholder register](D_Project_Initiation/Stakeholder_register.md) | Draft | 0.1 |
+| `NBEOS-D-007` | [Governance structure](D_Project_Initiation/Governance_structure.md) | Draft | 0.1 |
+| `NBEOS-D-008` | [RACI chart](D_Project_Initiation/RACI_chart.md) | Draft | 0.1 |
+| `NBEOS-D-009` | [Assumptions log](D_Project_Initiation/Assumptions_log.md) | Draft | 0.1 |
+| `NBEOS-D-010` | [Constraints log](D_Project_Initiation/Constraints_log.md) | Draft | 0.1 |
+| `NBEOS-D-011` | [Initial risk register](D_Project_Initiation/Initial_risk_register.md) | Draft | 0.1 |
+| `NBEOS-D-012` | [Initial dependency log](D_Project_Initiation/Initial_dependency_log.md) | Draft | 0.1 |
+| `NBEOS-D-013` | [High-level schedule](D_Project_Initiation/High-level_schedule.md) | Draft | 0.1 |
+| `NBEOS-D-014` | [Milestone list](D_Project_Initiation/Milestone_list.md) | Draft | 0.1 |
+| `NBEOS-D-015` | [High-level budget](D_Project_Initiation/High-level_budget.md) | Draft | 0.1 |
+| `NBEOS-D-016` | [High-level resource plan](D_Project_Initiation/High-level_resource_plan.md) | Draft | 0.1 |
+
 ## Current programme position
 
-NuBlox now has a controlled Draft pre-project baseline spanning:
+NuBlox now has a controlled Draft baseline from product strategy through formal project initiation.
 
-- product intent and strategy;
-- market and competitor hypotheses;
-- customer-evidence requirements;
-- business and feasibility case;
-- cost/benefit, ROI and TCO methodology;
-- strategic risk, compliance and security controls;
-- enterprise architecture and data-governance principles;
-- business model and portfolio roadmap;
-- benefits dependencies and realisation method;
-- stakeholder model;
-- budget/funding controls;
-- investment decision framework;
-- programme charter and stage gates.
+The programme has defined:
+
+- product and market hypotheses;
+- investment, feasibility, risk and funding controls;
+- architecture/data/security principles;
+- programme stage gates;
+- project scope and objectives;
+- governance and provisional RACI;
+- assumptions, constraints, risks and dependencies;
+- sequence, milestones, budget structure and resource capabilities.
 
 The strongest current product hypothesis remains that NuBlox can create value by reducing the operational divide between:
 
@@ -79,28 +97,30 @@ The current launch-market hypothesis is UK mid-market multidisciplinary built-en
 
 No Draft document is an approved product, architecture or investment baseline yet.
 
-## Next controlled documents — Project Initiation
+## Next controlled documents — Requirements & Analysis
 
-The next programme wave uses `software_project_docs_templates/D_Project_Initiation/` and should establish, in order:
+The next programme wave should establish the controlled requirements baseline using the relevant templates, including:
 
-1. `Project_charter.md`
-2. `Project_brief.md`
-3. `Project_initiation_document_PID.md`
-4. `High-level_scope_statement.md`
-5. `Objectives_and_success_criteria.md`
-6. `Stakeholder_register.md`
-7. `Governance_structure.md`
-8. `RACI_chart.md`
-9. `Assumptions_log.md`
-10. `Constraints_log.md`
-11. `Initial_risk_register.md`
-12. `Initial_dependency_log.md`
-13. `High-level_schedule.md`
-14. `Milestone_list.md`
-15. `High-level_budget.md`
-16. `High-level_resource_plan.md`
+1. Business requirements document (BRD)
+2. Stakeholder requirements specification
+3. Software requirements specification (SRS)
+4. Functional requirements
+5. Non-functional requirements
+6. User stories / epics
+7. Use cases
+8. User journeys
+9. Process flows / BPMN
+10. Business rules
+11. Data requirements and data dictionary
+12. Interface / integration requirements
+13. Reporting / analytics requirements
+14. Acceptance criteria
+15. Requirements traceability matrix
+16. Requirements prioritisation
+17. Glossary
+18. Requirements sign-off
 
-Primary customer research should proceed in parallel and continuously update `NBEOS-A-005` and the downstream requirements baseline.
+Primary customer research must continue in parallel and update `NBEOS-A-005` and all downstream requirements where evidence changes assumptions.
 
 ## Approval discipline
 
