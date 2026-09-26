@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.18  
+**Version:** 0.19  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -16,8 +16,8 @@
 **Retention Period:** Product lifetime + [TBD]  
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
-**Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_definition.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.17  
+**Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_definition.md`, `First_vertical_slice_verification_and_traceability.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
+**Supersedes:** Version 0.18  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -27,7 +27,7 @@
 
 ## Purpose
 
-Maintain the controlled implementation backlog that links NuBlox requirements and architecture decisions to executable product increments. Product semantics remain gated by controlled requirements; the production foundation is complete and the first governed vertical slice is now in final traceability/verification consolidation.
+Maintain the controlled implementation backlog that links NuBlox requirements and architecture decisions to executable product increments. Product semantics remain gated by controlled requirements; the production foundation is complete and the first governed vertical slice is in final traceability/verification consolidation.
 
 ## Backlog rules
 
@@ -87,7 +87,7 @@ Selected workflow: **Governed Work Product — Create, Review, Approve and Issue
 | `DEV-205` | P1 | Work-product/evidence linkage | FR-019–FR-022; NBEOS-H-004 | Approved-only issue path, attributable revision issue fields, exact approval-decision linkage, atomic issue/supersession, immutable issue evidence and tenant-isolated PostgreSQL verification | **Complete — CI run 36277625604** |
 | `DEV-206` | P1 | Operational management view/drill-through | FR-027–FR-029, FR-041; NBEOS-H-004 | Derived Principal-scoped contributor/reviewer attention view, tenant/RLS isolation, governed source drill-through with review/decision/issue evidence and unauthorised/cross-tenant negative verification | **Complete — CI run 36278067339** |
 | `DEV-207` | P1 | Durable notification/integration consequence | FR-018, FR-030, FR-032–FR-035; NBEOS-H-004; ADR-003 | Atomic issue+delivery-intent outbox, tenant RLS, recoverable `SKIP LOCKED` lease claiming, stable idempotency, retry scheduling, concurrent single-claim behaviour and completion reconciliation | **Complete — CI run 36279181900** |
-| `DEV-208` | P1 | First-slice traceability/verification evidence | SRS verification; NBEOS-H-004 | Requirement → ADR/design → code → test links | **Ready** |
+| `DEV-208` | P1 | First-slice traceability/verification evidence | SRS verification; NBEOS-H-004; NBEOS-H-005 | Requirement → ADR/design → code → automated test → CI links, 12 first-slice acceptance criteria mapped, F-section RTM reconciled | **In verification — H-005 v0.1 created; final-head production CI pending** |
 
 ## Wave 3 — cross-enterprise capability expansion
 
@@ -109,24 +109,36 @@ NuBloxSQL remains available for integrations/tooling or a later explicitly appro
 
 ## Immediate execution order
 
-The Governed Work Product implementation path is now complete through durable external-consequence intent and recovery. The remaining first-slice activity is:
+The Governed Work Product implementation path is complete through durable external-consequence intent and recovery. DEV-208 is consolidating the final evidence:
 
 ```text
-DEV-208 consolidated requirement → ADR/design → code → test → CI traceability
+NBEOS-H-005 requirement/use-case traceability
+        +
+12 first-slice acceptance criteria → implementation/test evidence
+        +
+F-section RTM reconciliation
+        ↓
+final-head Production foundation CI
+        ↓
+close DEV-208 / first vertical slice
+        ↓
+select next Wave 3 controlled capability increment
 ```
 
-DEV-207 implements accepted ADR-003 without introducing a broker vendor or second source of truth: issue evidence and its required durable intent commit atomically; delivery uses tenant-scoped recoverable claims, at-least-once attempts, stable idempotency identity, retry/failure visibility and reconciliation. The first slice remains work-product-type neutral. Discipline/customer-specific semantics are introduced only through later validated requirements.
+The first slice remains work-product-type neutral. Discipline/customer-specific semantics are introduced only through later validated requirements.
 
 ## References
 
 - `Development_plan.md`
 - `Dependency_management_document.md`
 - `First_vertical_slice_definition.md`
+- `First_vertical_slice_verification_and_traceability.md`
 - `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`
 - `../F_Requirements_Analysis/Functional_requirements_specification.md`
 - `../F_Requirements_Analysis/Use_cases.md`
 - `../F_Requirements_Analysis/API_requirements.md`
 - `../F_Requirements_Analysis/Non-functional_requirements_specification.md`
+- `../F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md`
 - `../G_Architecture_Design/Architecture_decision_records_ADRs.md`
 - `../G_Architecture_Design/adr/ADR-003-durable-asynchronous-processing.md`
 
@@ -152,3 +164,4 @@ DEV-207 implements accepted ADR-003 without introducing a broker vendor or secon
 | 0.16 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-205 after approved-only issue, exact approval-decision evidence linkage, atomic issue/supersession and tenant-isolation verification passed in CI run 36277625604 |
 | 0.17 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-206 after Principal-scoped attention/read-model and governed review/decision/issue evidence drill-through verification passed in CI run 36278067339 |
 | 0.18 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-207 after accepted ADR-003 was implemented with atomic durable issue intent, tenant-scoped recoverable claiming, retry/idempotency/concurrency and reconciliation verification in CI run 36279181900 |
+| 0.19 | 2026-09-27 | NuBlox Product / Engineering | Added NBEOS-H-005 consolidated first-slice traceability/verification evidence and reconciled the F-section RTM; DEV-208 awaiting final-head production CI |
