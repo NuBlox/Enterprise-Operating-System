@@ -22,7 +22,7 @@ jobs:
       PACKAGE_DIR: packages/mastered/mysql
     steps:
       - name: Checkout NuBlox repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate upstream commit
         id: upstream
@@ -68,7 +68,7 @@ jobs:
           } > "$artifact/README.md"
 
       - name: Upload review artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mysql-upstream-${{ steps.upstream.outputs.sha }}
           path: ${{ runner.temp }}/mysql-upstream-review
