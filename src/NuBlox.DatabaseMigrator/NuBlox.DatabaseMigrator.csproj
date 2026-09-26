@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>NuBlox.DatabaseMigrator</AssemblyName>
+    <RootNamespace>NuBlox.DatabaseMigrator</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Persistence.Postgres/NuBlox.Persistence.Postgres.csproj" />
+  </ItemGroup>
+</Project>
