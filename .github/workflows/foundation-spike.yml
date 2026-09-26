@@ -82,3 +82,12 @@ jobs:
 
       - name: Run authority verification
         run: dotnet run --project spikes/foundation-architecture/verification/NuBlox.FoundationSpike.AuthorityVerification/NuBlox.FoundationSpike.AuthorityVerification.csproj --configuration Release --no-build
+
+      - name: Restore integration verification harness
+        run: dotnet restore spikes/foundation-architecture/verification/NuBlox.FoundationSpike.IntegrationVerification/NuBlox.FoundationSpike.IntegrationVerification.csproj
+
+      - name: Build integration verification harness
+        run: dotnet build spikes/foundation-architecture/verification/NuBlox.FoundationSpike.IntegrationVerification/NuBlox.FoundationSpike.IntegrationVerification.csproj --configuration Release --no-restore
+
+      - name: Run integration verification
+        run: dotnet run --project spikes/foundation-architecture/verification/NuBlox.FoundationSpike.IntegrationVerification/NuBlox.FoundationSpike.IntegrationVerification.csproj --configuration Release --no-build
