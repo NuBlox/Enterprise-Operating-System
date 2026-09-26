@@ -200,8 +200,79 @@ await using (var session = await factory.OpenAsync())
 Ensure(overlapRejected, "Overlapping effective-dated subject state was not rejected.");
 Console.WriteLine("PASS: database exclusion constraint rejected overlapping effective periods.");
 
+Console.WriteLine("SPIKE-003: verifying row-level customer isolation under the application role...");
+
+SubjectId customerBSubjectId;
+await using (var session = await factory.OpenAsync())
+{
+    customerBSubjectId = await subjects.CreateAsync(
+        session,
+        customerB,
+        "Customer B isolation subject");
+    await session.CommitAsync();
+}
+
+await using (var session = await factory.OpenAsync())
+{
+    await SetApplicationCustomerContextAsync(session, customerA);
+
+    Ensure(
+        await VisibleByIdAsync(session, "subjects.business_subjects", committed.SubjectId.Value),
+        "Customer A could not read its own subject through the application role.");
+    Ensure(
+        !await VisibleByIdAsync(session, "subjects.business_subjects", customerBSubjectId.Value),
+        "Customer A could read Customer B's subject through the application role.");
+
+    await session.RollbackAsync();
+}
+
+Console.WriteLine("PASS: application role sees own-customer rows and cannot see another customer's rows.");
+
+await using (var session = await factory.OpenAsync())
+{
+    await SetApplicationRoleAsync(session);
+
+    Ensure(
+        !await VisibleByIdAsync(session, "subjects.business_subjects", committed.SubjectId.Value),
+        "Application role without customer context could read a customer row.");
+
+    await session.RollbackAsync();
+}
+
+Console.WriteLine("PASS: missing customer context exposes no customer rows.");
+
+var wrongCustomerWriteRejected = false;
+await using (var session = await factory.OpenAsync())
+{
+    try
+    {
+        await SetApplicationCustomerContextAsync(session, customerA);
+
+        await using var command = session.Connection.CreateCommand();
+        command.Transaction = session.Transaction;
+        command.CommandText = """
+            INSERT INTO subjects.business_subjects (customer_id, id)
+            VALUES (@customer_id, @id);
+            """;
+        command.AddParameter("customer_id", customerB.Value);
+        command.AddParameter("id", Guid.NewGuid());
+
+        await command.ExecuteNonQueryAsync();
+        await session.RollbackAsync();
+    }
+    catch (Exception exception)
+    {
+        wrongCustomerWriteRejected = true;
+        await session.RollbackAsync();
+        Console.WriteLine($"Expected row-policy write rejection: {exception.GetType().Name}");
+    }
+}
+
+Ensure(wrongCustomerWriteRejected, "Application role could write another customer's row.");
+Console.WriteLine("PASS: row-level security rejected a wrong-customer write.");
+
 Console.WriteLine();
-Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED (SPIKE-001 + SPIKE-002).");
+Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED (SPIKE-001 + SPIKE-002 + SPIKE-003).");
 
 return;
 
@@ -248,4 +319,39 @@ static async Task<EffectiveSubjectNameVersion?> GetNameAsOfAsync(
         effectiveAt);
     await session.RollbackAsync();
     return version;
+}
+
+static async Task SetApplicationRoleAsync(ITransactionalSession session)
+{
+    await using var command = session.Connection.CreateCommand();
+    command.Transaction = session.Transaction;
+    command.CommandText = "SET LOCAL ROLE nublox_app;";
+    await command.ExecuteNonQueryAsync();
+}
+
+static async Task SetApplicationCustomerContextAsync(
+    ITransactionalSession session,
+    CustomerId customerId)
+{
+    await SetApplicationRoleAsync(session);
+
+    await using var command = session.Connection.CreateCommand();
+    command.Transaction = session.Transaction;
+    command.CommandText = "SELECT set_config('app.customer_id', @customer_id, true);";
+    command.AddParameter("customer_id", customerId.Value.ToString());
+    await command.ExecuteScalarAsync();
+}
+
+static async Task<bool> VisibleByIdAsync(
+    ITransactionalSession session,
+    string trustedTableName,
+    Guid id)
+{
+    await using var command = session.Connection.CreateCommand();
+    command.Transaction = session.Transaction;
+    command.CommandText = $"SELECT EXISTS (SELECT 1 FROM {trustedTableName} WHERE id = @id);";
+    command.AddParameter("id", id);
+
+    var result = await command.ExecuteScalarAsync();
+    return result is true;
 }
