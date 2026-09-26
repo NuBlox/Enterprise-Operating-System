@@ -12,7 +12,7 @@ Templates remain under [`../../software_project_docs_templates/G_Architecture_De
 | `NBEOS-G-002` | [Architecture definition](Architecture_definition.md) | Draft | 0.1 |
 | `NBEOS-G-003` | [System context diagram](System_context_diagram.md) | Draft | 0.1 |
 | `NBEOS-G-004` | [Solution architecture document](Solution_architecture_document.md) | Draft | 0.1 |
-| `NBEOS-G-005` | [Architecture decision records (ADR register)](Architecture_decision_records_ADRs.md) | Draft | 0.3 |
+| `NBEOS-G-005` | [Architecture decision records (ADR register)](Architecture_decision_records_ADRs.md) | Draft | 0.4 |
 | `NBEOS-G-006` | [High-level design (HLD)](High-level_design_HLD.md) | Draft | 0.1 |
 | `NBEOS-G-007` | [Container diagram](Container_diagram.md) | Draft | 0.1 |
 | `NBEOS-G-008` | [Data architecture](Data_architecture.md) | Draft | 0.1 |
@@ -25,60 +25,73 @@ Templates remain under [`../../software_project_docs_templates/G_Architecture_De
 
 ## Accepted architecture foundation
 
-Four architecture decisions are now accepted as the initial implementation foundation:
+The initial implementation foundation now has seven accepted decisions:
 
 | ADR | Decision |
 |---|---|
-| [`ADR-001`](adr/ADR-001-cohesive-modular-application.md) | NuBlox begins as a cohesive modular application with explicit module/data ownership; independent services require later evidence |
-| [`ADR-002`](adr/ADR-002-transactional-relational-primary-persistence.md) | Transactional relational persistence is the primary authoritative model; database vendor/provider remains a separate decision |
-| [`ADR-007`](adr/ADR-007-layered-tenant-isolation.md) | One tenant-aware logical data model with layered enforcement; shared database/schema is the default profile and dedicated database is available when justified |
-| [`ADR-012`](adr/ADR-012-dotnet10-server-runtime.md) | .NET 10 LTS / C# is the production server/core runtime; ASP.NET Core is the default server HTTP framework; frontend remains a separate decision |
+| [`ADR-001`](adr/ADR-001-cohesive-modular-application.md) | Cohesive modular application with explicit module/data ownership; independent services require later evidence |
+| [`ADR-002`](adr/ADR-002-transactional-relational-primary-persistence.md) | Transactional relational persistence is the primary authoritative model; database provider remains separate |
+| [`ADR-007`](adr/ADR-007-layered-tenant-isolation.md) | One tenant-aware logical model with layered enforcement; shared database/schema default plus dedicated-database profile when justified |
+| [`ADR-008`](adr/ADR-008-federated-application-identity.md) | Enterprise identity remains separate from application Principal; OIDC-primary federation and governed service identities |
+| [`ADR-011`](adr/ADR-011-http-api-standards.md) | HTTPS/JSON/OpenAPI remote APIs with explicit major versions, RFC 9457 errors, server-side context/security and idempotency/compatibility rules |
+| [`ADR-012`](adr/ADR-012-dotnet10-server-runtime.md) | .NET 10 LTS / C# server/core runtime; ASP.NET Core default server HTTP framework |
+| [`ADR-017`](adr/ADR-017-module-owned-data-boundaries.md) | Module-owned authoritative data/persistence; cross-module behaviour through explicit contracts and provider-specific details behind infrastructure boundaries |
 
 Together they establish:
 
 ```text
 cohesive modular application
-+ explicit module responsibility boundaries
++ explicit module/data ownership
 + transactional relational persistence
-+ layered tenant-aware data isolation
-+ controlled physical isolation profiles
-+ .NET 10 LTS / C# server and core runtime
++ layered tenant isolation
++ federated application Principal model
++ .NET 10 LTS / C# server/core
++ governed HTTPS/JSON/OpenAPI remote contracts
 ```
 
-They do **not** yet select the relational database product, identity provider, frontend framework, cloud provider or observability vendor.
+They do **not** yet select the relational database product, identity-provider vendor, frontend framework, cloud provider or observability vendor.
+
+## Production implementation status
+
+The first real production code path now exists outside `spikes/`:
+
+```text
+src/NuBlox.Kernel/
+tests/NuBlox.Kernel.Tests/
+scripts/verify-production.sh
+.github/workflows/production-foundation.yml
+```
+
+The production foundation is built and tested on the pinned .NET 10 SDK and is governed through the H-section Development & Implementation documents.
 
 ## Foundation experiment evidence
 
-The disposable architecture experiment is maintained under:
+The disposable architecture experiment remains under [`../../spikes/foundation-architecture/`](../../spikes/foundation-architecture/).
 
-[`../../spikes/foundation-architecture/`](../../spikes/foundation-architecture/)
-
-`SPIKE-001` through `SPIKE-009` are complete. The experiment demonstrated modular transactions, effective history, shared-schema row isolation, business authority, durable asynchronous work, typed configuration, migration staging/reconciliation, operational reporting/drill-through, reproducible build/migration execution, structured correlation logging and stranded-work recovery.
+`SPIKE-001` through `SPIKE-009` are complete and remain evidence rather than production source.
 
 The [proof-of-concept report](Proof_of_concept_report.md) records the exact CI evidence, findings and limitations.
 
-Passing experiments remain bounded evidence. Production code must be implemented separately under the Development & Implementation controls.
-
 ## Architecture decisions requiring resolution next
 
-With the runtime decision accepted, the next production-foundation gates are:
+The remaining near-term production-foundation gates are:
 
-1. `ADR-008` identity/authentication and service identity;
-2. `ADR-011` internal/external API standards;
-3. `ADR-017` schema/data modularity and cross-module persistence controls;
-4. `ADR-016` observability baseline;
-5. `ADR-020` release/configuration/schema evolution;
-6. relational database product/provider selection under the accepted ADR-002 model.
+1. `ADR-016` production observability baseline;
+2. `ADR-020` release/configuration/schema evolution;
+3. relational database product/provider selection under ADR-002/ADR-007/ADR-017;
+4. `ADR-018` audit/evidence design as production audit capability begins.
 
-Additional domain/process decisions such as `ADR-003`, `ADR-005`, `ADR-009`, `ADR-010`, `ADR-015`, `ADR-018` and `ADR-019` are promoted as the relevant product slices require them.
+Identity-provider vendor selection is an environment/deployment/procurement decision behind accepted ADR-008 and does not block provider-neutral Principal/context implementation.
+
+Additional domain/process decisions such as `ADR-003`, `ADR-005`, `ADR-009`, `ADR-010`, `ADR-015` and `ADR-019` are promoted as the relevant product slices require them.
 
 ## Development handoff
 
-The controlled transition from architecture evidence into implementation is maintained under:
+The controlled transition into implementation is maintained under [`../H_Development_Implementation/`](../H_Development_Implementation/).
 
-[`../H_Development_Implementation/`](../H_Development_Implementation/)
+Accepted ADR-008 and ADR-011 now permit provider-neutral Principal/Tenant request-context abstractions and an ASP.NET Core API host to be added without yet committing to a specific hosted identity-provider product.
 
-The accepted runtime decision is sufficient to begin the production source/test/build scaffold while persistence-provider, identity, API and other affected capabilities remain blocked behind their own decisions.
+Accepted ADR-017 removes the schema-modularity blocker from the production persistence scaffold; provider selection and release/schema-evolution rules remain before authoritative production schema work.
 
 ## Architecture gate
 
