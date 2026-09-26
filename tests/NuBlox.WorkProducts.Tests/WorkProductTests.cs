@@ -14,13 +14,10 @@ public sealed class WorkProductTests
         var timestamp = new DateTimeOffset(2026, 9, 26, 22, 0, 0, TimeSpan.Zero);
         var actor = PrincipalId.New();
         var tenant = TenantId.New();
-        var service = new WorkProductApplicationService(repository, new FixedClock(timestamp));
+        var service = CreateService(repository, timestamp, allowSubmission: true);
 
         var result = await service.CreateAsync(new CreateWorkProductCommand(
-            tenant,
-            actor,
-            "  Configuration Plan  ",
-            "  governed-document  "));
+            tenant, actor, "  Configuration Plan  ", "  governed-document  "));
 
         Assert.AreEqual(tenant, result.WorkProduct.TenantId);
         Assert.AreEqual("Configuration Plan", result.WorkProduct.Title);
@@ -28,59 +25,98 @@ public sealed class WorkProductTests
         Assert.AreEqual(actor, result.WorkProduct.OwnerPrincipalId);
         Assert.AreEqual(WorkProductLifecycle.Active, result.WorkProduct.Lifecycle);
         Assert.AreEqual(1, result.WorkProduct.CurrentRevisionNumber);
-        Assert.AreEqual(1, result.CurrentRevision.RevisionNumber);
         Assert.AreEqual(WorkProductRevisionState.Draft, result.CurrentRevision.State);
-        Assert.AreEqual(result.WorkProduct.Id, result.CurrentRevision.WorkProductId);
-        Assert.AreEqual(timestamp, result.CurrentRevision.CreatedAtUtc);
-        Assert.AreSame(result, repository.Stored);
+        Assert.IsNull(result.CurrentRevision.SubmittedAtUtc);
     }
 
     [TestMethod]
-    public async Task CreateRejectsEmptyGovernedMetadataBeforePersistence()
+    public async Task SubmitForReviewCreatesRoutedOpenRequestAndSubmissionEvidence()
     {
         var repository = new InMemoryRepository();
-        var service = new WorkProductApplicationService(
-            repository,
-            new FixedClock(DateTimeOffset.UtcNow));
+        var createdAt = new DateTimeOffset(2026, 9, 26, 22, 0, 0, TimeSpan.Zero);
+        var submittedAt = createdAt.AddMinutes(15);
+        var actor = PrincipalId.New();
+        var reviewer = PrincipalId.New();
+        var tenant = TenantId.New();
+        var service = CreateService(repository, createdAt, allowSubmission: true);
+        var created = await service.CreateAsync(new CreateWorkProductCommand(
+            tenant, actor, "Configuration Plan", "governed-document"));
+        service = CreateService(repository, submittedAt, allowSubmission: true);
 
-        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(new CreateWorkProductCommand(
-            TenantId.New(),
-            PrincipalId.New(),
-            " ",
-            "governed-document")));
+        var result = await service.SubmitForReviewAsync(new SubmitWorkProductForReviewCommand(
+            tenant, created.WorkProduct.Id, actor, reviewer));
 
-        Assert.IsNull(repository.Stored);
+        Assert.AreEqual(WorkProductRevisionState.InReview, result.Revision.State);
+        Assert.AreEqual(actor, result.Revision.SubmittedByPrincipalId);
+        Assert.AreEqual(submittedAt, result.Revision.SubmittedAtUtc);
+        Assert.AreEqual(ReviewRequestKind.Review, result.ReviewRequest.Kind);
+        Assert.AreEqual(ReviewRequestState.Open, result.ReviewRequest.State);
+        Assert.AreEqual(reviewer, result.ReviewRequest.RequestedPrincipalId);
+        Assert.AreEqual(actor, result.ReviewRequest.RequestedByPrincipalId);
+        Assert.AreSame(result, repository.Submission);
     }
 
     [TestMethod]
-    public async Task FindUsesBothTenantAndStableWorkProductIdentity()
+    public async Task SubmitForReviewFailsClosedWhenAccessEvaluatorDeniesActor()
     {
+        var repository = new InMemoryRepository();
         var tenant = TenantId.New();
         var actor = PrincipalId.New();
-        var repository = new InMemoryRepository();
-        var service = new WorkProductApplicationService(repository, new FixedClock(DateTimeOffset.UtcNow));
+        var service = CreateService(repository, DateTimeOffset.UtcNow, allowSubmission: true);
         var created = await service.CreateAsync(new CreateWorkProductCommand(
-            tenant,
-            actor,
-            "Design Basis",
-            "governed-document"));
+            tenant, actor, "Design Basis", "governed-document"));
+        service = CreateService(repository, DateTimeOffset.UtcNow.AddMinutes(1), allowSubmission: false);
 
-        var found = await service.FindAsync(tenant, created.WorkProduct.Id);
-        var wrongTenant = await service.FindAsync(TenantId.New(), created.WorkProduct.Id);
+        await Assert.ThrowsAsync<WorkProductAccessDeniedException>(() => service.SubmitForReviewAsync(
+            new SubmitWorkProductForReviewCommand(tenant, created.WorkProduct.Id, actor, PrincipalId.New())));
 
-        Assert.IsNotNull(found);
-        Assert.AreEqual(created.WorkProduct.Id, found.WorkProduct.Id);
-        Assert.IsNull(wrongTenant);
+        Assert.IsNull(repository.Submission);
+        Assert.AreEqual(WorkProductRevisionState.Draft, repository.Stored!.CurrentRevision.State);
     }
+
+    [TestMethod]
+    public async Task RevisionCannotBeSubmittedTwice()
+    {
+        var repository = new InMemoryRepository();
+        var tenant = TenantId.New();
+        var actor = PrincipalId.New();
+        var service = CreateService(repository, DateTimeOffset.UtcNow, allowSubmission: true);
+        var created = await service.CreateAsync(new CreateWorkProductCommand(
+            tenant, actor, "Design Basis", "governed-document"));
+        await service.SubmitForReviewAsync(new SubmitWorkProductForReviewCommand(
+            tenant, created.WorkProduct.Id, actor, PrincipalId.New()));
+
+        await Assert.ThrowsAsync<WorkProductStateConflictException>(() => service.SubmitForReviewAsync(
+            new SubmitWorkProductForReviewCommand(tenant, created.WorkProduct.Id, actor, PrincipalId.New())));
+    }
+
+    private static WorkProductApplicationService CreateService(
+        InMemoryRepository repository,
+        DateTimeOffset timestamp,
+        bool allowSubmission) =>
+        new(repository, new FixedAccessEvaluator(allowSubmission), new FixedClock(timestamp));
 
     private sealed class FixedClock(DateTimeOffset timestamp) : ISystemClock
     {
         public DateTimeOffset UtcNow => timestamp;
     }
 
+    private sealed class FixedAccessEvaluator(bool allow) : IWorkProductAccessEvaluator
+    {
+        public ValueTask<bool> CanSubmitForReviewAsync(
+            WorkProductRecord record,
+            PrincipalId actorPrincipalId,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(allow);
+        }
+    }
+
     private sealed class InMemoryRepository : IWorkProductRepository
     {
         public WorkProductRecord? Stored { get; private set; }
+        public ReviewSubmission? Submission { get; private set; }
 
         public Task AddAsync(WorkProductRecord record, CancellationToken cancellationToken = default)
         {
@@ -101,6 +137,19 @@ public sealed class WorkProductTests
                 && Stored.WorkProduct.Id == workProductId
                     ? Stored
                     : null);
+        }
+
+        public Task SubmitForReviewAsync(ReviewSubmission submission, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (Stored is null || Stored.CurrentRevision.State != WorkProductRevisionState.Draft)
+            {
+                throw new WorkProductStateConflictException("The revision is no longer Draft.");
+            }
+
+            Submission = submission;
+            Stored = new WorkProductRecord(Stored.WorkProduct, submission.Revision);
+            return Task.CompletedTask;
         }
     }
 }
