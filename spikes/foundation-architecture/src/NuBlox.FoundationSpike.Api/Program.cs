@@ -12,8 +12,8 @@ var connectionString = builder.Configuration.GetConnectionString("Database")
     ?? throw new InvalidOperationException(
         "ConnectionStrings:Database is required for the foundation architecture spike.");
 
-builder.Services.AddSingleton<ITransactionalSessionFactory>(
-    _ => new PostgresTransactionalSessionFactory(connectionString));
+builder.Services.AddSingleton<ICustomerScopedTransactionalSessionFactory>(
+    _ => new PostgresCustomerScopedTransactionalSessionFactory(connectionString));
 builder.Services.AddSingleton<SubjectModule>();
 builder.Services.AddSingleton<WorkModule>();
 builder.Services.AddSingleton<DecisionModule>();
