@@ -97,37 +97,38 @@ public sealed class PostgresWorkProductRepository : IWorkProductRepository
         command.Parameters.AddWithValue("tenant_id", tenantId.Value);
         command.Parameters.AddWithValue("work_product_id", workProductId.Value);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        WorkProductRecord? result = null;
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
         {
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            return null;
+            if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var workProduct = WorkProduct.Restore(
+                    new WorkProductId(reader.GetGuid(0)),
+                    tenantId,
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    new PrincipalId(reader.GetGuid(3)),
+                    new PrincipalId(reader.GetGuid(4)),
+                    reader.GetFieldValue<DateTimeOffset>(5),
+                    ParseLifecycle(reader.GetString(6)),
+                    reader.GetInt32(7));
+
+                var revision = WorkProductRevision.Restore(
+                    new WorkProductRevisionId(reader.GetGuid(8)),
+                    tenantId,
+                    workProduct.Id,
+                    reader.GetInt32(9),
+                    reader.GetString(10),
+                    ParseRevisionState(reader.GetString(11)),
+                    new PrincipalId(reader.GetGuid(12)),
+                    reader.GetFieldValue<DateTimeOffset>(13));
+
+                result = new WorkProductRecord(workProduct, revision);
+            }
         }
 
-        var workProduct = WorkProduct.Restore(
-            new WorkProductId(reader.GetGuid(0)),
-            tenantId,
-            reader.GetString(1),
-            reader.GetString(2),
-            new PrincipalId(reader.GetGuid(3)),
-            new PrincipalId(reader.GetGuid(4)),
-            reader.GetFieldValue<DateTimeOffset>(5),
-            ParseLifecycle(reader.GetString(6)),
-            reader.GetInt32(7));
-
-        var revision = WorkProductRevision.Restore(
-            new WorkProductRevisionId(reader.GetGuid(8)),
-            tenantId,
-            workProduct.Id,
-            reader.GetInt32(9),
-            reader.GetString(10),
-            ParseRevisionState(reader.GetString(11)),
-            new PrincipalId(reader.GetGuid(12)),
-            reader.GetFieldValue<DateTimeOffset>(13));
-
-        await reader.DisposeAsync().ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return new WorkProductRecord(workProduct, revision);
+        return result;
     }
 
     private static void AddWorkProductParameters(NpgsqlCommand command, WorkProduct workProduct)
