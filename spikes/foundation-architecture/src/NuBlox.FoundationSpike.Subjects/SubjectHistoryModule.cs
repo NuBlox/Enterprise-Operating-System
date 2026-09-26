@@ -2,7 +2,7 @@ using NuBlox.FoundationSpike.Shared;
 
 namespace NuBlox.FoundationSpike.Subjects;
 
-public sealed record SubjectNameVersion(
+public sealed record EffectiveSubjectNameVersion(
     string DisplayName,
     DateTimeOffset EffectiveFrom,
     DateTimeOffset? EffectiveTo,
@@ -85,7 +85,7 @@ public sealed class SubjectHistoryModule
             cancellationToken);
     }
 
-    public async Task<SubjectNameVersion?> GetAsOfAsync(
+    public async Task<EffectiveSubjectNameVersion?> GetAsOfAsync(
         ITransactionalSession session,
         CustomerId customerId,
         SubjectId subjectId,
@@ -121,7 +121,7 @@ public sealed class SubjectHistoryModule
         static DateTimeOffset ToUtcOffset(DateTime value) =>
             new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
 
-        return new SubjectNameVersion(
+        return new EffectiveSubjectNameVersion(
             reader.GetString(0),
             ToUtcOffset(reader.GetDateTime(1)),
             reader.IsDBNull(2) ? null : ToUtcOffset(reader.GetDateTime(2)),
