@@ -51,14 +51,15 @@ public sealed class WorkProductEvidenceOperationsTests
             CancellationToken.None);
 
         Assert.AreEqual(4, audit.Evidence.Count);
+        var expectedActionCodes = new[]
+        {
+            "work_product.create",
+            "work_product.review.submit",
+            "work_product.review.decide",
+            "work_product.issue"
+        };
         CollectionAssert.AreEqual(
-            new[]
-            {
-                "work_product.create",
-                "work_product.review.submit",
-                "work_product.review.decide",
-                "work_product.issue"
-            },
+            expectedActionCodes,
             audit.Evidence.Select(item => item.ActionCode).ToArray());
 
         foreach (var evidence in audit.Evidence)
@@ -151,7 +152,7 @@ public sealed class WorkProductEvidenceOperationsTests
             reference.Name?.Contains("NuBlox.Audit", StringComparison.OrdinalIgnoreCase) == true));
     }
 
-    private static ActivityListener CreateActivityListener(ICollection<Activity> stoppedActivities)
+    private static ActivityListener CreateActivityListener(List<Activity> stoppedActivities)
     {
         var listener = new ActivityListener
         {
