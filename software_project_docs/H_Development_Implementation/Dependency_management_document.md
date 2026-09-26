@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-003  
 **Document Type:** Dependency management document  
-**Version:** 0.1  
+**Version:** 0.2  
 **Status:** Draft  
 **Author / Owner:** NuBlox Engineering  
 **Reviewer:** [TBD]  
@@ -16,8 +16,8 @@
 **Retention Period:** Product lifetime + [TBD]  
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
-**Related Documents:** `Development_plan.md`, `Product_backlog.md`, `../G_Architecture_Design/adr/ADR-012-dotnet10-server-runtime.md`  
-**Supersedes:** None  
+**Related Documents:** `Development_plan.md`, `Product_backlog.md`, `../G_Architecture_Design/adr/ADR-012-dotnet10-server-runtime.md`, `../G_Architecture_Design/adr/ADR-021-postgresql18-primary-provider.md`  
+**Supersedes:** Version 0.1  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Dependency_management_document.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Dependency_management_document.md`  
@@ -27,7 +27,7 @@
 
 ## Purpose
 
-Define the first production dependency and toolchain controls for the NuBlox server/core codebase. Dependencies are introduced deliberately, centrally versioned where practical and kept separate from the disposable architecture-spike dependency graph.
+Define the production dependency and toolchain controls for the NuBlox server/core codebase. Dependencies are introduced deliberately, centrally versioned where practical and kept separate from the disposable architecture-spike dependency graph.
 
 ## Production dependency principles
 
@@ -39,18 +39,20 @@ Define the first production dependency and toolchain controls for the NuBlox ser
 6. A package under `packages/mastered/` is a governed NuBlox asset, but product adoption still requires a product need and compatible architecture decision.
 7. Preview dependencies are prohibited in the production foundation unless explicitly approved.
 8. Dependency upgrades are verified through the same production build/test path as code changes.
+9. Database-provider packages remain isolated to provider-specific persistence/infrastructure projects.
 
-## Initial production toolchain inventory
+## Production toolchain and direct dependency inventory
 
 | Dependency / tool | Version | Scope | Source / provenance | Licence | Purpose |
 |---|---:|---|---|---|---|
 | .NET SDK | `10.0.401` | Build toolchain | Microsoft .NET official distribution | MIT / Microsoft component licences as applicable | Approved server/core SDK baseline under ADR-012 |
 | .NET target framework | `net10.0` | Runtime contract | Microsoft .NET shared framework | MIT / Microsoft component licences as applicable | Production server/core target |
+| `Npgsql` | `10.0.3` | PostgreSQL persistence infrastructure only | NuGet package published by the Npgsql project | PostgreSQL | Approved .NET PostgreSQL provider baseline under ADR-021 |
 | `Microsoft.NET.Test.Sdk` | `18.10.1` | Test only | NuGet package owned by Microsoft | MIT | Integrates production test projects with `dotnet test` / test platform |
 | `MSTest.TestAdapter` | `4.4.1` | Test only | NuGet package owned by Microsoft / MSTest | MIT | Test discovery/execution adapter |
-| `MSTest.TestFramework` | `4.4.1` | Test only | NuGet package owned by Microsoft / MSTest | MIT | Unit-test framework |
+| `MSTest.TestFramework` | `4.4.1` | Test only | NuGet package owned by Microsoft / MSTest | MIT | Unit/integration-test framework |
 
-The initial `NuBlox.Kernel` production project has **no third-party runtime PackageReference**.
+`NuBlox.Kernel` retains **no third-party runtime PackageReference**. Npgsql is referenced only by `NuBlox.Persistence.PostgreSql` and may flow transitively to persistence integration tests; domain/application/kernel projects must not reference it directly.
 
 ## Version controls
 
@@ -64,9 +66,15 @@ The initial `NuBlox.Kernel` production project has **no third-party runtime Pack
 
 Project files reference package names without local version attributes. This prevents individual projects silently drifting to different versions.
 
+### PostgreSQL provider
+
+ADR-021 accepts PostgreSQL 18 as the initial production primary relational provider and Npgsql `10.0.3` as the initial .NET provider baseline.
+
+The provider dependency is intentionally isolated behind the PostgreSQL persistence project. Provider-native SQL, migrations, row-level security and Npgsql APIs must not leak into `NuBlox.Kernel` or future domain/application contracts.
+
 ### Package locking
 
-Package lock files are not yet the production baseline in this first scaffold. Before the dependency graph becomes material, NuBlox must choose and document whether restore locking is enforced through `packages.lock.json`, repository-level dependency graph verification or another reproducible restore control.
+Package lock files are not yet the production baseline. Before the dependency graph becomes material, NuBlox must choose and document whether restore locking is enforced through `packages.lock.json`, repository-level dependency graph verification or another reproducible restore control.
 
 Until that decision is implemented:
 
@@ -78,7 +86,7 @@ Until that decision is implemented:
 
 `packages/mastered/mysql` is maintained separately as a NuBlox-mastered package with its own upstream provenance and synchronisation controls.
 
-It is **not** a dependency of the .NET production kernel created by this increment. Product adoption of MySQL connectivity waits for the relational database/provider decision and an appropriate .NET data-access boundary; the existence of a Node.js MySQL mastered package does not change ADR-012.
+It is not a dependency of the .NET PostgreSQL persistence foundation. ADR-021 explicitly selects PostgreSQL 18 as the initial primary provider while retaining the mastered MySQL package for integrations, tooling or a later separately approved provider implementation.
 
 ## Adding a dependency
 
@@ -96,7 +104,7 @@ A pull request adding or materially changing a direct dependency must record:
 
 ## Update and vulnerability process
 
-The production foundation should evolve toward automated dependency update and vulnerability reporting. Until the dedicated automation is established, dependency versions are reviewed through repository changes and current vendor/package information is revalidated before material upgrades.
+The production foundation should evolve toward automated dependency update and vulnerability reporting. Until dedicated automation is established, dependency versions are reviewed through repository changes and current vendor/package information is revalidated before material upgrades.
 
 Security fixes may be expedited but still require the production verifier to pass before merge unless an incident process explicitly authorises otherwise.
 
@@ -108,15 +116,17 @@ The production dependency baseline is verified by:
 bash scripts/verify-production.sh
 ```
 
-The same command is executed by `.github/workflows/production-foundation.yml`.
+When `NUBLOX_POSTGRES_CONNECTION_STRING` is set, the same command also restores/builds and runs the PostgreSQL persistence integration suite. GitHub Actions supplies PostgreSQL 18.6 and the test connection string automatically.
 
 ## References
 
 - `Development_plan.md`
 - `Product_backlog.md`
 - `../G_Architecture_Design/adr/ADR-012-dotnet10-server-runtime.md`
+- `../G_Architecture_Design/adr/ADR-021-postgresql18-primary-provider.md`
 - `../../packages/mastered/mysql/` where applicable
 - https://dotnet.microsoft.com/en-us/download/dotnet/10.0
+- https://www.nuget.org/packages/Npgsql
 - https://www.nuget.org/packages/Microsoft.NET.Test.Sdk
 - https://www.nuget.org/packages/MSTest.TestAdapter
 - https://www.nuget.org/packages/MSTest.TestFramework
@@ -126,3 +136,4 @@ The same command is executed by `.github/workflows/production-foundation.yml`.
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1 | 2026-09-26 | NuBlox Engineering | Established the first production SDK, test dependency and central package-version controls |
+| 0.2 | 2026-09-26 | NuBlox Engineering | Added the ADR-021 Npgsql production provider dependency and PostgreSQL integration-verification boundary |
