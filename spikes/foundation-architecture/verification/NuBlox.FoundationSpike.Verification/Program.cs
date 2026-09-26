@@ -142,22 +142,22 @@ var originalAsOf = await GetNameAsOfAsync(
     subjectHistory,
     customerA,
     historySubjectId,
-    new DateTimeOffset(2025, 3, 1, 0, 0, 0, TimeSpan.Zero));
+    new DateTimeOffset(2025, 3, 1, 0, 0, 0, TimeSpan.Zero))
+    ?? throw new InvalidOperationException("SPIKE VERIFICATION FAILED: Original as-of version was not found.");
 
 var renamedAsOf = await GetNameAsOfAsync(
     factory,
     subjectHistory,
     customerA,
     historySubjectId,
-    new DateTimeOffset(2025, 7, 1, 0, 0, 0, TimeSpan.Zero));
+    new DateTimeOffset(2025, 7, 1, 0, 0, 0, TimeSpan.Zero))
+    ?? throw new InvalidOperationException("SPIKE VERIFICATION FAILED: Renamed as-of version was not found.");
 
-Ensure(originalAsOf is not null, "Original as-of version was not found.");
 Ensure(originalAsOf.DisplayName == "Original Name", "Original as-of query returned the wrong name.");
 Ensure(originalAsOf.EffectiveFrom == initialEffective, "Original effective-from value was not preserved.");
 Ensure(originalAsOf.EffectiveTo == renameEffective, "Original version was not closed at the rename effective date.");
 Ensure(originalAsOf.RecordedAt > renameEffective, "Technical recorded-at timestamp was not distinct from historical business-effective time.");
 
-Ensure(renamedAsOf is not null, "Renamed as-of version was not found.");
 Ensure(renamedAsOf.DisplayName == "Renamed Subject", "Later as-of query returned the wrong name.");
 Ensure(renamedAsOf.EffectiveFrom == renameEffective, "Renamed effective-from value was not preserved.");
 Ensure(renamedAsOf.EffectiveTo is null, "Current version should remain open-ended.");
@@ -201,7 +201,7 @@ Ensure(overlapRejected, "Overlapping effective-dated subject state was not rejec
 Console.WriteLine("PASS: database exclusion constraint rejected overlapping effective periods.");
 
 Console.WriteLine();
-Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED (SPIKE-001 + SPIKE-002). ");
+Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED (SPIKE-001 + SPIKE-002).");
 
 return;
 
@@ -233,7 +233,7 @@ static async Task<bool> ExistsAsync(
     return result is true;
 }
 
-static async Task<SubjectNameVersion?> GetNameAsOfAsync(
+static async Task<EffectiveSubjectNameVersion?> GetNameAsOfAsync(
     ITransactionalSessionFactory factory,
     SubjectHistoryModule subjectHistory,
     CustomerId customerId,
