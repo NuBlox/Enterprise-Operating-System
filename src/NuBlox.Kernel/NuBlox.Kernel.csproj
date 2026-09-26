@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Kernel</AssemblyName>
+    <RootNamespace>NuBlox.Kernel</RootNamespace>
+    <Description>Provider-neutral NuBlox production kernel primitives.</Description>
+  </PropertyGroup>
+</Project>
