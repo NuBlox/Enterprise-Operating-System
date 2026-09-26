@@ -81,6 +81,9 @@ public sealed record WorkProductDecision
         var canonicalRationale = rationale.Trim();
         if (canonicalRationale.Length > 2000) throw new ArgumentOutOfRangeException(nameof(rationale), "Rationale cannot exceed 2000 characters.");
 
+        var canonicalAuthorityReference = authorityReference.Trim();
+        if (canonicalAuthorityReference.Length > 256) throw new ArgumentOutOfRangeException(nameof(authorityReference), "Authority reference cannot exceed 256 characters.");
+
         var canonicalCorrelation = string.IsNullOrWhiteSpace(correlationId) ? null : correlationId.Trim();
         if (canonicalCorrelation?.Length > 128) throw new ArgumentOutOfRangeException(nameof(correlationId), "Correlation identifier cannot exceed 128 characters.");
 
@@ -92,7 +95,7 @@ public sealed record WorkProductDecision
             actorPrincipalId,
             outcome,
             canonicalRationale,
-            authorityReference.Trim(),
+            canonicalAuthorityReference,
             decidedAtUtc.ToUniversalTime(),
             canonicalCorrelation);
     }
@@ -113,7 +116,7 @@ public sealed record WorkProductDecision
         {
             ReviewDecisionOutcome.Approved => WorkProductRevisionState.Approved,
             ReviewDecisionOutcome.Rejected => WorkProductRevisionState.Rejected,
-            _ => throw new ArgumentOutOfRangeException(nameof(Outcome))
+            _ => throw new InvalidOperationException($"Unknown review decision outcome '{Outcome}'.")
         };
 
         return WorkProductRevision.Restore(
