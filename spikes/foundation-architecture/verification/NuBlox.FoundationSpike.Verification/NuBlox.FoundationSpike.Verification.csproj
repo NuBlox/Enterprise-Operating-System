@@ -9,6 +9,7 @@
     <ProjectReference Include="../../src/NuBlox.FoundationSpike.Work/NuBlox.FoundationSpike.Work.csproj" />
     <ProjectReference Include="../../src/NuBlox.FoundationSpike.Decisions/NuBlox.FoundationSpike.Decisions.csproj" />
     <ProjectReference Include="../../src/NuBlox.FoundationSpike.Audit/NuBlox.FoundationSpike.Audit.csproj" />
+    <ProjectReference Include="../../src/NuBlox.FoundationSpike.Authority/NuBlox.FoundationSpike.Authority.csproj" />
     <ProjectReference Include="../../src/NuBlox.FoundationSpike.Shared/NuBlox.FoundationSpike.Shared.csproj" />
   </ItemGroup>
 </Project>
