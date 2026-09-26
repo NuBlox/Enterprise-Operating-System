@@ -10,18 +10,21 @@ using NuBlox.FoundationSpike.Work;
 var connectionString = Environment.GetEnvironmentVariable("NUBLOX_SPIKE_CONNECTION_STRING")
     ?? "Host=localhost;Port=55432;Database=nublox_spike;Username=nublox;Password=nublox_spike_dev_only";
 
-var factory = new PostgresTransactionalSessionFactory(connectionString);
+// Unrestricted factory exists only for adversarial/setup checks inside this disposable verifier.
+var adminFactory = new PostgresTransactionalSessionFactory(connectionString);
+// Application use cases receive only the scoped factory: a customer context is mandatory.
+var customerFactory = new PostgresCustomerScopedTransactionalSessionFactory(connectionString);
 var subjects = new SubjectModule();
 var subjectHistory = new SubjectHistoryModule();
 var work = new WorkModule();
 var decisions = new DecisionModule();
 var audit = new AuditModule();
-var handler = new CreateGovernedWorkHandler(factory, subjects, work, decisions, audit);
+var handler = new CreateGovernedWorkHandler(customerFactory, subjects, work, decisions, audit);
 
 var customerA = new CustomerId(Guid.Parse("11111111-1111-1111-1111-111111111111"));
 var customerB = new CustomerId(Guid.Parse("22222222-2222-2222-2222-222222222222"));
 
-Console.WriteLine("SPIKE-001: verifying atomic governed-work transaction...");
+Console.WriteLine("SPIKE-001: verifying atomic governed-work transaction through a customer-scoped application session...");
 
 var committed = await handler.HandleAsync(
     new CreateGovernedWorkCommand(
@@ -31,24 +34,24 @@ var committed = await handler.HandleAsync(
         "APPROVED"));
 
 Ensure(
-    await ExistsAsync(factory, "subjects.business_subjects", customerA.Value, committed.SubjectId.Value),
+    await ExistsAsync(adminFactory, "subjects.business_subjects", customerA.Value, committed.SubjectId.Value),
     "Committed subject was not found.");
 Ensure(
-    await ExistsAsync(factory, "work.work_requests", customerA.Value, committed.WorkId.Value),
+    await ExistsAsync(adminFactory, "work.work_requests", customerA.Value, committed.WorkId.Value),
     "Committed work record was not found.");
 Ensure(
-    await ExistsAsync(factory, "decisions.approval_decisions", customerA.Value, committed.DecisionId.Value),
+    await ExistsAsync(adminFactory, "decisions.approval_decisions", customerA.Value, committed.DecisionId.Value),
     "Committed decision was not found.");
 Ensure(
-    await ExistsAsync(factory, "audit.events", customerA.Value, committed.AuditEventId.Value),
+    await ExistsAsync(adminFactory, "audit.events", customerA.Value, committed.AuditEventId.Value),
     "Committed audit event was not found.");
 
-Console.WriteLine("PASS: one transaction committed subject, work, decision and audit evidence.");
+Console.WriteLine("PASS: one customer-scoped application transaction committed subject, work, decision and audit evidence.");
 
 Console.WriteLine("SPIKE-003 precursor: verifying cross-customer relational isolation...");
 
 var crossCustomerRejected = false;
-await using (var session = await factory.OpenAsync())
+await using (var session = await adminFactory.OpenAsync())
 {
     try
     {
@@ -76,7 +79,7 @@ Console.WriteLine("SPIKE-001: verifying explicit rollback leaves no partial modu
 var rollbackSubjectId = SubjectId.New();
 var rollbackWorkId = WorkId.New();
 
-await using (var session = await factory.OpenAsync())
+await using (var session = await adminFactory.OpenAsync())
 {
     rollbackSubjectId = await subjects.CreateAsync(
         session,
@@ -93,10 +96,10 @@ await using (var session = await factory.OpenAsync())
 }
 
 Ensure(
-    !await ExistsAsync(factory, "subjects.business_subjects", customerB.Value, rollbackSubjectId.Value),
+    !await ExistsAsync(adminFactory, "subjects.business_subjects", customerB.Value, rollbackSubjectId.Value),
     "Rolled-back subject still exists.");
 Ensure(
-    !await ExistsAsync(factory, "work.work_requests", customerB.Value, rollbackWorkId.Value),
+    !await ExistsAsync(adminFactory, "work.work_requests", customerB.Value, rollbackWorkId.Value),
     "Rolled-back work record still exists.");
 
 Console.WriteLine("PASS: rollback removed all partial module writes.");
@@ -107,7 +110,7 @@ var historySubjectId = SubjectId.New();
 var initialEffective = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
 var renameEffective = new DateTimeOffset(2025, 6, 1, 0, 0, 0, TimeSpan.Zero);
 
-await using (var session = await factory.OpenAsync())
+await using (var session = await adminFactory.OpenAsync())
 {
     historySubjectId = await subjects.CreateIdentityAsync(
         session,
@@ -124,7 +127,7 @@ await using (var session = await factory.OpenAsync())
     await session.CommitAsync();
 }
 
-await using (var session = await factory.OpenAsync())
+await using (var session = await adminFactory.OpenAsync())
 {
     await subjectHistory.ChangeNameAsync(
         session,
@@ -138,7 +141,7 @@ await using (var session = await factory.OpenAsync())
 }
 
 var originalAsOf = await GetNameAsOfAsync(
-    factory,
+    adminFactory,
     subjectHistory,
     customerA,
     historySubjectId,
@@ -146,7 +149,7 @@ var originalAsOf = await GetNameAsOfAsync(
     ?? throw new InvalidOperationException("SPIKE VERIFICATION FAILED: Original as-of version was not found.");
 
 var renamedAsOf = await GetNameAsOfAsync(
-    factory,
+    adminFactory,
     subjectHistory,
     customerA,
     historySubjectId,
@@ -167,7 +170,7 @@ Console.WriteLine("PASS: as-of queries reconstruct different business-effective 
 Console.WriteLine("SPIKE-002: verifying overlapping effective periods are rejected by the database...");
 
 var overlapRejected = false;
-await using (var session = await factory.OpenAsync())
+await using (var session = await adminFactory.OpenAsync())
 {
     try
     {
@@ -200,35 +203,39 @@ await using (var session = await factory.OpenAsync())
 Ensure(overlapRejected, "Overlapping effective-dated subject state was not rejected.");
 Console.WriteLine("PASS: database exclusion constraint rejected overlapping effective periods.");
 
-Console.WriteLine("SPIKE-003: verifying row-level customer isolation under the application role...");
+Console.WriteLine("SPIKE-003: verifying row-level customer isolation through the mandatory application context...");
 
-SubjectId customerBSubjectId;
-await using (var session = await factory.OpenAsync())
-{
-    customerBSubjectId = await subjects.CreateAsync(
-        session,
+var customerBCommitted = await handler.HandleAsync(
+    new CreateGovernedWorkCommand(
         customerB,
-        "Customer B isolation subject");
-    await session.CommitAsync();
-}
+        "Customer B isolation subject",
+        "Prove customer B application context",
+        "APPROVED"));
 
-await using (var session = await factory.OpenAsync())
+await using (var session = await customerFactory.OpenAsync(customerA))
 {
-    await SetApplicationCustomerContextAsync(session, customerA);
-
     Ensure(
         await VisibleByIdAsync(session, "subjects.business_subjects", committed.SubjectId.Value),
-        "Customer A could not read its own subject through the application role.");
+        "Customer A could not read its own subject through the scoped application session.");
     Ensure(
-        !await VisibleByIdAsync(session, "subjects.business_subjects", customerBSubjectId.Value),
-        "Customer A could read Customer B's subject through the application role.");
+        !await VisibleByIdAsync(session, "subjects.business_subjects", customerBCommitted.SubjectId.Value),
+        "Customer A could read Customer B's subject through the scoped application session.");
+    Ensure(
+        !await VisibleByIdAsync(session, "work.work_requests", customerBCommitted.WorkId.Value),
+        "Customer A could read Customer B's work through the scoped application session.");
+    Ensure(
+        !await VisibleByIdAsync(session, "decisions.approval_decisions", customerBCommitted.DecisionId.Value),
+        "Customer A could read Customer B's decision through the scoped application session.");
+    Ensure(
+        !await VisibleByIdAsync(session, "audit.events", customerBCommitted.AuditEventId.Value),
+        "Customer A could read Customer B's audit event through the scoped application session.");
 
     await session.RollbackAsync();
 }
 
-Console.WriteLine("PASS: application role sees own-customer rows and cannot see another customer's rows.");
+Console.WriteLine("PASS: scoped application session sees own-customer data and hides another customer's subject/work/decision/audit rows.");
 
-await using (var session = await factory.OpenAsync())
+await using (var session = await adminFactory.OpenAsync())
 {
     await SetApplicationRoleAsync(session);
 
@@ -242,12 +249,10 @@ await using (var session = await factory.OpenAsync())
 Console.WriteLine("PASS: missing customer context exposes no customer rows.");
 
 var wrongCustomerWriteRejected = false;
-await using (var session = await factory.OpenAsync())
+await using (var session = await customerFactory.OpenAsync(customerA))
 {
     try
     {
-        await SetApplicationCustomerContextAsync(session, customerA);
-
         await using var command = session.Connection.CreateCommand();
         command.Transaction = session.Transaction;
         command.CommandText = """
@@ -268,8 +273,20 @@ await using (var session = await factory.OpenAsync())
     }
 }
 
-Ensure(wrongCustomerWriteRejected, "Application role could write another customer's row.");
+Ensure(wrongCustomerWriteRejected, "Customer-scoped application session could write another customer's row.");
 Console.WriteLine("PASS: row-level security rejected a wrong-customer write.");
+
+Console.WriteLine("SPIKE-003: verifying background-style scoped work cannot lose customer context...");
+
+var customerACount = await CountVisibleSubjectsAsync(customerFactory, customerA);
+var customerBCount = await CountVisibleSubjectsAsync(customerFactory, customerB);
+Ensure(customerACount > 0, "Customer A background-style scoped query returned no own rows.");
+Ensure(customerBCount > 0, "Customer B background-style scoped query returned no own rows.");
+Ensure(
+    !await IsVisibleFromCustomerAsync(customerFactory, customerA, customerBCommitted.SubjectId.Value),
+    "Background-style Customer A session could observe a Customer B subject.");
+
+Console.WriteLine("PASS: reusable scoped-session factory carries customer context into background-style operations.");
 
 Console.WriteLine();
 Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED (SPIKE-001 + SPIKE-002 + SPIKE-003).");
@@ -329,19 +346,6 @@ static async Task SetApplicationRoleAsync(ITransactionalSession session)
     await command.ExecuteNonQueryAsync();
 }
 
-static async Task SetApplicationCustomerContextAsync(
-    ITransactionalSession session,
-    CustomerId customerId)
-{
-    await SetApplicationRoleAsync(session);
-
-    await using var command = session.Connection.CreateCommand();
-    command.Transaction = session.Transaction;
-    command.CommandText = "SELECT set_config('app.customer_id', @customer_id, true);";
-    command.AddParameter("customer_id", customerId.Value.ToString());
-    await command.ExecuteScalarAsync();
-}
-
 static async Task<bool> VisibleByIdAsync(
     ITransactionalSession session,
     string trustedTableName,
@@ -354,4 +358,28 @@ static async Task<bool> VisibleByIdAsync(
 
     var result = await command.ExecuteScalarAsync();
     return result is true;
+}
+
+static async Task<int> CountVisibleSubjectsAsync(
+    ICustomerScopedTransactionalSessionFactory factory,
+    CustomerId customerId)
+{
+    await using var session = await factory.OpenAsync(customerId);
+    await using var command = session.Connection.CreateCommand();
+    command.Transaction = session.Transaction;
+    command.CommandText = "SELECT count(*) FROM subjects.business_subjects;";
+    var result = await command.ExecuteScalarAsync();
+    await session.RollbackAsync();
+    return Convert.ToInt32(result);
+}
+
+static async Task<bool> IsVisibleFromCustomerAsync(
+    ICustomerScopedTransactionalSessionFactory factory,
+    CustomerId customerId,
+    Guid subjectId)
+{
+    await using var session = await factory.OpenAsync(customerId);
+    var visible = await VisibleByIdAsync(session, "subjects.business_subjects", subjectId);
+    await session.RollbackAsync();
+    return visible;
 }
