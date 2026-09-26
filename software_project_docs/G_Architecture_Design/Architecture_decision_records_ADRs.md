@@ -3,7 +3,7 @@
 **Section:** G_Architecture_Design  
 **Document ID:** NBEOS-G-005  
 **Document Type:** Architecture decision records (ADR register)  
-**Version:** 0.5  
+**Version:** 0.6  
 **Status:** Draft  
 **Author / Owner:** NuBlox Architecture  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Architecture_vision.md`, `Architecture_definition.md`, `Solution_architecture_document.md`  
-**Supersedes:** Version 0.4  
+**Supersedes:** Version 0.5  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
 **Storage Location:** `software_project_docs/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
@@ -49,7 +49,7 @@ Maintain the authoritative register of material architecture decisions. Individu
 | `ADR-006` | Information authority | Every material integration/domain boundary must declare authoritative source/update rights | PROPOSED | Data integrity, reconciliation, BR-004 |
 | [`ADR-007`](adr/ADR-007-layered-tenant-isolation.md) | Customer/tenant isolation | One tenant-aware logical model; shared database/schema is the default profile with layered enforcement and dedicated-database profile when justified | ACCEPTED | Security, economics, scale, residency, operations |
 | [`ADR-008`](adr/ADR-008-federated-application-identity.md) | Identity/authentication | Separate enterprise identity from application Principal; OIDC-primary federation, service principals and verified tenant participation | ACCEPTED | Enterprise federation, security, FR-001–FR-004 |
-| `ADR-009` | Business authority model | Business authority/decision mandate must be enforceable separately from technical permission where required | PROPOSED | BR-006, BR-007, audit/control |
+| [`ADR-009`](adr/ADR-009-contextual-business-authority.md) | Business authority model | Evaluate business authority server-side against verified Tenant, Principal, governed action and subject; authority is separate from technical permission and granted decisions retain an attributable authority reference | ACCEPTED | BR-006, BR-007, FR-015–FR-018, audit/control |
 | `ADR-010` | Workflow/orchestration | Determine coded use-case/state-machine patterns vs workflow engine vs hybrid by process characteristics | PROPOSED | Changeability, observability, long-running work, complexity |
 | [`ADR-011`](adr/ADR-011-http-api-standards.md) | API standards | HTTPS/JSON/OpenAPI capability-oriented remote APIs; explicit major versions, RFC 9457 errors and defined idempotency/compatibility | ACCEPTED | Integration, security, developer experience, compatibility |
 | [`ADR-012`](adr/ADR-012-dotnet10-server-runtime.md) | Runtime/language/framework | .NET 10 LTS / C# is the production server/core runtime; ASP.NET Core is the default HTTP server framework; frontend remains separate | ACCEPTED | Maintainability, productivity, ecosystem, support, completed spike evidence |
@@ -75,13 +75,14 @@ cohesive modular application
 + layered tenant-aware logical data model
 + .NET 10 LTS / C# server and core runtime
 + federated Principal identity separate from Person
++ contextual business authority separate from technical permission
 + HTTPS/JSON/OpenAPI remote API standard
 + OpenTelemetry/OTLP observability boundary
 + append-oriented business audit/evidence
 + expand/migrate/contract release and schema evolution
 ```
 
-These decisions deliberately do **not** select an identity-provider vendor, frontend framework, cloud provider or monitoring backend/vendor.
+These decisions deliberately do **not** select an identity-provider vendor, frontend framework, cloud provider, monitoring backend/vendor or final enterprise authority-source taxonomy.
 
 ## ADR approval requirements
 
@@ -104,6 +105,7 @@ ADR-001 decomposition
 ADR-002 persistence model
 ADR-007 tenant isolation
 ADR-008 identity boundary
+ADR-009 business authority boundary
 ADR-011 API standards
 ADR-012 .NET 10 runtime
 ADR-016 observability
@@ -117,10 +119,11 @@ API host + Principal/Tenant context
 PostgreSQL persistence/migrations
 OpenTelemetry telemetry
 business audit boundary
+contextual authority evaluation
 complete CI quality gates
 ```
 
-Domain/process decisions such as ADR-003, ADR-005, ADR-009, ADR-010, ADR-015 and ADR-019 are promoted as the relevant product slice requires them.
+Domain/process decisions such as ADR-003, ADR-005, ADR-010, ADR-015 and ADR-019 are promoted as the relevant product slice requires them.
 
 ## Individual ADR location
 
@@ -151,3 +154,4 @@ The register remains the authoritative index/status view.
 | 0.3 | 2026-09-26 | NuBlox Architecture | Accepted ADR-012 .NET 10 LTS/C# as the production server/core runtime and ASP.NET Core as the default server HTTP framework |
 | 0.4 | 2026-09-26 | NuBlox Architecture | Accepted ADR-008 federated application identity, ADR-011 HTTP API standards and ADR-017 module-owned data boundaries |
 | 0.5 | 2026-09-26 | NuBlox Architecture | Accepted ADR-016 OpenTelemetry observability, ADR-018 business audit evidence, ADR-020 release/schema evolution and ADR-021 PostgreSQL 18 provider |
+| 0.6 | 2026-09-26 | NuBlox Architecture | Accepted ADR-009 contextual business authority with permission/authority separation and attributable authority references for governed decisions |
