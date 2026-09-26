@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.WorkProducts.Domain</AssemblyName>
+    <RootNamespace>NuBlox.WorkProducts</RootNamespace>
+    <Description>Provider-neutral governed Work Product domain model.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Kernel/NuBlox.Kernel.csproj" />
+  </ItemGroup>
+</Project>
