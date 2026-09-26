@@ -142,7 +142,7 @@ public sealed class WorkProductDeliveryPersistenceTests
         Assert.AreEqual(intent.Id, claims.Single(claim => claim is not null)!.Intent.Id);
     }
 
-    private async Task<WorkProductIssueResult> CreateIssuedWorkProductAsync(NpgsqlDataSource dataSource, TenantId tenant)
+    private static async Task<WorkProductIssueResult> CreateIssuedWorkProductAsync(NpgsqlDataSource dataSource, TenantId tenant)
     {
         var repository = new PostgresGovernedWorkProductRepository(dataSource);
         var contributor = PrincipalId.New();
