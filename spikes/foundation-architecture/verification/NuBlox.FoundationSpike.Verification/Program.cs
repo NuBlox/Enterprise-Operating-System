@@ -1,6 +1,7 @@
 using System.Data.Common;
 using NuBlox.FoundationSpike.Application;
 using NuBlox.FoundationSpike.Audit;
+using NuBlox.FoundationSpike.Authority;
 using NuBlox.FoundationSpike.Decisions;
 using NuBlox.FoundationSpike.Infrastructure;
 using NuBlox.FoundationSpike.Shared;
@@ -19,6 +20,7 @@ var subjectHistory = new SubjectHistoryModule();
 var work = new WorkModule();
 var decisions = new DecisionModule();
 var audit = new AuditModule();
+var authority = new AuthorityModule();
 var handler = new CreateGovernedWorkHandler(customerFactory, subjects, work, decisions, audit);
 
 var customerA = new CustomerId(Guid.Parse("11111111-1111-1111-1111-111111111111"));
@@ -288,8 +290,125 @@ Ensure(
 
 Console.WriteLine("PASS: reusable scoped-session factory carries customer context into background-style operations.");
 
+Console.WriteLine("SPIKE-004: verifying operation permission and business authority are distinct controls...");
+
+var permissionOnlyPrincipal = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+var authorityOnlyPrincipal = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+var authorisedPrincipal = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+var permissionFrom = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+var authorityFrom = new DateTimeOffset(2025, 6, 1, 0, 0, 0, TimeSpan.Zero);
+var authorityTo = new DateTimeOffset(2026, 6, 1, 0, 0, 0, TimeSpan.Zero);
+
+await using (var session = await customerFactory.OpenAsync(customerA))
+{
+    await authority.GrantApprovePermissionAsync(
+        session,
+        customerA,
+        permissionOnlyPrincipal,
+        permissionFrom);
+
+    await authority.GrantDecisionAuthorityAsync(
+        session,
+        customerA,
+        authorityOnlyPrincipal,
+        "COMMERCIAL_APPROVAL",
+        maximumAmount: 1000m,
+        effectiveFrom: authorityFrom,
+        effectiveTo: authorityTo,
+        grantReason: "Authority without technical permission");
+
+    await authority.GrantApprovePermissionAsync(
+        session,
+        customerA,
+        authorisedPrincipal,
+        permissionFrom);
+
+    await authority.GrantDecisionAuthorityAsync(
+        session,
+        customerA,
+        authorisedPrincipal,
+        "COMMERCIAL_APPROVAL",
+        maximumAmount: 1000m,
+        effectiveFrom: authorityFrom,
+        effectiveTo: authorityTo,
+        grantReason: "Approved spike authority threshold");
+
+    await session.CommitAsync();
+}
+
+await using (var session = await customerFactory.OpenAsync(customerA))
+{
+    var permissionOnly = await authority.EvaluateApprovalAsync(
+        session,
+        customerA,
+        permissionOnlyPrincipal,
+        "COMMERCIAL_APPROVAL",
+        requestedAmount: 500m,
+        effectiveAt: new DateTimeOffset(2025, 7, 1, 0, 0, 0, TimeSpan.Zero));
+    Ensure(!permissionOnly.Allowed, "Permission-only principal was allowed without business authority.");
+    Ensure(
+        permissionOnly.Reason == "BUSINESS_AUTHORITY_MISSING_OR_THRESHOLD_EXCEEDED",
+        "Permission-only denial did not identify missing business authority.");
+
+    var authorityOnly = await authority.EvaluateApprovalAsync(
+        session,
+        customerA,
+        authorityOnlyPrincipal,
+        "COMMERCIAL_APPROVAL",
+        requestedAmount: 500m,
+        effectiveAt: new DateTimeOffset(2025, 7, 1, 0, 0, 0, TimeSpan.Zero));
+    Ensure(!authorityOnly.Allowed, "Authority-only principal was allowed without operation permission.");
+    Ensure(
+        authorityOnly.Reason == "OPERATION_PERMISSION_MISSING",
+        "Authority-only denial did not identify missing operation permission.");
+
+    var beforeEffective = await authority.EvaluateApprovalAsync(
+        session,
+        customerA,
+        authorisedPrincipal,
+        "COMMERCIAL_APPROVAL",
+        requestedAmount: 500m,
+        effectiveAt: new DateTimeOffset(2025, 3, 1, 0, 0, 0, TimeSpan.Zero));
+    Ensure(!beforeEffective.Allowed, "Authority was usable before its effective-from date.");
+
+    var allowed = await authority.EvaluateApprovalAsync(
+        session,
+        customerA,
+        authorisedPrincipal,
+        "COMMERCIAL_APPROVAL",
+        requestedAmount: 500m,
+        effectiveAt: new DateTimeOffset(2025, 7, 1, 0, 0, 0, TimeSpan.Zero));
+    Ensure(allowed.Allowed, "Authorised principal was denied within effective period and threshold.");
+    Ensure(allowed.Reason == "ALLOWED", "Allowed authority evaluation did not record ALLOWED reason.");
+
+    var overThreshold = await authority.EvaluateApprovalAsync(
+        session,
+        customerA,
+        authorisedPrincipal,
+        "COMMERCIAL_APPROVAL",
+        requestedAmount: 1500m,
+        effectiveAt: new DateTimeOffset(2025, 7, 1, 0, 0, 0, TimeSpan.Zero));
+    Ensure(overThreshold.Allowed is false, "Authority threshold was not enforced.");
+
+    var afterExpiry = await authority.EvaluateApprovalAsync(
+        session,
+        customerA,
+        authorisedPrincipal,
+        "COMMERCIAL_APPROVAL",
+        requestedAmount: 500m,
+        effectiveAt: new DateTimeOffset(2026, 7, 1, 0, 0, 0, TimeSpan.Zero));
+    Ensure(!afterExpiry.Allowed, "Expired authority was still usable.");
+
+    var evidenceCount = await CountAuthorityEvaluationsAsync(session);
+    Ensure(evidenceCount == 6, $"Expected 6 authority evaluation evidence rows; found {evidenceCount}.");
+
+    await session.CommitAsync();
+}
+
+Console.WriteLine("PASS: permission and business authority are independent, effective-dated, threshold-aware and evidenced.");
+
 Console.WriteLine();
-Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED (SPIKE-001 + SPIKE-002 + SPIKE-003).");
+Console.WriteLine("FOUNDATION SPIKE VERIFICATION PASSED (SPIKE-001 + SPIKE-002 + SPIKE-003 + SPIKE-004).");
 
 return;
 
@@ -382,4 +501,13 @@ static async Task<bool> IsVisibleFromCustomerAsync(
     var visible = await VisibleByIdAsync(session, "subjects.business_subjects", subjectId);
     await session.RollbackAsync();
     return visible;
+}
+
+static async Task<int> CountAuthorityEvaluationsAsync(ITransactionalSession session)
+{
+    await using var command = session.Connection.CreateCommand();
+    command.Transaction = session.Transaction;
+    command.CommandText = "SELECT count(*) FROM authority.evaluations;";
+    var result = await command.ExecuteScalarAsync();
+    return Convert.ToInt32(result);
 }
