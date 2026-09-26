@@ -105,7 +105,7 @@ public sealed record ReviewDecision
             ReviewDecisionOutcome.ChangesRequired => WorkProductRevisionState.ChangesRequired,
             ReviewDecisionOutcome.Rejected => WorkProductRevisionState.Rejected,
             ReviewDecisionOutcome.Approved => WorkProductRevisionState.Approved,
-            _ => throw new ArgumentOutOfRangeException(nameof(Outcome))
+            _ => throw new InvalidOperationException($"Unknown Review Decision outcome '{Outcome}'.")
         };
 
         return WorkProductRevision.Restore(
