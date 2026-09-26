@@ -1,9 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/NuBlox.Spikes.Core/NuBlox.Spikes.Core.csproj" />
-    <Project Path="src/NuBlox.Spikes.Api/NuBlox.Spikes.Api.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/NuBlox.Spikes.Tests/NuBlox.Spikes.Tests.csproj" />
-  </Folder>
-</Solution>
