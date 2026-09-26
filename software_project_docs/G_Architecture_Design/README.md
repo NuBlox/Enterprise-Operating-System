@@ -12,7 +12,7 @@ Templates remain under [`../../software_project_docs_templates/G_Architecture_De
 | `NBEOS-G-002` | [Architecture definition](Architecture_definition.md) | Draft | 0.1 |
 | `NBEOS-G-003` | [System context diagram](System_context_diagram.md) | Draft | 0.1 |
 | `NBEOS-G-004` | [Solution architecture document](Solution_architecture_document.md) | Draft | 0.1 |
-| `NBEOS-G-005` | [Architecture decision records (ADR register)](Architecture_decision_records_ADRs.md) | Draft | 0.1 |
+| `NBEOS-G-005` | [Architecture decision records (ADR register)](Architecture_decision_records_ADRs.md) | Draft | 0.2 |
 | `NBEOS-G-006` | [High-level design (HLD)](High-level_design_HLD.md) | Draft | 0.1 |
 | `NBEOS-G-007` | [Container diagram](Container_diagram.md) | Draft | 0.1 |
 | `NBEOS-G-008` | [Data architecture](Data_architecture.md) | Draft | 0.1 |
@@ -21,77 +21,73 @@ Templates remain under [`../../software_project_docs_templates/G_Architecture_De
 | `NBEOS-G-011` | [Data migration design](Data_migration_design.md) | Draft | 0.1 |
 | `NBEOS-G-012` | [Evaluation matrix for technology selection](Evaluation_matrix_for_technology_selection.md) | Draft | 0.1 |
 | `NBEOS-G-013` | [Technical spikes](Technical_spikes.md) | Draft | 0.1 |
-| `NBEOS-G-014` | [Proof of concept report](Proof_of_concept_report.md) | Draft | 0.5 |
+| `NBEOS-G-014` | [Proof of concept report](Proof_of_concept_report.md) | Draft | 0.6 |
 
-## Current architecture hypothesis
+## Accepted architecture foundation
 
-The leading first-implementation hypothesis is:
+Three architecture decisions are now accepted as provider-neutral implementation foundations:
+
+| ADR | Decision |
+|---|---|
+| [`ADR-001`](adr/ADR-001-cohesive-modular-application.md) | NuBlox begins as a cohesive modular application with explicit module/data ownership; independent services require later evidence |
+| [`ADR-002`](adr/ADR-002-transactional-relational-primary-persistence.md) | Transactional relational persistence is the primary authoritative model; database vendor/provider remains a separate decision |
+| [`ADR-007`](adr/ADR-007-layered-tenant-isolation.md) | One tenant-aware logical data model with layered enforcement; shared database/schema is the default profile and dedicated database is available when justified |
+
+Together they establish:
 
 ```text
 cohesive modular application
-+ explicit internal responsibility boundaries
++ explicit module responsibility boundaries
 + transactional relational persistence
-+ durable asynchronous processing for external/long-running work
-+ explicit integration adapters
-+ separate binary/object storage when required
-+ governed configuration rather than customer forks
++ layered tenant-aware data isolation
++ controlled physical isolation profiles
 ```
 
-This remains provisional. Spike success provides evidence; it does not silently approve the production architecture.
+They do **not** yet select the production runtime/framework, database product, identity provider, frontend, cloud provider or observability vendor.
 
 ## Foundation experiment evidence
 
-The active disposable experiment is:
+The disposable architecture experiment is maintained under:
 
 [`../../spikes/foundation-architecture/`](../../spikes/foundation-architecture/)
 
-Its independent .NET 10/PostgreSQL 18 checks cover modular transactions,
-effective history, customer row isolation, business authority, a simulated
-durable outbox, typed configuration and synthetic migration. SPIKE-008 adds
-two operational measures, source drill-through, isolation checks and query
-plans at synthetic volume on [PR #1](https://github.com/NuBlox/Enterprise-Operating-System/pull/1).
-Its [workflow run 36265786034](https://github.com/NuBlox/Enterprise-Operating-System/actions/runs/36265786034)
-passed on the tested commit.
+`SPIKE-001` through `SPIKE-009` are complete. The experiment demonstrated modular transactions, effective history, shared-schema row isolation, business authority, durable asynchronous work, typed configuration, migration staging/reconciliation, operational reporting/drill-through, reproducible build/migration execution, structured correlation logging and stranded-work recovery.
 
-The [proof-of-concept report](Proof_of_concept_report.md) records the exact
-workflow runs, findings and limits. Passing experiments remain evidence for
-proposed ADRs, not approved production decisions.
+The [proof-of-concept report](Proof_of_concept_report.md) records the exact CI evidence, findings and limitations.
 
-## Architecture decisions requiring evidence next
+Passing experiments remain bounded evidence. Production code must be implemented separately under the Development & Implementation controls.
 
-Highest-priority remaining decisions/spikes include:
+## Architecture decisions requiring resolution next
 
-1. `ADR-007` isolation options and privileged/support access beyond the tested shared-schema candidate;
-2. `ADR-008` identity/authentication boundary;
-3. `ADR-010` long-running workflow/orchestration approach;
-4. `ADR-015` historical work-state reporting, published snapshots and realistic volume;
-5. `ADR-019` representative source-data migration and scale;
-6. `SPIKE-009` reproducible build, testing and operability review.
+The next production-foundation gates are:
 
-## Next architecture documents/evidence
+1. `ADR-012` runtime/language/framework;
+2. `ADR-008` identity/authentication and service identity;
+3. `ADR-011` internal/external API standards;
+4. `ADR-017` schema/data modularity and cross-module persistence controls;
+5. `ADR-016` observability baseline;
+6. `ADR-020` release/configuration/schema evolution.
 
-Use the supplied templates as evidence requires, including:
+Additional domain/process decisions such as `ADR-003`, `ADR-005`, `ADR-009`, `ADR-010`, `ADR-015`, `ADR-018` and `ADR-019` are promoted as the relevant product slices require them.
 
-- Data model / ERD;
-- Database design;
-- Component diagram;
-- Threat model;
-- Identity and access management design;
-- Privacy-by-design assessment;
-- API specification/versioning strategy;
-- Deployment/infrastructure design;
-- observability/operations architecture;
-- individual spike result updates and ADR decisions.
+## Development handoff
+
+The controlled transition from architecture evidence into implementation is maintained under:
+
+[`../H_Development_Implementation/`](../H_Development_Implementation/)
+
+The product backlog now marks the first three decision gates complete and retains explicit blockers for unresolved runtime, identity, API, schema modularity, observability and release-evolution decisions.
 
 ## Architecture gate
 
-Architecture may move toward approval only when:
+Architecture decisions may be accepted when:
 
-- the selected initial workflow/customer scope is sufficiently validated;
-- material NFR/isolation/security assumptions are explicit;
-- high-risk decisions have spike/benchmark evidence where necessary;
-- architecture traces to the requirements baseline;
-- migration, security, operations and test implications are credible;
-- technology choice follows the requirements/option analysis rather than becoming the product model.
+- decision scope is explicit;
+- requirements/NFRs/constraints are traced;
+- credible alternatives are considered;
+- material security/data/operational implications are understood;
+- migration/reversibility consequences are recorded;
+- spikes/benchmarks support high-risk assumptions where appropriate;
+- the accountable NuBlox architecture governance role accepts the decision.
 
-The successful foundation spike satisfies part of this gate only. It does **not** approve the full production architecture.
+Accepted ADRs remain reviewable when their stated review triggers occur.
