@@ -6,11 +6,9 @@ This spike implements bounded experiments defined by `NBEOS-G-013 Technical_spik
 
 ## Current scope
 
-Implemented verification currently covers:
-
-- `SPIKE-001` — cohesive modular core + relational transactions;
-- `SPIKE-002` — historical/effective-dated data;
-- an early database-integrity check relevant to `SPIKE-003` — customer/isolation context.
+Implemented verification covers `SPIKE-001` through `SPIKE-007`. `SPIKE-008`
+adds operational reporting, source drill-through and measured synthetic-volume
+queries. Each capability remains a bounded experiment under `Technical_spikes.md`.
 
 Technology used for the experiment:
 
@@ -28,6 +26,38 @@ Technology used for the experiment:
 - path-scoped GitHub Actions verification.
 
 It deliberately does **not** define the final NuBlox business taxonomy, frontend, tenancy model, identity model, cloud topology or production architecture.
+
+## SPIKE-008 operational reporting
+
+The Reporting module is a read-only consumer of `work.work_requests`. It uses
+the same restricted customer session and row-level security as operational
+writes. Two explicit provisional measures are tested:
+
+| Code | Calculation | Time basis |
+|---|---|---|
+| `WORK_CREATED_THROUGH` | Count work created before an exclusive UTC cutoff | Cumulative technical creation time; does not reconstruct historical state |
+| `WORK_CURRENT_OPEN` | Count work with state `OPEN` | Current committed state at query time |
+
+Both measures expose paged, customer-scoped source rows for drill-through.
+The verifier compares counts and rows across two customers, checks missing and
+wrong isolation contexts, and measures count and first-page queries against
+20,000 additional synthetic records. It prints `EXPLAIN (ANALYZE, BUFFERS)`
+plans. The 5-second CI bound is only a smoke-test bound, not a production SLO.
+
+From the repository root with .NET 10 and PostgreSQL 18 available, apply the
+ordered migrations and run:
+
+```bash
+dotnet run --project spikes/foundation-architecture/verification/NuBlox.FoundationSpike.ReportingVerification/NuBlox.FoundationSpike.ReportingVerification.csproj --configuration Release
+```
+
+The connection string comes from `NUBLOX_SPIKE_CONNECTION_STRING`, with the
+local Docker development value used if unset. The reporting workflow also
+runs on pull requests and pushes to `main` that change the spike.
+
+This test does not reconstruct earlier work states, preserve published report
+snapshots, prove field-level permissions, or establish realistic production
+volumes. The measure definitions and source trace are provisional for ADR-015.
 
 ## Structure
 

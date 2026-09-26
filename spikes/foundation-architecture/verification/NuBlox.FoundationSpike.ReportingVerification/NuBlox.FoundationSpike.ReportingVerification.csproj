@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/NuBlox.FoundationSpike.Reporting/NuBlox.FoundationSpike.Reporting.csproj" />
+    <ProjectReference Include="../../src/NuBlox.FoundationSpike.Infrastructure/NuBlox.FoundationSpike.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/NuBlox.FoundationSpike.Shared/NuBlox.FoundationSpike.Shared.csproj" />
+  </ItemGroup>
+</Project>
