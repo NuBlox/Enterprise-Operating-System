@@ -86,10 +86,7 @@ public static class NuBloxTelemetry
         TelemetryOutcome outcome,
         TimeSpan duration)
     {
-        if (duration < TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(duration));
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThan(duration, TimeSpan.Zero);
 
         var code = TelemetryCode.Require(operationCode, nameof(operationCode));
         var outcomeCode = outcome.ToString().ToLowerInvariant();
