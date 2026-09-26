@@ -10,5 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="../NuBlox.Identity/NuBlox.Identity.csproj" />
     <ProjectReference Include="../NuBlox.Observability/NuBlox.Observability.csproj" />
+    <ProjectReference Include="../NuBlox.WorkProducts.Application/NuBlox.WorkProducts.Application.csproj" />
   </ItemGroup>
 </Project>

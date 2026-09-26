@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.19  
+**Version:** 0.20  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_definition.md`, `First_vertical_slice_verification.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.18  
+**Supersedes:** Version 0.19  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -27,7 +27,7 @@
 
 ## Purpose
 
-Maintain the controlled implementation backlog linking NuBlox requirements and architecture decisions to executable product increments. The production foundation is complete. The first governed vertical slice has a verified business core, but its end-to-end HTTP/request-context and audit/telemetry composition must close before final acceptance.
+Maintain the controlled implementation backlog linking NuBlox requirements and architecture decisions to executable product increments. The production foundation is complete. The first governed vertical slice now has its WorkProducts HTTP/request-context composition verified; audit/telemetry composition remains before final acceptance.
 
 ## Backlog rules
 
@@ -87,8 +87,8 @@ Selected workflow: **Governed Work Product — Create, Review, Approve and Issue
 | `DEV-205` | P1 | Work-product/evidence linkage | approved-only issue + exact approval evidence + supersession | **Complete — CI 36277625604** |
 | `DEV-206` | P1 | Operational attention/drill-through | Principal-scoped attention + governed source evidence | **Complete — CI 36278067339** |
 | `DEV-207` | P1 | Durable notification/integration consequence | atomic issue intent + RLS + lease/retry/idempotency/reconciliation | **Complete — CI 36279181900** |
-| `DEV-208` | P1 | First-slice traceability/verification | NBEOS-H-005 acceptance assessment + RTM | **In Progress — verification found DEV-209/210 gaps** |
-| `DEV-209` | P1 | WorkProducts HTTP composition + verified request context | Work Product endpoints derive Principal/Tenant only from verified context; RFC 9457 and route/body/header tamper tests | **Ready** |
+| `DEV-208` | P1 | First-slice traceability/verification | NBEOS-H-005 acceptance assessment + RTM | **In Progress — DEV-210 remains before final rerun** |
+| `DEV-209` | P1 | WorkProducts HTTP composition + verified request context | Work Product create/read/submit/decide/issue endpoints derive Principal/Tenant only from verified context; fail-closed, route/body/header tamper, RFC 9457 and OpenAPI tests | **Complete — CI 36280459358** |
 | `DEV-210` | P1 | WorkProducts audit + correlated telemetry composition | material operations emit authoritative audit evidence and correlated technical telemetry with separation/minimisation tests | **Ready** |
 
 ## Wave 3 — cross-enterprise capability expansion
@@ -109,10 +109,9 @@ The separately governed `NuBlox/NuBloxSQL` repository is the authoritative NuBlo
 
 ## Immediate execution order
 
-DEV-208 verification found that the business core is verified but NBEOS-H-004 cannot yet be accepted end to end:
+DEV-209 closes the first HTTP/request-context gap identified by NBEOS-H-005. One first-slice composition gap remains:
 
 ```text
-DEV-209 WorkProducts HTTP + verified request context
 DEV-210 WorkProducts audit + telemetry integration
         ↓
 DEV-208 rerun/consolidate all 12 acceptance criteria
@@ -120,7 +119,7 @@ DEV-208 rerun/consolidate all 12 acceptance criteria
 first vertical slice accepted or explicit deviation approved
 ```
 
-The verification gap is intentional evidence, not a documentation failure: the repository will not claim end-to-end completion while WorkProducts is absent from the HTTP composition boundary or its material operations are not wired to the production audit/observability controls.
+The repository still will not claim end-to-end completion until material WorkProducts operations are composed with the production audit/observability controls and the DEV-208 acceptance assessment is rerun.
 
 ## References
 
@@ -155,3 +154,4 @@ The verification gap is intentional evidence, not a documentation failure: the r
 | 0.17 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-206 after Principal-scoped attention/read-model and governed review/decision/issue evidence drill-through verification passed in CI run 36278067339 |
 | 0.18 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-207 after accepted ADR-003 was implemented with atomic durable issue intent, tenant-scoped recoverable claiming, retry/idempotency/concurrency and reconciliation verification in CI run 36279181900 |
 | 0.19 | 2026-09-26 | NuBlox Product / Engineering | Started DEV-208 verification; recorded HTTP/request-context and audit/telemetry composition gaps as DEV-209/210 rather than falsely accepting the first slice |
+| 0.20 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-209 after WorkProducts HTTP verified-context composition, tenant/actor tamper protection, RFC 9457 failure mapping and OpenAPI verification passed in CI run 36280459358 |

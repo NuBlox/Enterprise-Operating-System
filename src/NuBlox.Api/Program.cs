@@ -1,5 +1,6 @@
 using NuBlox.Api;
 using NuBlox.Observability;
+using NuBlox.WorkProducts.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ builder.Services.AddProblemDetails(options =>
     };
 });
 builder.Services.AddOpenApi("v1");
+builder.Services.AddScoped<IWorkProductHttpOperations, WorkProductHttpOperations>();
 
 var app = builder.Build();
 
@@ -34,7 +36,8 @@ app.MapGet(NuBloxApiRoutes.Readiness, () =>
     })
     .ExcludeFromDescription();
 
-_ = app.MapNuBloxApiV1();
+var api = app.MapNuBloxApiV1();
+_ = api.MapWorkProductEndpoints();
 
 app.Run();
 
