@@ -32,15 +32,15 @@ PromisePool.prototype.getConnection = function getConnection() {
     pool.getConnection(function (error, connection) {
       if (error) {
         AcquireErrorChannel.publish({
-          durationMs: durationMs(started),
-          errorCode : error.code
+          durationMs : durationMs(started),
+          errorCode  : error.code
         });
         reject(error);
         return;
       }
 
       AcquireEndChannel.publish({
-        durationMs : durationMs(started)
+        durationMs: durationMs(started)
       });
       resolve(new PromiseConnection(connection, PromiseImpl));
     });
