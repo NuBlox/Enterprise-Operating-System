@@ -103,15 +103,13 @@ public static class NuBloxTelemetry
         OperationDuration.Record(duration.TotalMilliseconds, tags);
     }
 
-    public static IDisposable? BeginCorrelationScope(
-        ILogger logger,
+    public static IReadOnlyDictionary<string, object?> CreateCorrelationScopeState(
         TelemetryCorrelation correlation)
     {
-        ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(correlation);
 
         var activity = Activity.Current;
-        var state = new Dictionary<string, object?>(StringComparer.Ordinal)
+        return new Dictionary<string, object?>(StringComparer.Ordinal)
         {
             ["CorrelationId"] = correlation.CorrelationId,
             ["TraceId"] = activity?.TraceId.ToString(),
@@ -119,7 +117,13 @@ public static class NuBloxTelemetry
             ["TenantId"] = correlation.TenantId?.ToString(),
             ["PrincipalId"] = correlation.PrincipalId?.ToString()
         };
+    }
 
-        return logger.BeginScope(state);
+    public static IDisposable? BeginCorrelationScope(
+        ILogger logger,
+        TelemetryCorrelation correlation)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+        return logger.BeginScope(CreateCorrelationScopeState(correlation));
     }
 }
