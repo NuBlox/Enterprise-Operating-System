@@ -104,7 +104,7 @@ public sealed record WorkProduct
             1);
     }
 
-    internal static WorkProduct Rehydrate(
+    public static WorkProduct Restore(
         WorkProductId id,
         TenantId tenantId,
         string title,
@@ -113,8 +113,20 @@ public sealed record WorkProduct
         PrincipalId createdByPrincipalId,
         DateTimeOffset createdAtUtc,
         WorkProductLifecycle lifecycle,
-        int currentRevisionNumber) =>
-        new(id, tenantId, title, productType, ownerPrincipalId, createdByPrincipalId, createdAtUtc, lifecycle, currentRevisionNumber);
+        int currentRevisionNumber)
+    {
+        if (currentRevisionNumber <= 0) throw new ArgumentOutOfRangeException(nameof(currentRevisionNumber));
+        return new WorkProduct(
+            id,
+            tenantId,
+            RequireText(title, nameof(title), 240),
+            RequireText(productType, nameof(productType), 80),
+            ownerPrincipalId,
+            createdByPrincipalId,
+            createdAtUtc.ToUniversalTime(),
+            lifecycle,
+            currentRevisionNumber);
+    }
 
     private static string RequireText(string value, string parameterName, int maximumLength)
     {
@@ -170,7 +182,7 @@ public sealed record WorkProductRevision
             workProduct.CreatedAtUtc);
     }
 
-    internal static WorkProductRevision Rehydrate(
+    public static WorkProductRevision Restore(
         WorkProductRevisionId id,
         TenantId tenantId,
         WorkProductId workProductId,
@@ -178,6 +190,18 @@ public sealed record WorkProductRevision
         string titleSnapshot,
         WorkProductRevisionState state,
         PrincipalId createdByPrincipalId,
-        DateTimeOffset createdAtUtc) =>
-        new(id, tenantId, workProductId, revisionNumber, titleSnapshot, state, createdByPrincipalId, createdAtUtc);
+        DateTimeOffset createdAtUtc)
+    {
+        if (revisionNumber <= 0) throw new ArgumentOutOfRangeException(nameof(revisionNumber));
+        if (string.IsNullOrWhiteSpace(titleSnapshot)) throw new ArgumentException("Revision title cannot be empty.", nameof(titleSnapshot));
+        return new WorkProductRevision(
+            id,
+            tenantId,
+            workProductId,
+            revisionNumber,
+            titleSnapshot.Trim(),
+            state,
+            createdByPrincipalId,
+            createdAtUtc.ToUniversalTime());
+    }
 }
