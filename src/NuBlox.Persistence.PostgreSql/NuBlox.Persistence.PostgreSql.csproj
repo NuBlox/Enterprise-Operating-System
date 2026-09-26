@@ -8,6 +8,9 @@
     <PackageReference Include="Npgsql" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../NuBlox.Kernel/NuBlox.Kernel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="Migrations/*.sql" />
   </ItemGroup>
 </Project>
