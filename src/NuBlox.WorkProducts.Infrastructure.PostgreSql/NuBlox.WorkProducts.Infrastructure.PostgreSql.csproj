@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.WorkProducts.Infrastructure.PostgreSql</AssemblyName>
+    <RootNamespace>NuBlox.WorkProducts.Infrastructure.PostgreSql</RootNamespace>
+    <Description>PostgreSQL persistence implementation for governed Work Products.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.WorkProducts.Application/NuBlox.WorkProducts.Application.csproj" />
+    <ProjectReference Include="../NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations/*.sql" />
+  </ItemGroup>
+</Project>

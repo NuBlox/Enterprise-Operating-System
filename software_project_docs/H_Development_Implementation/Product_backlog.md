@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.12  
+**Version:** 0.13  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_definition.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.11  
+**Supersedes:** Version 0.12  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -27,7 +27,7 @@
 
 ## Purpose
 
-Maintain the controlled implementation backlog that links NuBlox requirements and architecture decisions to executable product increments. Product semantics remain gated by controlled requirements; the production foundation is complete and the first governed vertical slice is now selected for implementation validation.
+Maintain the controlled implementation backlog that links NuBlox requirements and architecture decisions to executable product increments. Product semantics remain gated by controlled requirements; the production foundation is complete and the first governed vertical slice is now in implementation.
 
 ## Backlog rules
 
@@ -81,10 +81,10 @@ Selected workflow: **Governed Work Product — Create, Review, Approve and Issue
 | ID | Priority | Backlog item | Traceability | Completion evidence | Status |
 |---|---|---|---|---|---|
 | `DEV-201` | P1 | Select and baseline the first representative business workflow | UC-001/002/003/010; functional validation priorities | Scope, actors, records, lifecycle, authority boundary and acceptance criteria baselined | **Complete — NBEOS-H-004 v0.1** |
-| `DEV-202` | P1 | Governed record creation/maintenance | FR-005–FR-008; NBEOS-H-004 | WorkProduct + Revision typed semantics, persistence constraints/history and tests | **Ready** |
-| `DEV-203` | P1 | Work initiation/routing/state | FR-009–FR-014; NBEOS-H-004 | Submission/review work state with isolation/access enforcement | **Ready after DEV-202** |
-| `DEV-204` | P1 | Review/decision/authority path | FR-015–FR-018; NBEOS-H-004 | Authority, evidence and outcome verified | **Ready after DEV-202/203** |
-| `DEV-205` | P1 | Work-product/evidence linkage | FR-019–FR-022; NBEOS-H-004 | Revisions/decisions/issue evidence traceably related | **Ready after DEV-202/204** |
+| `DEV-202` | P1 | Governed record creation/maintenance | FR-005–FR-008; NBEOS-H-004 | WorkProduct + Revision typed semantics, atomic persistence, module-owned migration, constraints, RLS isolation and automated tests | **Complete — CI run 36275665645** |
+| `DEV-203` | P1 | Work initiation/routing/state | FR-009–FR-014; NBEOS-H-004 | Submission/review work state with isolation/access enforcement | **Ready** |
+| `DEV-204` | P1 | Review/decision/authority path | FR-015–FR-018; NBEOS-H-004 | Authority, evidence and outcome verified | **Ready after DEV-203** |
+| `DEV-205` | P1 | Work-product/evidence linkage | FR-019–FR-022; NBEOS-H-004 | Revisions/decisions/issue evidence traceably related | **Ready after DEV-204** |
 | `DEV-206` | P1 | Operational management view/drill-through | FR-027–FR-029, FR-041; NBEOS-H-004 | Contributor/reviewer attention view and governed source drill-through | **Ready after DEV-203** |
 | `DEV-207` | P1 | Durable notification/integration consequence | FR-018, FR-030, FR-032–FR-035; NBEOS-H-004 | Restart/retry-safe consequence and reconciliation | **Ready after DEV-204/205** |
 | `DEV-208` | P1 | First-slice traceability/verification evidence | SRS verification; NBEOS-H-004 | Requirement → ADR/design → code → test links | **Ready after DEV-202–207** |
@@ -109,11 +109,9 @@ NuBloxSQL remains available for integrations/tooling or a later explicitly appro
 
 ## Immediate execution order
 
-The production foundation and workflow selection are complete. The active sequence is:
+The production foundation, workflow selection and governed record/persistence baseline are complete. The active sequence is:
 
 ```text
-DEV-202 WorkProduct + Revision domain/persistence
-        ↓
 DEV-203 submission/review work state
         ↓
 DEV-204 authority-backed decision
@@ -157,3 +155,4 @@ The first slice remains work-product-type neutral. Discipline/customer-specific 
 | 0.10 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-106 after audit/observability verification passed in CI run 36274166788 |
 | 0.11 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-107/108 after API-host and full production foundation verification passed in CI run 36274812831 |
 | 0.12 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-201 by baselining Governed Work Product — Create, Review, Approve and Issue as the first representative production workflow |
+| 0.13 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-202 after WorkProduct/Revision domain, module-owned PostgreSQL persistence, tenant isolation and negative-path verification passed in CI run 36275665645 |

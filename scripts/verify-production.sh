@@ -16,6 +16,11 @@ api_project="src/NuBlox.Api/NuBlox.Api.csproj"
 api_test_project="tests/NuBlox.Api.Tests/NuBlox.Api.Tests.csproj"
 persistence_project="src/NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj"
 persistence_test_project="tests/NuBlox.Persistence.PostgreSql.IntegrationTests/NuBlox.Persistence.PostgreSql.IntegrationTests.csproj"
+work_products_domain_project="src/NuBlox.WorkProducts.Domain/NuBlox.WorkProducts.Domain.csproj"
+work_products_application_project="src/NuBlox.WorkProducts.Application/NuBlox.WorkProducts.Application.csproj"
+work_products_postgres_project="src/NuBlox.WorkProducts.Infrastructure.PostgreSql/NuBlox.WorkProducts.Infrastructure.PostgreSql.csproj"
+work_products_test_project="tests/NuBlox.WorkProducts.Tests/NuBlox.WorkProducts.Tests.csproj"
+work_products_postgres_test_project="tests/NuBlox.WorkProducts.PostgreSql.IntegrationTests/NuBlox.WorkProducts.PostgreSql.IntegrationTests.csproj"
 
 printf 'NuBlox production verification\n'
 printf 'Repository: %s\n' "${repo_root}"
@@ -28,58 +33,29 @@ dotnet restore "${audit_test_project}" --nologo
 dotnet restore "${observability_test_project}" --nologo
 dotnet restore "${api_test_project}" --nologo
 dotnet restore "${persistence_test_project}" --nologo
+dotnet restore "${work_products_test_project}" --nologo
+dotnet restore "${work_products_postgres_test_project}" --nologo
 
-dotnet build "${kernel_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet build "${identity_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet build "${audit_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet build "${observability_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet build "${api_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet build "${persistence_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
+dotnet build "${kernel_project}" --configuration Release --no-restore --nologo
+dotnet build "${identity_project}" --configuration Release --no-restore --nologo
+dotnet build "${audit_project}" --configuration Release --no-restore --nologo
+dotnet build "${observability_project}" --configuration Release --no-restore --nologo
+dotnet build "${api_project}" --configuration Release --no-restore --nologo
+dotnet build "${persistence_project}" --configuration Release --no-restore --nologo
+dotnet build "${work_products_domain_project}" --configuration Release --no-restore --nologo
+dotnet build "${work_products_application_project}" --configuration Release --no-restore --nologo
+dotnet build "${work_products_postgres_project}" --configuration Release --no-restore --nologo
 
-dotnet test "${kernel_test_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet test "${identity_test_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet test "${audit_test_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet test "${observability_test_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
-dotnet test "${api_test_project}" \
-  --configuration Release \
-  --no-restore \
-  --nologo
+dotnet test "${kernel_test_project}" --configuration Release --no-restore --nologo
+dotnet test "${identity_test_project}" --configuration Release --no-restore --nologo
+dotnet test "${audit_test_project}" --configuration Release --no-restore --nologo
+dotnet test "${observability_test_project}" --configuration Release --no-restore --nologo
+dotnet test "${api_test_project}" --configuration Release --no-restore --nologo
+dotnet test "${work_products_test_project}" --configuration Release --no-restore --nologo
 
 if [[ -n "${NUBLOX_POSTGRES_CONNECTION_STRING:-}" ]]; then
-  dotnet test "${persistence_test_project}" \
-    --configuration Release \
-    --no-restore \
-    --nologo
+  dotnet test "${persistence_test_project}" --configuration Release --no-restore --nologo
+  dotnet test "${work_products_postgres_test_project}" --configuration Release --no-restore --nologo
 else
   printf 'Skipping PostgreSQL integration tests: NUBLOX_POSTGRES_CONNECTION_STRING is not set.\n'
 fi
