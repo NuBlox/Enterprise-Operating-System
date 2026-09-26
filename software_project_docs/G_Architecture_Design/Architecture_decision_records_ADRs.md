@@ -3,7 +3,7 @@
 **Section:** G_Architecture_Design  
 **Document ID:** NBEOS-G-005  
 **Document Type:** Architecture decision records (ADR register)  
-**Version:** 0.1  
+**Version:** 0.2  
 **Status:** Draft  
 **Author / Owner:** NuBlox Architecture  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Architecture_vision.md`, `Architecture_definition.md`, `Solution_architecture_document.md`  
-**Supersedes:** None  
+**Supersedes:** Version 0.1  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
 **Storage Location:** `software_project_docs/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
@@ -27,7 +27,7 @@
 
 ## Purpose
 
-Maintain the authoritative register of material architecture decisions. Individual ADRs may later be split into separate files; this register provides stable IDs, status and dependency order from the outset.
+Maintain the authoritative register of material architecture decisions. Individual ADRs are created under `adr/` once a decision has enough evidence and scope to stand alone.
 
 ## ADR lifecycle
 
@@ -37,19 +37,17 @@ Maintain the authoritative register of material architecture decisions. Individu
 - `REJECTED` — explicitly considered and rejected.
 - `DEFERRED` — decision intentionally postponed.
 
-No ADR in version 0.1 is Accepted unless explicitly shown.
-
 ## ADR register
 
-| ADR | Decision topic | Current leading position / question | Status | Primary drivers |
+| ADR | Decision topic | Current decision / question | Status | Primary drivers |
 |---|---|---|---|---|
-| `ADR-001` | Initial application decomposition | Cohesive modular application is leading hypothesis over first-release microservices | PROPOSED | Integrity, evolving semantics, delivery/ops complexity |
-| `ADR-002` | Primary persistence model | Transactional relational persistence is leading hypothesis | PROPOSED | Relationships, consistency, querying, history, migration |
+| [`ADR-001`](adr/ADR-001-cohesive-modular-application.md) | Initial application decomposition | Start as a cohesive modular application with explicit module/data ownership; extract services only when evidence justifies it | ACCEPTED | Integrity, evolving semantics, delivery/ops complexity |
+| [`ADR-002`](adr/ADR-002-transactional-relational-primary-persistence.md) | Primary persistence model | Transactional relational persistence is the primary authoritative model; database product/provider remains separate | ACCEPTED | Relationships, consistency, querying, history, migration |
 | `ADR-003` | Durable asynchronous processing | Use durable jobs/messages and transactional-outbox-or-equivalent for external/long-running work | PROPOSED | Reliability, retry, reconciliation, no silent loss |
 | `ADR-004` | Binary content/work-product storage | Keep business metadata/state separate from binary/object content where appropriate | PROPOSED | Scale, content lifecycle, specialist-system coexistence |
 | `ADR-005` | Configuration/extensibility model | Typed/governed configuration should extend domain semantics rather than universal generic-object runtime | PROPOSED | Integrity, supportability, upgradeability |
 | `ADR-006` | Information authority | Every material integration/domain boundary must declare authoritative source/update rights | PROPOSED | Data integrity, reconciliation, BR-004 |
-| `ADR-007` | Customer/tenant isolation | Compare shared database/schema, row-level isolation, database-per-customer and hybrid models | PROPOSED | Security, economics, scale, residency, operations |
+| [`ADR-007`](adr/ADR-007-layered-tenant-isolation.md) | Customer/tenant isolation | One tenant-aware logical model; shared database/schema is the default profile with layered enforcement and dedicated-database profile when justified | ACCEPTED | Security, economics, scale, residency, operations |
 | `ADR-008` | Identity/authentication | Determine external IdP/federation model, account linking and privileged/service identity approach | PROPOSED | Enterprise adoption, security, SR-024 |
 | `ADR-009` | Business authority model | Business authority/decision mandate must be enforceable separately from technical permission where required | PROPOSED | BR-006, BR-007, audit/control |
 | `ADR-010` | Workflow/orchestration | Determine coded use-case/state-machine patterns vs workflow engine vs hybrid by process characteristics | PROPOSED | Changeability, observability, long-running work, complexity |
@@ -63,6 +61,20 @@ No ADR in version 0.1 is Accepted unless explicitly shown.
 | `ADR-018` | Audit/event evidence | Distinguish business audit/evidence from technical logs; define protected retained evidence mechanisms | PROPOSED | NFR-AUD, BR-014, BR-015 |
 | `ADR-019` | Migration architecture | Treat migration as product/architecture capability with staging, mapping, validation and reconciliation | PROPOSED | BR-013, implementation repeatability |
 | `ADR-020` | Release/config/schema evolution | Define backward-safe application/schema/configuration migration and rollback/forward-fix model | PROPOSED | Operability, customer upgrades, integrity |
+
+## Accepted foundation invariants
+
+The first accepted decision set establishes three provider-neutral product foundations:
+
+```text
+cohesive modular application
+        +
+transactional relational authoritative persistence
+        +
+layered tenant-aware logical data model
+```
+
+These decisions deliberately do **not** select the production runtime/framework, database product, identity provider, cloud provider or observability vendor.
 
 ## ADR approval requirements
 
@@ -79,42 +91,41 @@ Before an ADR is Accepted it should include:
 
 ## Decision dependency order
 
-Some decisions intentionally depend on others:
-
 ```text
-Validated workflow / isolation / NFRs
-        ↓
+ACCEPTED:
 ADR-001 decomposition
-ADR-002 persistence
-ADR-007 isolation
+ADR-002 persistence model
+ADR-007 tenant isolation model
+        ↓
+NEXT IMPLEMENTATION GATES:
 ADR-008 identity
-        ↓
-ADR-003 async processing
-ADR-010 workflow
 ADR-011 API
-ADR-017 schema modularity
-        ↓
 ADR-012 runtime/framework
-ADR-013 cloud/deployment
 ADR-016 observability
 ADR-020 release/evolution
+        ↓
+PRODUCTION FOUNDATION
 ```
+
+Other domain/process decisions continue in parallel as their product slices require them.
 
 ## Individual ADR location
 
-When a decision receives enough analysis to stand alone, create:
+Individual records are stored under:
 
 ```text
-software_project_docs/G_Architecture_Design/adr/ADR-###-short-title.md
+software_project_docs/G_Architecture_Design/adr/
 ```
 
-and retain this register as the index.
+The register remains the authoritative index/status view.
 
 ## References
 
 - `Architecture_vision.md`
 - `Architecture_definition.md`
 - `Solution_architecture_document.md`
+- `Technical_spikes.md`
+- `Proof_of_concept_report.md`
 - `../F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md`
 
 ## Change History
@@ -122,3 +133,4 @@ and retain this register as the index.
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1 | 2026-09-26 | NuBlox Architecture | Established stable ADR register with first 20 proposed/deferred decisions |
+| 0.2 | 2026-09-26 | NuBlox Architecture | Accepted ADR-001 cohesive modular application, ADR-002 relational primary persistence model and ADR-007 layered tenant isolation; linked individual records |
