@@ -65,11 +65,20 @@ jobs:
       - name: Build API harness
         run: dotnet build spikes/foundation-architecture/src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj --configuration Release --no-restore
 
-      - name: Restore verification harness
+      - name: Restore foundation verification harness
         run: dotnet restore spikes/foundation-architecture/verification/NuBlox.FoundationSpike.Verification/NuBlox.FoundationSpike.Verification.csproj
 
-      - name: Build verification harness
+      - name: Build foundation verification harness
         run: dotnet build spikes/foundation-architecture/verification/NuBlox.FoundationSpike.Verification/NuBlox.FoundationSpike.Verification.csproj --configuration Release --no-restore
 
       - name: Run foundation verification
         run: dotnet run --project spikes/foundation-architecture/verification/NuBlox.FoundationSpike.Verification/NuBlox.FoundationSpike.Verification.csproj --configuration Release --no-build
+
+      - name: Restore authority verification harness
+        run: dotnet restore spikes/foundation-architecture/verification/NuBlox.FoundationSpike.AuthorityVerification/NuBlox.FoundationSpike.AuthorityVerification.csproj
+
+      - name: Build authority verification harness
+        run: dotnet build spikes/foundation-architecture/verification/NuBlox.FoundationSpike.AuthorityVerification/NuBlox.FoundationSpike.AuthorityVerification.csproj --configuration Release --no-restore
+
+      - name: Run authority verification
+        run: dotnet run --project spikes/foundation-architecture/verification/NuBlox.FoundationSpike.AuthorityVerification/NuBlox.FoundationSpike.AuthorityVerification.csproj --configuration Release --no-build
