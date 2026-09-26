@@ -132,6 +132,17 @@ await using (var session = await admin.OpenAsync())
     await session.CommitAsync();
 }
 
+// Refresh planner statistics after the bulk fixture is committed so the
+// captured plan represents this dataset rather than the small initial seed.
+await using (var session = await admin.OpenAsync())
+{
+    await using var command = session.Connection.CreateCommand();
+    command.Transaction = session.Transaction;
+    command.CommandText = "ANALYZE work.work_requests;";
+    await command.ExecuteNonQueryAsync();
+    await session.CommitAsync();
+}
+
 await using (var session = await scoped.OpenAsync(customerA))
 {
     var timer = Stopwatch.StartNew();
