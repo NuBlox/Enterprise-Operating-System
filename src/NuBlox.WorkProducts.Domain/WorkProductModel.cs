@@ -225,12 +225,17 @@ public sealed record WorkProductRevision
 
         if (submittedAtUtc == default) throw new ArgumentException("Submission timestamp is required.", nameof(submittedAtUtc));
 
-        return this with
-        {
-            State = WorkProductRevisionState.InReview,
-            SubmittedByPrincipalId = actorPrincipalId,
-            SubmittedAtUtc = submittedAtUtc.ToUniversalTime()
-        };
+        return new WorkProductRevision(
+            Id,
+            TenantId,
+            WorkProductId,
+            RevisionNumber,
+            TitleSnapshot,
+            WorkProductRevisionState.InReview,
+            CreatedByPrincipalId,
+            CreatedAtUtc,
+            actorPrincipalId,
+            submittedAtUtc.ToUniversalTime());
     }
 
     public static WorkProductRevision Restore(
