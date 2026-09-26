@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Persistence.PostgreSql</AssemblyName>
+    <RootNamespace>NuBlox.Persistence.PostgreSql</RootNamespace>
+    <Description>PostgreSQL 18 persistence infrastructure for NuBlox production modules.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations/*.sql" />
+  </ItemGroup>
+</Project>
