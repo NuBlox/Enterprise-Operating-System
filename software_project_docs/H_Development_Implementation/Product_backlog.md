@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.11  
+**Version:** 0.12  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -16,8 +16,8 @@
 **Retention Period:** Product lifetime + [TBD]  
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
-**Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.10  
+**Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_selection.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
+**Supersedes:** Version 0.11  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -27,7 +27,7 @@
 
 ## Purpose
 
-Maintain the controlled implementation backlog that links NuBlox requirements and architecture decisions to executable product increments. Product semantics remain gated by controlled requirements; architecture-foundation decisions now permit the main production platform foundations to proceed.
+Maintain the controlled implementation backlog that links NuBlox requirements and architecture decisions to executable product increments. The production platform foundation is complete; business semantics remain gated by controlled requirement and workflow validation.
 
 ## Backlog rules
 
@@ -37,6 +37,7 @@ Maintain the controlled implementation backlog that links NuBlox requirements an
 4. A NuBlox-mastered or separately governed NuBlox package may be adopted only when a product need and compatible architecture decision exist.
 5. Every implementation item requires objective completion evidence.
 6. Security, tenant isolation, authority and audit controls require negative-path verification.
+7. A candidate workflow cannot enter production business code until its actors, information subjects, material rules and acceptance scenarios have sufficient validation and approval evidence.
 
 ## Priority model
 
@@ -71,21 +72,21 @@ Maintain the controlled implementation backlog that links NuBlox requirements an
 | `DEV-104` | P1 | Production PostgreSQL persistence/migration scaffold | ADR-002/007/017/020/021; FR-005–FR-008 | Empty DB migration, journal/checksum, module schema ownership, tenant isolation and integration tests | **Complete — CI run 36272246291** |
 | `DEV-105` | P1 | Identity/context request boundary | ADR-007/008/011; FR-001–FR-004 | Provider-neutral Principal/Tenant context plus protected-request negative tests | **Complete — CI run 36273403103** |
 | `DEV-106` | P1 | Production audit/telemetry primitives | ADR-016/018; NFR-AUD/OPS | Separate authoritative audit contract plus OTel trace/metric/log/health primitives and tests | **Complete — CI run 36274166788** |
-| `DEV-107` | P1 | Complete CI quality gates | Development plan; NFRs | CI covers build/tests, persistence migrations/isolation, identity/security, telemetry/audit and dependency controls | **Complete — integrated gate includes API-host verification; CI run 36274697845** |
-| `DEV-108` | P1 | Production ASP.NET Core API host and contract primitives | ADR-008/011/012 | API host, health, RFC 9457 baseline, `/api/v1` grouping and OpenAPI infrastructure verified without invented business endpoints | **Complete — CI run 36274697845** |
+| `DEV-107` | P1 | Complete CI quality gates | Development plan; NFRs | CI covers build/tests, persistence migrations/isolation, identity/security, telemetry/audit and dependency controls | **Complete — integrated gate includes API-host verification; CI run 36274812831** |
+| `DEV-108` | P1 | Production ASP.NET Core API host and contract primitives | ADR-008/011/012 | API host, health, RFC 9457 baseline, `/api/v1` grouping and OpenAPI infrastructure verified without invented business endpoints | **Complete — CI run 36274812831** |
 
 ## Wave 2 — first governed vertical product slice
 
-The exact workflow remains **Not Ready** until requirements work selects and validates the first priority business workflow.
+`NBEOS-H-004` has selected **governed work-product review and issue** as the first workflow **candidate for primary validation**. It is not yet approved for production business implementation because the controlled requirements remain Candidate and `NBEOS-A-005` records that primary customer discovery is not yet sufficient for product approval.
 
 | ID | Priority | Backlog item | Traceability | Completion evidence | Status |
 |---|---|---|---|---|---|
-| `DEV-201` | P1 | Select and baseline the first representative business workflow | SRS open questions; functional validation priorities | Approved/validated scope, actors, records, rules and acceptance criteria | **Ready for controlled selection** |
-| `DEV-202` | P1 | Governed record creation/maintenance | FR-005–FR-008 | Typed semantics, persistence constraints/history and tests | Blocked by DEV-201 |
+| `DEV-201` | P1 | Select and baseline the first representative business workflow | SRS open questions; functional validation priorities; H-004 | Validated/approved scope, actors, information subjects, material rules and acceptance scenarios | **In Progress — candidate selected: governed work-product review and issue; primary validation/approval pending** |
+| `DEV-202` | P1 | Governed record creation/maintenance | FR-005–FR-008 | Typed semantics, persistence constraints/history and tests | **Blocked by DEV-201 validation/approval** |
 | `DEV-203` | P1 | Work initiation/routing/state | FR-009–FR-014 | End-to-end work state with isolation/access enforcement | Blocked by DEV-201/202 |
 | `DEV-204` | P1 | Review/decision/authority path | FR-015–FR-018 | Authority, evidence and outcome verified | Blocked by DEV-201 |
 | `DEV-205` | P1 | Work-product/evidence linkage | FR-019–FR-022 | Outputs/revisions/evidence traceably related | Blocked by DEV-201 |
-| `DEV-206` | P1 | Operational management view/drill-through | FR-027–FR-029, FR-041 | Actionable view and governed source drill-through | Blocked by DEV-202/203 |
+| `DEV-206` | P1 | Operational management view/drill-through | FR-027–FR-029, FR-041 | Actionable view and governed source drill-through | Blocked by DEV-201/202 |
 | `DEV-207` | P1 | Durable notification/integration consequence | FR-018, FR-030, FR-032–FR-035 | Restart/retry-safe effect and reconciliation | Blocked by DEV-201 |
 | `DEV-208` | P1 | First-slice traceability/verification evidence | SRS verification | Requirement → ADR/design → code → test links | Blocked by DEV-202–207 |
 
@@ -103,32 +104,36 @@ The exact workflow remains **Not Ready** until requirements work selects and val
 
 ## Governed SQL package workstream
 
-The separately governed `NuBlox/NuBloxSQL` repository is now the authoritative NuBlox location for the extracted MySQL driver capability previously maintained under `packages/mastered/mysql` in this repository. ADR-021 deliberately selects PostgreSQL 18 as the initial Enterprise Operating System production provider based on the current NuBlox evidence.
+The separately governed `NuBlox/NuBloxSQL` repository is the authoritative NuBlox location for the extracted MySQL driver capability previously maintained under `packages/mastered/mysql` in this repository. ADR-021 selects PostgreSQL 18 as the initial Enterprise Operating System production provider based on the current NuBlox evidence.
 
 NuBloxSQL remains available for integrations/tooling or a later explicitly approved provider implementation. Its existence does not make MySQL an Enterprise Operating System production dependency and it is not pulled into the .NET PostgreSQL persistence layer.
 
 ## Immediate execution order
 
-The production engineering foundation is now complete through DEV-108. The next controlled sequence is:
+The production engineering foundation is complete through DEV-108. The next controlled sequence is:
 
 ```text
-DEV-201 select and baseline the first representative business workflow
+DEV-201 candidate selected
         ↓
-DEV-202 governed record creation / maintenance
+execute primary workflow/customer validation in NBEOS-H-004
         ↓
-DEV-203–DEV-207 complete the first workflow behaviour and consequences
+record approved initial actors, information subjects, material rules and acceptance criteria
         ↓
-DEV-208 traceability / verification evidence
+DEV-201 complete
+        ↓
+DEV-202–DEV-208 first governed vertical product slice
         ↓
 Wave 3 controlled capability expansion
 ```
 
-The first vertical slice must be selected from validated requirements and must exercise the production foundation end to end without introducing an unapproved enterprise taxonomy by convenience.
+Until DEV-201 completes, engineering may improve cross-cutting platform controls that do not encode candidate business semantics, but must not silently turn the candidate work-product/review vocabulary into the product's canonical domain model.
 
 ## References
 
 - `Development_plan.md`
 - `Dependency_management_document.md`
+- `First_vertical_slice_selection.md`
+- `../A_Enterprise_Pre_Project/Customer_research_summary.md`
 - `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`
 - `../F_Requirements_Analysis/Functional_requirements_specification.md`
 - `../F_Requirements_Analysis/API_requirements.md`
@@ -151,4 +156,5 @@ The first vertical slice must be selected from validated requirements and must e
 | 0.8 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-104 after production PostgreSQL migration, RLS/runtime-role and checksum integration verification passed in CI run 36272246291 |
 | 0.9 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-105 after provider-neutral Principal/Tenant context resolution, fail-closed access checks and protected-request negative tests passed in CI run 36273403103; aligned the SQL package workstream with the NuBloxSQL extraction |
 | 0.10 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-106 after append-oriented audit evidence, OpenTelemetry trace/metric/log correlation, health semantics and full production regression verification passed in CI run 36274166788 |
-| 0.11 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-107/108 after ASP.NET Core host, OpenAPI, RFC 9457, health and identity-context boundary verification passed in CI run 36274697845 |
+| 0.11 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-107/108 after ASP.NET Core host, OpenAPI, RFC 9457, health and identity-context boundary verification passed in CI run 36274812831 |
+| 0.12 | 2026-09-26 | NuBlox Product / Engineering | Started DEV-201 by selecting governed work-product review and issue as the controlled candidate for primary validation; kept DEV-202–208 blocked pending evidence and approval |
