@@ -44,15 +44,20 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Apply spike migration
+      - name: Apply spike migrations
+        shell: bash
         run: |
-          psql \
-            --host=localhost \
-            --port=5432 \
-            --username=nublox \
-            --dbname=nublox_spike \
-            --set=ON_ERROR_STOP=1 \
-            --file=spikes/foundation-architecture/migrations/0001_foundation.sql
+          set -euo pipefail
+          for migration in spikes/foundation-architecture/migrations/*.sql; do
+            echo "Applying ${migration}"
+            psql \
+              --host=localhost \
+              --port=5432 \
+              --username=nublox \
+              --dbname=nublox_spike \
+              --set=ON_ERROR_STOP=1 \
+              --file="${migration}"
+          done
 
       - name: Restore API harness
         run: dotnet restore spikes/foundation-architecture/src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj
