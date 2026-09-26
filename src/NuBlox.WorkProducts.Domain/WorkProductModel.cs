@@ -115,7 +115,7 @@ public sealed record WorkProduct
         WorkProductLifecycle lifecycle,
         int currentRevisionNumber)
     {
-        if (currentRevisionNumber <= 0) throw new ArgumentOutOfRangeException(nameof(currentRevisionNumber));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(currentRevisionNumber);
         return new WorkProduct(
             id,
             tenantId,
@@ -192,7 +192,7 @@ public sealed record WorkProductRevision
         PrincipalId createdByPrincipalId,
         DateTimeOffset createdAtUtc)
     {
-        if (revisionNumber <= 0) throw new ArgumentOutOfRangeException(nameof(revisionNumber));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(revisionNumber);
         if (string.IsNullOrWhiteSpace(titleSnapshot)) throw new ArgumentException("Revision title cannot be empty.", nameof(titleSnapshot));
         return new WorkProductRevision(
             id,
