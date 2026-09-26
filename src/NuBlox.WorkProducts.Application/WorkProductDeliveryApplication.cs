@@ -85,7 +85,7 @@ public sealed record WorkProductDeliveryOutcome(
     public static WorkProductDeliveryOutcome Retryable(string failureCode, TimeSpan retryAfter)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(failureCode);
-        if (retryAfter <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(retryAfter));
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(retryAfter, TimeSpan.Zero);
         return new WorkProductDeliveryOutcome(WorkProductDeliveryOutcomeKind.RetryableFailure, failureCode.Trim(), retryAfter);
     }
 
@@ -163,7 +163,7 @@ public sealed class WorkProductDeliveryWorker
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workerId);
-        if (leaseDuration <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(leaseDuration));
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(leaseDuration, TimeSpan.Zero);
 
         var claim = await _store.ClaimNextAsync(
             tenantId,
