@@ -137,15 +137,21 @@ The verification gap is intentional evidence, not a documentation failure: the r
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1 | 2026-09-26 | NuBlox Product / Engineering | Established the first controlled implementation backlog and gated production-foundation sequence |
-| 0.8 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-104 after production PostgreSQL verification |
-| 0.9 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-105 after Principal/Tenant context verification |
-| 0.10 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-106 after audit/observability primitive verification |
-| 0.11 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-107/108 after API-host/full-foundation verification |
-| 0.12 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-201 by baselining the first governed Work Product workflow |
-| 0.13 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-202 |
-| 0.14 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-203 |
-| 0.15 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-204 |
-| 0.16 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-205 |
-| 0.17 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-206 |
-| 0.18 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-207 after durable consequence verification in CI 36279181900 |
+| 0.2 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-001/002/003 and added schema-modularity gate |
+| 0.3 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-004 and unblocked production source/build work |
+| 0.4 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-101/102/103 after production foundation CI passed |
+| 0.5 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-005/006/009; added provider selection and API-host foundation |
+| 0.6 | 2026-09-26 | NuBlox Product / Engineering | Closed observability, release/schema evolution, provider and audit/evidence gates through ADR-016/018/020/021; unblocked DEV-104/106 |
+| 0.7 | 2026-09-26 | NuBlox Product / Engineering | Started DEV-104 production PostgreSQL migration, isolation and integration-verification implementation |
+| 0.8 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-104 after production PostgreSQL migration, RLS/runtime-role and checksum integration verification passed in CI run 36272246291 |
+| 0.9 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-105 after provider-neutral Principal/Tenant context resolution and protected-request negative tests passed in CI run 36273403103 |
+| 0.10 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-106 after audit/observability verification passed in CI run 36274166788 |
+| 0.11 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-107/108 after API-host and full production foundation verification passed in CI run 36274812831 |
+| 0.12 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-201 by baselining Governed Work Product — Create, Review, Approve and Issue as the first representative production workflow |
+| 0.13 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-202 after WorkProduct/Revision domain, module-owned PostgreSQL persistence, tenant isolation and negative-path verification passed in CI run 36275665645 |
+| 0.14 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-203 after access-evaluated review submission, ReviewRequest routing, concurrency and tenant-isolation verification passed in CI run 36276125829 |
+| 0.15 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-204 after contextual business-authority separation, immutable decision evidence and atomic tenant-isolated decision persistence passed in CI run 36277012364 |
+| 0.16 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-205 after approved-only issue, exact approval-decision evidence linkage, atomic issue/supersession and tenant-isolation verification passed in CI run 36277625604 |
+| 0.17 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-206 after Principal-scoped attention/read-model and governed review/decision/issue evidence drill-through verification passed in CI run 36278067339 |
+| 0.18 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-207 after accepted ADR-003 was implemented with atomic durable issue intent, tenant-scoped recoverable claiming, retry/idempotency/concurrency and reconciliation verification in CI run 36279181900 |
 | 0.19 | 2026-09-26 | NuBlox Product / Engineering | Started DEV-208 verification; recorded HTTP/request-context and audit/telemetry composition gaps as DEV-209/210 rather than falsely accepting the first slice |
