@@ -1,0 +1,134 @@
+name: Sync MySQL mastered package
+
+on:
+  push:
+    branches:
+      - feature/mastered-package-mysql
+    paths:
+      - .github/workflows/sync-mysql-mastered-package.yml
+  workflow_dispatch:
+    inputs:
+      upstream_commit:
+        description: mysqljs/mysql commit SHA to import
+        required: false
+        default: dc9c152a87ec51a1f647447268917243d2eab1fd
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-mysql-mastered-package-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_UPSTREAM_COMMIT: dc9c152a87ec51a1f647447268917243d2eab1fd
+      PACKAGE_DIR: packages/mastered/mysql
+    steps:
+      - name: Checkout NuBlox repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Resolve pinned upstream commit
+        id: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          requested='${{ inputs.upstream_commit }}'
+          if [[ -z "$requested" ]]; then
+            requested="$DEFAULT_UPSTREAM_COMMIT"
+          fi
+          if [[ ! "$requested" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "upstream_commit must be a full 40-character Git SHA" >&2
+            exit 1
+          fi
+          echo "sha=$requested" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch mysqljs/mysql snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          upstream="$RUNNER_TEMP/mysqljs-mysql"
+          git clone --filter=blob:none --no-checkout https://github.com/mysqljs/mysql.git "$upstream"
+          git -C "$upstream" fetch --depth=1 origin "${{ steps.upstream.outputs.sha }}"
+          git -C "$upstream" checkout --detach "${{ steps.upstream.outputs.sha }}"
+          test "$(git -C "$upstream" rev-parse HEAD)" = "${{ steps.upstream.outputs.sha }}"
+
+      - name: Replace mastered package from upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          upstream="$RUNNER_TEMP/mysqljs-mysql"
+          rm -rf "$PACKAGE_DIR"
+          mkdir -p "$PACKAGE_DIR"
+          cp -a "$upstream"/. "$PACKAGE_DIR"/
+          rm -rf "$PACKAGE_DIR/.git"
+
+          cat > "$PACKAGE_DIR/NUBLOX-MASTERED-PACKAGE.md" <<'EOF'
+          # NuBlox Mastered Package — MySQL
+
+          This directory is a NuBlox-mastered source snapshot of the `mysqljs/mysql` Node.js MySQL driver.
+
+          ## Provenance
+
+          - Upstream repository: `https://github.com/mysqljs/mysql`
+          - Upstream version at initial mastering: `2.18.1`
+          - Initial upstream commit: `dc9c152a87ec51a1f647447268917243d2eab1fd`
+          - Initial mastering date: `2026-09-26`
+          - Upstream licence: MIT (retained as `License`)
+
+          ## Mastering model
+
+          The upstream project is vendored as source rather than referenced as a Git submodule. NuBlox therefore owns and versions this copy independently inside the Enterprise Operating System repository while retaining upstream copyright and licence notices.
+
+          NuBlox-specific changes should be made in this mastered package and tracked through normal NuBlox pull requests. Upstream refreshes are explicit, reviewable sync operations so NuBlox changes cannot be silently overwritten by a moving upstream branch.
+
+          ## Refresh
+
+          Run the `Sync MySQL mastered package` workflow with a reviewed, full 40-character upstream commit SHA. The workflow replaces the vendored upstream snapshot while recreating this NuBlox provenance marker.
+          EOF
+
+      - name: Record current provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$PACKAGE_DIR/NUBLOX-UPSTREAM.json" <<EOF
+          {
+            "packageType": "NuBlox Mastered Package",
+            "package": "mysql",
+            "upstreamRepository": "mysqljs/mysql",
+            "upstreamCommit": "${{ steps.upstream.outputs.sha }}",
+            "upstreamVersion": "2.18.1",
+            "license": "MIT",
+            "masteredPath": "$PACKAGE_DIR"
+          }
+          EOF
+
+      - name: Verify imported package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$PACKAGE_DIR/package.json"
+          test -f "$PACKAGE_DIR/index.js"
+          test -f "$PACKAGE_DIR/License"
+          test -d "$PACKAGE_DIR/lib"
+          test -d "$PACKAGE_DIR/test"
+          node -e "const p=require('./$PACKAGE_DIR/package.json'); if(p.name!=='mysql'||p.version!=='2.18.1'||p.license!=='MIT') process.exit(1)"
+
+      - name: Commit mastered snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "NuBlox Automation"
+          git config user.email "56647740+NuBlox@users.noreply.github.com"
+          git add "$PACKAGE_DIR"
+          if git diff --cached --quiet; then
+            echo "Mastered package already matches requested upstream commit."
+            exit 0
+          fi
+          git commit -m "feat(packages): master mysqljs/mysql for NuBlox"
+          git push origin "HEAD:${{ github.ref_name }}"
