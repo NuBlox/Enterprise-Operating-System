@@ -30,6 +30,26 @@ Nothing is canonical here because it existed in V1, V2 or V3. Concepts are promo
 - [`docs/04-object-model.md`](docs/04-object-model.md)
 - [`docs/05-control-model.md`](docs/05-control-model.md)
 - [`docs/06-evidence-reconciliation.md`](docs/06-evidence-reconciliation.md)
+- [`docs/07-wave-1-enterprise-identity-reconciliation.md`](docs/07-wave-1-enterprise-identity-reconciliation.md)
+
+## Reconciliation status
+
+### Wave 1 — Enterprise identity and structure — ACCEPTED
+
+The clean-slate baseline now establishes Tenant, Party, Person, Organisation, Organisational Unit, Position, Work Relationship, Position Occupancy, Reporting Relationship and the separation of Responsibility, Permission, Authority and Delegation.
+
+Important clean-slate corrections include:
+
+- Tenant is a platform context, not a Party type;
+- Employee is a Work Relationship state/role, not a Party identity type;
+- Client and Supplier are contextual business relationships, not Party identity types;
+- Work Relationship is separate from assignment/deployment;
+- reporting is Position-to-Position and does not itself grant Permission, Authority or record ownership;
+- enterprise Person identity is separate from application account/authentication identity.
+
+### Wave 2 — Work execution — NEXT
+
+Activity, Method, Work Item, Assignment, workflow, lifecycle, handoff, work products, Decisions and Evidence will be reconciled next.
 
 ## Current repository phase
 
@@ -37,9 +57,11 @@ Nothing is canonical here because it existed in V1, V2 or V3. Concepts are promo
 
 There is intentionally no application scaffold, database migration history, runtime framework or UI in this repository yet.
 
+No application implementation is authorised until the clean-slate work/execution model is also accepted.
+
 ## Evidence
 
-Prior NuBlox repositories, market-tool research, industry references, user/job research, standards and product benchmarks will be brought into `docs/evidence/` only as evidence to test this architecture. They do not define it by default.
+Prior NuBlox repositories, market-tool research, industry references, user/job research, standards and product benchmarks are evidence to test this architecture. They do not define it by default.
 
 ## Licence
 
