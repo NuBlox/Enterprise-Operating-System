@@ -53,6 +53,15 @@ Ensure(atomicMessage.AttemptCount == 0, "New outbox intent unexpectedly has deli
 
 Console.WriteLine("PASS: committed business state includes durable PENDING external intent.");
 
+var processedAtomic = await worker.ProcessOneAsync(customerA, "worker-A", TimeSpan.Zero);
+Ensure(processedAtomic == atomic.OutboxMessageId, "Atomic-case message was not the message claimed for delivery.");
+var atomicAfterDelivery = await GetMessageAsync(customerFactory, outbox, customerA, atomic.OutboxMessageId)
+    ?? throw new InvalidOperationException("Atomic outbox message disappeared after delivery.");
+Ensure(atomicAfterDelivery.State == "SUCCEEDED", "Atomic-case message did not complete before later scenarios.");
+Ensure(provider.GetBusinessEffectCount("atomic-handoff-001") == 1, "Atomic-case delivery did not produce exactly one external effect.");
+
+Console.WriteLine("PASS: initial atomic case was completed before isolated failure/retry scenarios.");
+
 Console.WriteLine("SPIKE-005: verifying rollback removes local state and outbound intent together...");
 
 SubjectId rollbackSubjectId;
