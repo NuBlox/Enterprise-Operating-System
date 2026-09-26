@@ -1,73 +1,69 @@
 # NuBlox Enterprise Operating System
 
-NuBlox is being designed from first principles as an enterprise operating system: a single governed environment in which organisations can operate the business and deliver the work they exist to perform.
+![NuBlox](brand/NuBlox_Logo_On_Light_Background.svg)
 
-This repository is the **clean-slate product foundation**. It deliberately does not inherit application code, database schema, routes, navigation, Function catalogues, activity catalogues, or implementation assumptions from earlier NuBlox repositories.
+NuBlox is an enterprise operating system being defined and developed through a controlled software-development programme.
 
-## Clean-slate rule
+## Programme approach
 
-Earlier NuBlox work is evidence, not authority.
+The project proceeds top-down from business intent through product definition, requirements, architecture, design, implementation, verification, release and operation.
 
-Nothing is canonical here because it existed in V1, V2 or V3. Concepts are promoted only after they survive review against business reality, the enterprise model, observed work, market evidence and implementation constraints.
+The repository contains a comprehensive software-project document template library so that each controlled artifact can use a consistent structure, lifecycle and approval model.
 
-## Product questions, in order
+## Project document templates
 
-1. What is NuBlox?
-2. What kinds of parties participate in an enterprise?
-3. How is an organisation structured and governed?
-4. What work does the enterprise need to perform?
-5. What objects exist because of that work?
-6. What capabilities, methods and tools are required?
-7. How are authority, permissions, decisions, evidence and change controlled?
-8. Only then: what software architecture, persistence, routes and UI implement the model?
+The template library is located at:
 
-## Governing documents
+[`software_project_docs_templates/`](software_project_docs_templates/)
 
-The authoritative index is [`docs/DOCUMENT-REGISTER.md`](docs/DOCUMENT-REGISTER.md). Document identity, lifecycle, ownership and dependency rules are governed by [`docs/08-document-governance.md`](docs/08-document-governance.md).
+It contains templates spanning:
 
-Current governing documents:
+- enterprise and pre-project work;
+- legal, commercial and procurement;
+- product, market and UX;
+- project initiation;
+- planning and governance;
+- requirements and analysis;
+- architecture and design;
+- development and implementation;
+- testing and quality assurance;
+- deployment and release;
+- operations and maintenance;
+- project closure;
+- cross-cutting project controls.
 
-- [`docs/00-product-definition.md`](docs/00-product-definition.md)
-- [`docs/01-enterprise-model.md`](docs/01-enterprise-model.md)
-- [`docs/02-work-model.md`](docs/02-work-model.md)
-- [`docs/03-capability-model.md`](docs/03-capability-model.md)
-- [`docs/04-object-model.md`](docs/04-object-model.md)
-- [`docs/05-control-model.md`](docs/05-control-model.md)
-- [`docs/06-evidence-reconciliation.md`](docs/06-evidence-reconciliation.md)
-- [`docs/07-wave-1-enterprise-identity-reconciliation.md`](docs/07-wave-1-enterprise-identity-reconciliation.md)
-- [`docs/08-document-governance.md`](docs/08-document-governance.md)
+The common document-control metadata requirements are defined in:
 
-## Reconciliation status
+[`software_project_docs_templates/00_Templates/Document_Control_Metadata_Template.md`](software_project_docs_templates/00_Templates/Document_Control_Metadata_Template.md)
 
-### Wave 1 — Enterprise identity and structure — ACCEPTED
+Controlled project documents should identify the template used and carry the applicable document-control fields, including status, version, owner, reviewer, approver, classification, retention, related documents and change history.
 
-The clean-slate baseline now establishes Tenant, Party, Person, Organisation, Organisational Unit, Position, Work Relationship, Position Occupancy, Reporting Relationship and the separation of Responsibility, Permission, Authority and Delegation.
+## Brand assets
 
-Important clean-slate corrections include:
+Canonical NuBlox brand assets are maintained under:
 
-- Tenant is a platform context, not a Party type;
-- Employee is a Work Relationship state/role, not a Party identity type;
-- Client and Supplier are contextual business relationships, not Party identity types;
-- Work Relationship is separate from assignment/deployment;
-- reporting is Position-to-Position and does not itself grant Permission, Authority or record ownership;
-- enterprise Person identity is separate from application account/authentication identity.
+[`brand/`](brand/)
 
-### Wave 2 — Work execution — NEXT
+For light-background usage, the primary logo asset is:
 
-Activity, Method, Work Item, Assignment, workflow, lifecycle, handoff, work products, Decisions and Evidence will be reconciled next.
+[`brand/NuBlox_Logo_On_Light_Background.svg`](brand/NuBlox_Logo_On_Light_Background.svg)
 
-## Current repository phase
+Brand assets should be referenced from this directory rather than duplicated into project-document or application folders.
 
-**Architecture before application.**
+## Working principles
 
-There is intentionally no application scaffold, database migration history, runtime framework or UI in this repository yet.
+- Start with the business and product need before defining the software solution.
+- Maintain traceability from strategy through requirements, architecture, implementation, testing, release and operation.
+- Use controlled documents where the project needs durable decisions, evidence, approvals or operating instructions.
+- Use the repository templates as the default structure for controlled project documents.
+- Keep important decisions, assumptions, risks, approvals and changes traceable.
+- Avoid creating multiple overlapping documents when one controlled artifact can satisfy the need clearly.
+- Keep implementation decisions subordinate to approved business, product and technical requirements.
 
-No application implementation is authorised until the clean-slate work/execution model is also accepted.
+## Repository status
 
-## Evidence
-
-Prior NuBlox repositories, market-tool research, industry references, user/job research, standards and product benchmarks are evidence to test this architecture. They do not define it by default.
+The repository currently contains project-definition material, document templates, project-document generation tooling and NuBlox brand assets. Product and software decisions should be introduced through the appropriate controlled project artifacts as the programme progresses.
 
 ## Licence
 
-This repository is proprietary. See [`LICENSE`](LICENSE).
+Proprietary. See [`LICENSE`](LICENSE).
