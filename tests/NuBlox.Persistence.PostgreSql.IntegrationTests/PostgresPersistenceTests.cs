@@ -36,7 +36,7 @@ public sealed class PostgresPersistenceTests
     }
 
     [TestMethod]
-    public async Task Migrations_AreReplaySafeOwnedAndChecksumProtected()
+    public async Task MigrationsAreReplaySafeOwnedAndChecksumProtected()
     {
         await using var dataSource = NpgsqlDataSource.Create(_connectionString);
         var runner = new PostgresMigrationRunner(dataSource);
@@ -61,11 +61,11 @@ public sealed class PostgresPersistenceTests
             await tamper.ExecuteNonQueryAsync();
         }
 
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(() => runner.ApplyAsync());
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => runner.ApplyAsync());
     }
 
     [TestMethod]
-    public async Task RuntimeRole_IsTenantScopedAndCannotPerformSchemaDdl()
+    public async Task RuntimeRoleIsTenantScopedAndCannotPerformSchemaDdl()
     {
         await using var migrationDataSource = NpgsqlDataSource.Create(_connectionString);
         var runner = new PostgresMigrationRunner(migrationDataSource);
@@ -107,7 +107,7 @@ public sealed class PostgresPersistenceTests
             crossTenantWrite.Parameters.AddWithValue("tenant_id", Guid.NewGuid());
             crossTenantWrite.Parameters.AddWithValue("tenant_slug", "forbidden-tenant");
 
-            var exception = await Assert.ThrowsExceptionAsync<PostgresException>(() => crossTenantWrite.ExecuteNonQueryAsync());
+            var exception = await Assert.ThrowsExactlyAsync<PostgresException>(() => crossTenantWrite.ExecuteNonQueryAsync());
             Assert.AreEqual(PostgresErrorCodes.InsufficientPrivilege, exception.SqlState);
 
             await transaction.RollbackAsync();
@@ -116,7 +116,7 @@ public sealed class PostgresPersistenceTests
         await using var forbiddenDdl = new NpgsqlCommand(
             "CREATE TABLE kernel.runtime_forbidden (id integer);",
             runtimeConnection);
-        var ddlException = await Assert.ThrowsExceptionAsync<PostgresException>(() => forbiddenDdl.ExecuteNonQueryAsync());
+        var ddlException = await Assert.ThrowsExactlyAsync<PostgresException>(() => forbiddenDdl.ExecuteNonQueryAsync());
         Assert.AreEqual(PostgresErrorCodes.InsufficientPrivilege, ddlException.SqlState);
     }
 
