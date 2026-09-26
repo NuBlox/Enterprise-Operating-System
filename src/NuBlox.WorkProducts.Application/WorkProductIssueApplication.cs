@@ -14,7 +14,8 @@ public sealed record WorkProductIssueContext(
 
 public sealed record WorkProductIssueResult(
     WorkProductRevision Revision,
-    WorkProductIssueEvidence Evidence);
+    WorkProductIssueEvidence Evidence,
+    WorkProductDeliveryIntent? DeliveryIntent = null);
 
 public interface IWorkProductIssueRepository
 {
@@ -103,7 +104,8 @@ public sealed class WorkProductIssueService
             throw new WorkProductStateConflictException(exception.Message);
         }
 
-        var result = new WorkProductIssueResult(issuedRevision, evidence);
+        var deliveryIntent = WorkProductDeliveryIntent.Create(evidence);
+        var result = new WorkProductIssueResult(issuedRevision, evidence, deliveryIntent);
         await _repository.RecordIssueAsync(result, cancellationToken).ConfigureAwait(false);
         return result;
     }

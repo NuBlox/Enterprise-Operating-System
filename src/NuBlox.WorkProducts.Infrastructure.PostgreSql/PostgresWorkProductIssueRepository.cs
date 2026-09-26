@@ -61,15 +61,21 @@ public sealed class PostgresWorkProductIssueRepository : IWorkProductIssueReposi
         ArgumentNullException.ThrowIfNull(result);
         var revision = result.Revision;
         var evidence = result.Evidence;
+        var deliveryIntent = result.DeliveryIntent
+            ?? throw new InvalidOperationException("A durable delivery intent is required when issuing a Work Product revision.");
 
         if (revision.State != WorkProductRevisionState.Issued
             || revision.TenantId != evidence.TenantId
             || revision.WorkProductId != evidence.WorkProductId
             || revision.Id != evidence.WorkProductRevisionId
             || revision.IssuedByPrincipalId != evidence.IssuedByPrincipalId
-            || revision.IssuedAtUtc != evidence.IssuedAtUtc)
+            || revision.IssuedAtUtc != evidence.IssuedAtUtc
+            || deliveryIntent.TenantId != evidence.TenantId
+            || deliveryIntent.WorkProductId != evidence.WorkProductId
+            || deliveryIntent.WorkProductRevisionId != evidence.WorkProductRevisionId
+            || deliveryIntent.IssueEvidenceId != evidence.Id)
         {
-            throw new InvalidOperationException("Issued revision and issue evidence are inconsistent.");
+            throw new InvalidOperationException("Issued revision, issue evidence and delivery intent are inconsistent.");
         }
 
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -141,6 +147,32 @@ public sealed class PostgresWorkProductIssueRepository : IWorkProductIssueReposi
             insert.Parameters.AddWithValue("issued_at", evidence.IssuedAtUtc);
             insert.Parameters.AddWithValue("correlation_id", evidence.CorrelationId is { } correlation ? correlation : DBNull.Value);
             await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await using (var outbox = new NpgsqlCommand(
+            """
+            INSERT INTO work_products.delivery_intents (
+                tenant_id, delivery_intent_id, work_product_id, work_product_revision_id,
+                issue_evidence_id, consequence_type, idempotency_key, created_at,
+                correlation_id, state, attempt_count, next_attempt_at)
+            VALUES (
+                @tenant_id, @intent_id, @work_product_id, @revision_id,
+                @issue_evidence_id, @consequence_type, @idempotency_key, @created_at,
+                @correlation_id, 'PENDING', 0, @created_at);
+            """,
+            connection,
+            transaction))
+        {
+            outbox.Parameters.AddWithValue("tenant_id", deliveryIntent.TenantId.Value);
+            outbox.Parameters.AddWithValue("intent_id", deliveryIntent.Id.Value);
+            outbox.Parameters.AddWithValue("work_product_id", deliveryIntent.WorkProductId.Value);
+            outbox.Parameters.AddWithValue("revision_id", deliveryIntent.WorkProductRevisionId.Value);
+            outbox.Parameters.AddWithValue("issue_evidence_id", deliveryIntent.IssueEvidenceId.Value);
+            outbox.Parameters.AddWithValue("consequence_type", deliveryIntent.ConsequenceType);
+            outbox.Parameters.AddWithValue("idempotency_key", deliveryIntent.IdempotencyKey);
+            outbox.Parameters.AddWithValue("created_at", deliveryIntent.CreatedAtUtc);
+            outbox.Parameters.AddWithValue("correlation_id", deliveryIntent.CorrelationId is { } correlation ? correlation : DBNull.Value);
+            await outbox.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
