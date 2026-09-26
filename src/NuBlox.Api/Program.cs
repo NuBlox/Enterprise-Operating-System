@@ -40,4 +40,6 @@ app.Run();
 
 internal sealed record OperationalHealthContract(string Status);
 
-public partial class Program;
+public partial class Program
+{
+}
