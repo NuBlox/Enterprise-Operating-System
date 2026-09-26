@@ -28,6 +28,19 @@ public readonly record struct WorkProductRevisionId
     public override string ToString() => Value.ToString("D");
 }
 
+public readonly record struct ReviewRequestId
+{
+    public ReviewRequestId(Guid value)
+    {
+        if (value == Guid.Empty) throw new ArgumentException("Review Request identifiers cannot be empty.", nameof(value));
+        Value = value;
+    }
+
+    public Guid Value { get; }
+    public static ReviewRequestId New() => new(Guid.NewGuid());
+    public override string ToString() => Value.ToString("D");
+}
+
 public enum WorkProductLifecycle
 {
     Active = 1,
@@ -44,6 +57,19 @@ public enum WorkProductRevisionState
     Approved = 5,
     Issued = 6,
     Superseded = 7
+}
+
+public enum ReviewRequestKind
+{
+    Review = 1,
+    Approval = 2
+}
+
+public enum ReviewRequestState
+{
+    Open = 1,
+    Completed = 2,
+    Cancelled = 3
 }
 
 public sealed record WorkProduct
@@ -147,7 +173,9 @@ public sealed record WorkProductRevision
         string titleSnapshot,
         WorkProductRevisionState state,
         PrincipalId createdByPrincipalId,
-        DateTimeOffset createdAtUtc)
+        DateTimeOffset createdAtUtc,
+        PrincipalId? submittedByPrincipalId,
+        DateTimeOffset? submittedAtUtc)
     {
         Id = id;
         TenantId = tenantId;
@@ -157,6 +185,8 @@ public sealed record WorkProductRevision
         State = state;
         CreatedByPrincipalId = createdByPrincipalId;
         CreatedAtUtc = createdAtUtc;
+        SubmittedByPrincipalId = submittedByPrincipalId;
+        SubmittedAtUtc = submittedAtUtc;
     }
 
     public WorkProductRevisionId Id { get; }
@@ -167,6 +197,8 @@ public sealed record WorkProductRevision
     public WorkProductRevisionState State { get; }
     public PrincipalId CreatedByPrincipalId { get; }
     public DateTimeOffset CreatedAtUtc { get; }
+    public PrincipalId? SubmittedByPrincipalId { get; }
+    public DateTimeOffset? SubmittedAtUtc { get; }
 
     public static WorkProductRevision CreateInitial(WorkProduct workProduct)
     {
@@ -179,7 +211,26 @@ public sealed record WorkProductRevision
             workProduct.Title,
             WorkProductRevisionState.Draft,
             workProduct.CreatedByPrincipalId,
-            workProduct.CreatedAtUtc);
+            workProduct.CreatedAtUtc,
+            null,
+            null);
+    }
+
+    public WorkProductRevision SubmitForReview(PrincipalId actorPrincipalId, DateTimeOffset submittedAtUtc)
+    {
+        if (State != WorkProductRevisionState.Draft)
+        {
+            throw new InvalidOperationException($"Only a Draft revision can be submitted for review; current state is {State}.");
+        }
+
+        if (submittedAtUtc == default) throw new ArgumentException("Submission timestamp is required.", nameof(submittedAtUtc));
+
+        return this with
+        {
+            State = WorkProductRevisionState.InReview,
+            SubmittedByPrincipalId = actorPrincipalId,
+            SubmittedAtUtc = submittedAtUtc.ToUniversalTime()
+        };
     }
 
     public static WorkProductRevision Restore(
@@ -190,10 +241,21 @@ public sealed record WorkProductRevision
         string titleSnapshot,
         WorkProductRevisionState state,
         PrincipalId createdByPrincipalId,
-        DateTimeOffset createdAtUtc)
+        DateTimeOffset createdAtUtc,
+        PrincipalId? submittedByPrincipalId = null,
+        DateTimeOffset? submittedAtUtc = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(revisionNumber);
         if (string.IsNullOrWhiteSpace(titleSnapshot)) throw new ArgumentException("Revision title cannot be empty.", nameof(titleSnapshot));
+        if ((submittedByPrincipalId is null) != (submittedAtUtc is null))
+        {
+            throw new ArgumentException("Submission actor and timestamp must either both be present or both be absent.");
+        }
+        if (state != WorkProductRevisionState.Draft && submittedAtUtc is null)
+        {
+            throw new ArgumentException("A non-Draft revision requires submission evidence.", nameof(submittedAtUtc));
+        }
+
         return new WorkProductRevision(
             id,
             tenantId,
@@ -202,6 +264,64 @@ public sealed record WorkProductRevision
             titleSnapshot.Trim(),
             state,
             createdByPrincipalId,
-            createdAtUtc.ToUniversalTime());
+            createdAtUtc.ToUniversalTime(),
+            submittedByPrincipalId,
+            submittedAtUtc?.ToUniversalTime());
+    }
+}
+
+public sealed record ReviewRequest
+{
+    private ReviewRequest(
+        ReviewRequestId id,
+        TenantId tenantId,
+        WorkProductRevisionId workProductRevisionId,
+        ReviewRequestKind kind,
+        PrincipalId requestedPrincipalId,
+        PrincipalId requestedByPrincipalId,
+        DateTimeOffset requestedAtUtc,
+        ReviewRequestState state)
+    {
+        Id = id;
+        TenantId = tenantId;
+        WorkProductRevisionId = workProductRevisionId;
+        Kind = kind;
+        RequestedPrincipalId = requestedPrincipalId;
+        RequestedByPrincipalId = requestedByPrincipalId;
+        RequestedAtUtc = requestedAtUtc;
+        State = state;
+    }
+
+    public ReviewRequestId Id { get; }
+    public TenantId TenantId { get; }
+    public WorkProductRevisionId WorkProductRevisionId { get; }
+    public ReviewRequestKind Kind { get; }
+    public PrincipalId RequestedPrincipalId { get; }
+    public PrincipalId RequestedByPrincipalId { get; }
+    public DateTimeOffset RequestedAtUtc { get; }
+    public ReviewRequestState State { get; }
+
+    public static ReviewRequest CreateReview(
+        WorkProductRevision revision,
+        PrincipalId reviewerPrincipalId,
+        PrincipalId requestedByPrincipalId,
+        DateTimeOffset requestedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(revision);
+        if (revision.State != WorkProductRevisionState.InReview)
+        {
+            throw new InvalidOperationException("A review request can only be created for a revision that is InReview.");
+        }
+        if (requestedAtUtc == default) throw new ArgumentException("Request timestamp is required.", nameof(requestedAtUtc));
+
+        return new ReviewRequest(
+            ReviewRequestId.New(),
+            revision.TenantId,
+            revision.Id,
+            ReviewRequestKind.Review,
+            reviewerPrincipalId,
+            requestedByPrincipalId,
+            requestedAtUtc.ToUniversalTime(),
+            ReviewRequestState.Open);
     }
 }
