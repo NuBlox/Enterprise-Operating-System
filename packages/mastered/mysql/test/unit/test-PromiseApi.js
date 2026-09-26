@@ -12,22 +12,22 @@ var rollbackCount = 0;
 var rawConnection;
 
 rawConnection = {
-  config   : {},
-  state    : 'authenticated',
-  threadId : 42,
-  beginTransaction: function beginTransaction(callback) {
+  config           : {},
+  state            : 'authenticated',
+  threadId         : 42,
+  beginTransaction : function beginTransaction(callback) {
     beginCount++;
     process.nextTick(callback);
   },
-  commit: function commit(callback) {
+  commit           : function commit(callback) {
     commitCount++;
     process.nextTick(callback);
   },
-  rollback: function rollback(callback) {
+  rollback         : function rollback(callback) {
     rollbackCount++;
     process.nextTick(callback);
   },
-  query: function query(sql, values, callback) {
+  query            : function query(sql, values, callback) {
     var queryObject = {_connection: rawConnection};
 
     process.nextTick(function () {
@@ -36,10 +36,10 @@ rawConnection = {
 
     return queryObject;
   },
-  destroy: function destroy() {},
-  escape: function escape(value) { return String(value); },
-  escapeId: function escapeId(value) { return String(value); },
-  format: function format(sql) { return sql; }
+  destroy          : function destroy() {},
+  escape           : function escape(value) { return String(value); },
+  escapeId         : function escapeId(value) { return String(value); },
+  format           : function format(sql) { return sql; }
 };
 
 var connection = new PromiseConnection(rawConnection, global.Promise);
@@ -79,10 +79,10 @@ connection.query('SELECT ?', [42])
       config   : {},
       state    : 'authenticated',
       threadId : 43,
-      query: function query() {
+      query    : function query() {
         return {_connection: abortRawConnection};
       },
-      destroy: function destroy() {
+      destroy  : function destroy() {
         destroyed = true;
       }
     };
@@ -109,7 +109,7 @@ connection.query('SELECT ?', [42])
       _acquiringConnections : [{}],
       _connectionQueue      : [function () {}, function () {}],
       _closed               : false,
-      config: {
+      config                : {
         connectionLimit : 4,
         queueLimit      : 10
       }
