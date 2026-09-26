@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.FoundationSpike.Shared/NuBlox.FoundationSpike.Shared.csproj" />
+    <ProjectReference Include="../NuBlox.FoundationSpike.Subjects/NuBlox.FoundationSpike.Subjects.csproj" />
+  </ItemGroup>
+</Project>
