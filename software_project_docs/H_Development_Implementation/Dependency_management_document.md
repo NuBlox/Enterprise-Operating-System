@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-003  
 **Document Type:** Dependency management document  
-**Version:** 0.3  
+**Version:** 0.4  
 **Status:** Draft  
 **Author / Owner:** NuBlox Engineering  
 **Reviewer:** [TBD]  
@@ -16,8 +16,8 @@
 **Retention Period:** Product lifetime + [TBD]  
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
-**Related Documents:** `Development_plan.md`, `Product_backlog.md`, `../G_Architecture_Design/adr/ADR-012-dotnet10-server-runtime.md`, `../G_Architecture_Design/adr/ADR-016-opentelemetry-observability-baseline.md`, `../G_Architecture_Design/adr/ADR-021-postgresql18-primary-provider.md`  
-**Supersedes:** Version 0.2  
+**Related Documents:** `Development_plan.md`, `Product_backlog.md`, `../G_Architecture_Design/adr/ADR-011-http-api-standards.md`, `../G_Architecture_Design/adr/ADR-012-dotnet10-server-runtime.md`, `../G_Architecture_Design/adr/ADR-016-opentelemetry-observability-baseline.md`, `../G_Architecture_Design/adr/ADR-021-postgresql18-primary-provider.md`  
+**Supersedes:** Version 0.3  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Dependency_management_document.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Dependency_management_document.md`  
@@ -41,6 +41,7 @@ Define the production dependency and toolchain controls for the NuBlox server/co
 8. Dependency upgrades are verified through the same production build/test path as code changes.
 9. Database-provider packages remain isolated to provider-specific persistence/infrastructure projects.
 10. Observability instrumentation remains based on standard .NET diagnostics/OpenTelemetry contracts rather than vendor-specific telemetry APIs.
+11. ASP.NET Core host dependencies remain at the HTTP boundary and must not leak into Kernel, domain or provider-neutral identity/audit contracts.
 
 ## Production toolchain and direct dependency inventory
 
@@ -48,6 +49,9 @@ Define the production dependency and toolchain controls for the NuBlox server/co
 |---|---:|---|---|---|---|
 | .NET SDK | `10.0.401` | Build toolchain | Microsoft .NET official distribution | MIT / Microsoft component licences as applicable | Approved server/core SDK baseline under ADR-012 |
 | .NET target framework | `net10.0` | Runtime contract | Microsoft .NET shared framework | MIT / Microsoft component licences as applicable | Production server/core target |
+| ASP.NET Core shared framework | `net10.0` | `NuBlox.Api` only | Microsoft .NET shared framework | MIT / Microsoft component licences as applicable | Production HTTP host, routing, Problem Details and operational endpoints under ADR-011/012 |
+| `Microsoft.AspNetCore.OpenApi` | `10.0.12` | `NuBlox.Api` only | Microsoft NuGet package | MIT | Runtime OpenAPI document generation for the controlled HTTP contract |
+| `Microsoft.AspNetCore.Mvc.Testing` | `10.0.12` | API test only | Microsoft NuGet package | MIT | In-process production host/TestServer verification through `WebApplicationFactory` |
 | `Npgsql` | `10.0.3` | PostgreSQL persistence infrastructure only | NuGet package published by the Npgsql project | PostgreSQL | Approved .NET PostgreSQL provider baseline under ADR-021 |
 | `OpenTelemetry` | `1.19.1` | `NuBlox.Observability` only | NuGet package published by the OpenTelemetry project | Apache-2.0 | OpenTelemetry SDK registration for NuBlox trace/metric instrumentation under ADR-016 |
 | `Microsoft.Extensions.Logging.Abstractions` | `10.0.12` | `NuBlox.Observability` only | Microsoft NuGet package | MIT | Standard `ILogger` correlation-scope contract without a logging vendor dependency |
@@ -55,7 +59,7 @@ Define the production dependency and toolchain controls for the NuBlox server/co
 | `MSTest.TestAdapter` | `4.4.1` | Test only | NuGet package owned by Microsoft / MSTest | MIT | Test discovery/execution adapter |
 | `MSTest.TestFramework` | `4.4.1` | Test only | NuGet package owned by Microsoft / MSTest | MIT | Unit/integration-test framework |
 
-`NuBlox.Kernel` retains **no third-party runtime PackageReference**. `NuBlox.Audit` also remains provider-neutral and has no OpenTelemetry or database-provider dependency. Npgsql is referenced only by `NuBlox.Persistence.PostgreSql`. OpenTelemetry and logging abstractions are confined to `NuBlox.Observability` and may flow transitively only to its verification project.
+`NuBlox.Kernel` retains **no third-party runtime PackageReference**. `NuBlox.Identity` remains provider-neutral. `NuBlox.Audit` has no OpenTelemetry or database-provider dependency. Npgsql is referenced only by `NuBlox.Persistence.PostgreSql`. OpenTelemetry/logging abstractions are confined to `NuBlox.Observability`. ASP.NET Core/OpenAPI packages are confined to the `NuBlox.Api` HTTP host, while `Microsoft.AspNetCore.Mvc.Testing` remains test-only.
 
 ## Version controls
 
@@ -79,18 +83,25 @@ The provider dependency is intentionally isolated behind the PostgreSQL persiste
 
 ADR-016 accepts OpenTelemetry as the production telemetry interoperability standard and OTLP as the preferred export boundary.
 
-DEV-106 introduces the stable OpenTelemetry `1.19.1` SDK only where NuBlox instrumentation is registered. The observability project exposes standard `ActivitySource`, `Meter` and `ILogger` correlation primitives and does not select a monitoring backend.
+DEV-106 introduces OpenTelemetry `1.19.1` only where NuBlox instrumentation is registered. The observability project exposes standard `ActivitySource`, `Meter` and `ILogger` correlation primitives and does not select a monitoring backend.
 
-An OTLP exporter/collector configuration is intentionally not embedded in the platform library. Host-level exporter configuration is introduced with the production host/deployment path and remains centrally versioned when adopted.
+An OTLP exporter/collector configuration is intentionally not embedded in the platform library. Host/deployment exporter configuration remains a separately controlled deployment concern.
+
+### HTTP API host baseline
+
+ADR-011/012 place the production HTTP boundary on ASP.NET Core under .NET 10. DEV-108 uses the ASP.NET Core shared framework plus `Microsoft.AspNetCore.OpenApi 10.0.12` for contract generation. `Microsoft.AspNetCore.Mvc.Testing 10.0.12` is test-only and verifies the actual host pipeline in process.
+
+Authentication-provider packages are intentionally absent. ADR-008's provider-neutral Principal/Tenant boundary is implemented independently; an OIDC/OAuth provider package is introduced only when the deployment/identity-provider decision requires one.
 
 ### Package locking
 
-Package lock files are not yet the production baseline. Before the dependency graph becomes material, NuBlox must choose and document whether restore locking is enforced through `packages.lock.json`, repository-level dependency graph verification or another reproducible restore control.
+Package lock files are not yet the production baseline. Before the dependency graph becomes materially larger, NuBlox must choose and document whether restore locking is enforced through `packages.lock.json`, repository-level dependency graph verification or another reproducible restore control.
 
 Until that decision is implemented:
 
 - direct versions remain exact and centrally controlled;
 - CI performs a fresh restore on each verification run;
+- NuGet restore auditing and compiler/analyser warnings remain visible in CI;
 - dependency/provenance changes are reviewed as code changes.
 
 ## Governed NuBlox packages
@@ -127,12 +138,13 @@ The production dependency baseline is verified by:
 bash scripts/verify-production.sh
 ```
 
-The command restores/builds/tests the production Kernel, Identity, Audit and Observability boundaries. When `NUBLOX_POSTGRES_CONNECTION_STRING` is set, it also runs the PostgreSQL persistence integration suite. GitHub Actions supplies PostgreSQL 18.6 and the test connection string automatically.
+The command restores/builds/tests the production Kernel, Identity, Audit, Observability and API host boundaries. When `NUBLOX_POSTGRES_CONNECTION_STRING` is set, it also runs the PostgreSQL persistence integration suite. GitHub Actions supplies PostgreSQL 18.6 and the test connection string automatically.
 
 ## References
 
 - `Development_plan.md`
 - `Product_backlog.md`
+- `../G_Architecture_Design/adr/ADR-011-http-api-standards.md`
 - `../G_Architecture_Design/adr/ADR-012-dotnet10-server-runtime.md`
 - `../G_Architecture_Design/adr/ADR-016-opentelemetry-observability-baseline.md`
 - `../G_Architecture_Design/adr/ADR-021-postgresql18-primary-provider.md`
@@ -140,6 +152,8 @@ The command restores/builds/tests the production Kernel, Identity, Audit and Obs
 - https://www.nuget.org/packages/Npgsql
 - https://www.nuget.org/packages/OpenTelemetry
 - https://www.nuget.org/packages/Microsoft.Extensions.Logging.Abstractions
+- https://www.nuget.org/packages/Microsoft.AspNetCore.OpenApi
+- https://www.nuget.org/packages/Microsoft.AspNetCore.Mvc.Testing
 - https://www.nuget.org/packages/Microsoft.NET.Test.Sdk
 - https://www.nuget.org/packages/MSTest.TestAdapter
 - https://www.nuget.org/packages/MSTest.TestFramework
@@ -151,3 +165,4 @@ The command restores/builds/tests the production Kernel, Identity, Audit and Obs
 | 0.1 | 2026-09-26 | NuBlox Engineering | Established the first production SDK, test dependency and central package-version controls |
 | 0.2 | 2026-09-26 | NuBlox Engineering | Added the ADR-021 Npgsql production provider dependency and PostgreSQL integration-verification boundary |
 | 0.3 | 2026-09-26 | NuBlox Engineering | Added OpenTelemetry 1.19.1 and logging abstractions for the vendor-neutral DEV-106 observability boundary; aligned MySQL ownership with NuBloxSQL extraction |
+| 0.4 | 2026-09-26 | NuBlox Engineering | Added ASP.NET Core OpenAPI 10.0.12 and test-host 10.0.12 dependencies for DEV-108; recorded the HTTP boundary and provider-neutral authentication constraint |
