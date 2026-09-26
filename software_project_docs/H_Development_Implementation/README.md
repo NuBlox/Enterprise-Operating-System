@@ -9,17 +9,23 @@ The corresponding reusable templates are maintained under [`../../software_proje
 | ID | Document | Status | Version |
 |---|---|---|---|
 | `NBEOS-H-001` | [Development plan](Development_plan.md) | Draft | 0.1 |
-| `NBEOS-H-002` | [Product backlog](Product_backlog.md) | Draft | 0.4 |
-| `NBEOS-H-003` | [Dependency management document](Dependency_management_document.md) | Draft | 0.1 |
+| `NBEOS-H-002` | [Product backlog](Product_backlog.md) | Draft | 0.12 |
+| `NBEOS-H-003` | [Dependency management document](Dependency_management_document.md) | Draft | 0.4 |
+| `NBEOS-H-004` | [First vertical slice definition](First_vertical_slice_definition.md) | Draft | 0.1 |
 
-## Current production foundation
+## Production foundation status
 
-The first production code path is now physically separate from the disposable architecture spikes:
+The controlled production foundation is physically separate from disposable spikes and now includes:
 
 ```text
 src/NuBlox.Kernel/
+src/NuBlox.Identity/
+src/NuBlox.Audit/
+src/NuBlox.Observability/
+src/NuBlox.Persistence.PostgreSql/
+src/NuBlox.Api/
         ↓
-tests/NuBlox.Kernel.Tests/
+tests/*
         ↓
 scripts/verify-production.sh
         ↓
@@ -28,19 +34,19 @@ scripts/verify-production.sh
 
 The repository root pins the approved .NET SDK through `global.json`, defines shared production build rules through `Directory.Build.props`, and centrally controls direct NuGet package versions through `Directory.Packages.props`.
 
-The first production kernel intentionally contains no synthetic spike business model, persistence-provider dependency, identity model or API contract. Those capabilities remain behind their own controlled decisions.
+## Completed production-foundation controls
 
-## Completed entry controls
+The implementation baseline has completed the initial production foundation through `DEV-108`, including:
 
-The current implementation baseline has completed:
-
-- `ADR-001` cohesive modular application decision;
-- `ADR-002` transactional relational primary persistence-model decision;
-- `ADR-007` layered tenant-isolation decision;
-- `ADR-012` .NET 10 LTS / C# server/core runtime decision;
-- `DEV-101` production source/test separation;
-- `DEV-102` deterministic restore/build/test entrypoint;
-- `DEV-103` initial dependency/provenance controls.
+- cohesive modular application and module-owned data boundaries;
+- .NET 10 LTS / C# production server runtime;
+- PostgreSQL 18 / Npgsql production persistence boundary;
+- migration journal/checksum, tenant session and PostgreSQL RLS verification;
+- provider-neutral Principal/Tenant request-context resolution;
+- append-oriented authoritative audit evidence;
+- OpenTelemetry trace/metric/log correlation and health primitives;
+- ASP.NET Core HTTP host with `/api/v1`, OpenAPI, RFC 9457 Problem Details and operational health endpoints;
+- one integrated production CI verification path.
 
 Production verification runs with:
 
@@ -48,28 +54,45 @@ Production verification runs with:
 bash scripts/verify-production.sh
 ```
 
-and the identical command is enforced in the `Production foundation` GitHub Actions workflow.
+GitHub Actions runs the identical production verifier with PostgreSQL 18.6 available for integration tests.
 
-## Remaining production-foundation decisions
+## First governed vertical slice
 
-The next P0 decisions are:
+`DEV-201` selects **Governed Work Product — Create, Review, Approve and Issue** as the first representative production workflow.
 
-1. `ADR-008` identity/authentication and service identity;
-2. `ADR-011` API standards;
-3. `ADR-017` schema/data modularity;
-4. `ADR-016` observability baseline;
-5. `ADR-020` release/configuration/schema evolution;
-6. relational database product/provider under accepted `ADR-002`.
+The controlled definition is [`First_vertical_slice_definition.md`](First_vertical_slice_definition.md).
 
-These decisions unblock persistence, identity/context, audit/telemetry and the complete production CI quality gate.
+The slice is deliberately work-product-type neutral so the same core model can later support documents, drawings, models, specifications, reports, submissions and other governed outputs across functional governance, functional delivery and built-environment domains without prematurely hard-coding the full enterprise taxonomy.
+
+The next implementation sequence is:
+
+```text
+DEV-202 governed Work Product + Revision records/persistence
+        ↓
+DEV-203 submission/review work state
+        ↓
+DEV-204 authority-backed review/approval decision
+        ↓
+DEV-205 work-product/revision/evidence linkage and issue
+        ↓
+DEV-206 attention/management view + drill-through
+        ↓
+DEV-207 durable downstream consequence
+        ↓
+DEV-208 consolidated traceability/verification
+```
 
 ## Development rule
 
-The spike code remains disposable experimental code. It is not the production application and must not be copied into the production codebase by momentum. Promotion of a proven pattern requires the relevant ADR decision, traceability to requirements, a controlled implementation plan, review and normal build/test/security controls.
+The spike code remains disposable experimental code. It is not the production application and must not be copied into the production codebase by momentum. Proven patterns are reimplemented through the accepted ADRs, controlled product requirements, module ownership, production tests and normal security/quality gates.
+
+The first vertical slice is an implementation/validation baseline. Draft/Candidate requirements remain subject to controlled business/customer validation and refinement; implementation must not silently convert every candidate requirement into permanent product semantics.
 
 ## References
 
 - [`../G_Architecture_Design/Architecture_decision_records_ADRs.md`](../G_Architecture_Design/Architecture_decision_records_ADRs.md)
-- [`../G_Architecture_Design/Technical_spikes.md`](../G_Architecture_Design/Technical_spikes.md)
-- [`../G_Architecture_Design/Proof_of_concept_report.md`](../G_Architecture_Design/Proof_of_concept_report.md)
 - [`../F_Requirements_Analysis/`](../F_Requirements_Analysis/)
+- [`Development_plan.md`](Development_plan.md)
+- [`Product_backlog.md`](Product_backlog.md)
+- [`Dependency_management_document.md`](Dependency_management_document.md)
+- [`First_vertical_slice_definition.md`](First_vertical_slice_definition.md)
