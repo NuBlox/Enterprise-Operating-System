@@ -109,10 +109,9 @@ var renameEffective = new DateTimeOffset(2025, 6, 1, 0, 0, 0, TimeSpan.Zero);
 
 await using (var session = await factory.OpenAsync())
 {
-    historySubjectId = await subjects.CreateAsync(
+    historySubjectId = await subjects.CreateIdentityAsync(
         session,
-        customerA,
-        "Historical subject");
+        customerA);
 
     await subjectHistory.InitialiseAsync(
         session,
