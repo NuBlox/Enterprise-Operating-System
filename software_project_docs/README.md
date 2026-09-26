@@ -70,20 +70,30 @@ Each working document records:
 | `NBEOS-D-015` | [High-level budget](D_Project_Initiation/High-level_budget.md) | Draft | 0.1 |
 | `NBEOS-D-016` | [High-level resource plan](D_Project_Initiation/High-level_resource_plan.md) | Draft | 0.1 |
 
+## Requirements & Analysis baseline
+
+| ID | Document | Status | Version |
+|---|---|---|---|
+| `NBEOS-F-001` | [Business requirements document (BRD)](F_Requirements_Analysis/Business_requirements_document_BRD.md) | Draft | 0.1 |
+| `NBEOS-F-002` | [Stakeholder requirements specification](F_Requirements_Analysis/Stakeholder_requirements_specification.md) | Draft | 0.1 |
+| `NBEOS-F-003` | [Software requirements specification (SRS)](F_Requirements_Analysis/Software_requirements_specification_SRS.md) | Draft | 0.1 |
+| `NBEOS-F-004` | [Functional requirements specification](F_Requirements_Analysis/Functional_requirements_specification.md) | Draft | 0.1 |
+| `NBEOS-F-005` | [Non-functional requirements specification](F_Requirements_Analysis/Non-functional_requirements_specification.md) | Draft | 0.1 |
+
 ## Current programme position
 
-NuBlox now has a controlled Draft baseline from product strategy through formal project initiation.
+NuBlox now has controlled Draft baselines spanning pre-project strategy, formal project initiation and the governing first layer of requirements.
 
 The programme has defined:
 
 - product and market hypotheses;
 - investment, feasibility, risk and funding controls;
 - architecture/data/security principles;
-- programme stage gates;
-- project scope and objectives;
-- governance and provisional RACI;
-- assumptions, constraints, risks and dependencies;
-- sequence, milestones, budget structure and resource capabilities.
+- programme and project stage gates;
+- project scope, objectives, governance, assumptions, constraints, risks, dependencies, schedule, budget and resources;
+- business and stakeholder needs;
+- an SRS envelope;
+- initial candidate functional and non-functional software requirements.
 
 The strongest current product hypothesis remains that NuBlox can create value by reducing the operational divide between:
 
@@ -97,27 +107,27 @@ The current launch-market hypothesis is UK mid-market multidisciplinary built-en
 
 No Draft document is an approved product, architecture or investment baseline yet.
 
-## Next controlled documents — Requirements & Analysis
+## Next controlled documents — Requirements detail and traceability
 
-The next programme wave should establish the controlled requirements baseline using the relevant templates, including:
+The next requirements wave should develop:
 
-1. Business requirements document (BRD)
-2. Stakeholder requirements specification
-3. Software requirements specification (SRS)
-4. Functional requirements
-5. Non-functional requirements
-6. User stories / epics
-7. Use cases
-8. User journeys
-9. Process flows / BPMN
-10. Business rules
-11. Data requirements and data dictionary
-12. Interface / integration requirements
-13. Reporting / analytics requirements
-14. Acceptance criteria
-15. Requirements traceability matrix
-16. Requirements prioritisation
-17. Glossary
+1. Business rules
+2. User stories / epics
+3. Use cases
+4. User journeys
+5. Process flows / BPMN
+6. Data requirements
+7. Data dictionary
+8. Interface requirements
+9. Integration requirements
+10. API requirements
+11. Reporting requirements
+12. Analytics requirements
+13. Acceptance criteria
+14. Requirements traceability matrix (RTM)
+15. Requirements prioritisation
+16. Business glossary / acronym list
+17. Definition of Ready / Definition of Done
 18. Requirements sign-off
 
 Primary customer research must continue in parallel and update `NBEOS-A-005` and all downstream requirements where evidence changes assumptions.
