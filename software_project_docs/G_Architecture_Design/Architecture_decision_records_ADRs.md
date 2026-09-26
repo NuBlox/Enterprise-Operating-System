@@ -3,7 +3,7 @@
 **Section:** G_Architecture_Design  
 **Document ID:** NBEOS-G-005  
 **Document Type:** Architecture decision records (ADR register)  
-**Version:** 0.2  
+**Version:** 0.3  
 **Status:** Draft  
 **Author / Owner:** NuBlox Architecture  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Architecture_vision.md`, `Architecture_definition.md`, `Solution_architecture_document.md`  
-**Supersedes:** Version 0.1  
+**Supersedes:** Version 0.2  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
 **Storage Location:** `software_project_docs/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
@@ -52,7 +52,7 @@ Maintain the authoritative register of material architecture decisions. Individu
 | `ADR-009` | Business authority model | Business authority/decision mandate must be enforceable separately from technical permission where required | PROPOSED | BR-006, BR-007, audit/control |
 | `ADR-010` | Workflow/orchestration | Determine coded use-case/state-machine patterns vs workflow engine vs hybrid by process characteristics | PROPOSED | Changeability, observability, long-running work, complexity |
 | `ADR-011` | API standards | Select external/internal API styles, schemas, error/versioning/idempotency conventions | PROPOSED | Integration, developer experience, compatibility |
-| `ADR-012` | Runtime/language/framework | Select implementation stack after architecture spikes and team/NFR/product-economics assessment | DEFERRED | Maintainability, productivity, ecosystem, operations |
+| [`ADR-012`](adr/ADR-012-dotnet10-server-runtime.md) | Runtime/language/framework | .NET 10 LTS / C# is the production server/core runtime; ASP.NET Core is the default HTTP server framework; frontend remains separate | ACCEPTED | Maintainability, productivity, ecosystem, support, completed spike evidence |
 | `ADR-013` | Cloud/deployment provider | Determine provider/topology after residency, customer, resilience and cost requirements are clearer | DEFERRED | NFRs, compliance, economics |
 | `ADR-014` | Search | Use relational/native search first vs dedicated search index based on validated search/load requirements | DEFERRED | Search UX, scale, operations |
 | `ADR-015` | Analytics architecture | Begin from operational read/query models; add analytical store when workload/retention needs justify it | PROPOSED | REP/ANA requirements, isolation, cost |
@@ -62,9 +62,9 @@ Maintain the authoritative register of material architecture decisions. Individu
 | `ADR-019` | Migration architecture | Treat migration as product/architecture capability with staging, mapping, validation and reconciliation | PROPOSED | BR-013, implementation repeatability |
 | `ADR-020` | Release/config/schema evolution | Define backward-safe application/schema/configuration migration and rollback/forward-fix model | PROPOSED | Operability, customer upgrades, integrity |
 
-## Accepted foundation invariants
+## Accepted production foundation
 
-The first accepted decision set establishes three provider-neutral product foundations:
+The accepted decisions now establish:
 
 ```text
 cohesive modular application
@@ -72,9 +72,11 @@ cohesive modular application
 transactional relational authoritative persistence
         +
 layered tenant-aware logical data model
+        +
+.NET 10 LTS / C# server and core runtime
 ```
 
-These decisions deliberately do **not** select the production runtime/framework, database product, identity provider, cloud provider or observability vendor.
+These decisions deliberately do **not** yet select the relational database product, identity provider, frontend framework, cloud provider or observability vendor.
 
 ## ADR approval requirements
 
@@ -96,18 +98,19 @@ ACCEPTED:
 ADR-001 decomposition
 ADR-002 persistence model
 ADR-007 tenant isolation model
+ADR-012 .NET 10 server/core runtime
         ↓
 NEXT IMPLEMENTATION GATES:
 ADR-008 identity
 ADR-011 API
-ADR-012 runtime/framework
+ADR-017 schema modularity
 ADR-016 observability
 ADR-020 release/evolution
         ↓
-PRODUCTION FOUNDATION
+PRODUCTION FOUNDATION EXPANSION
 ```
 
-Other domain/process decisions continue in parallel as their product slices require them.
+The accepted runtime allows the production source/test/build scaffold to begin without waiting for the still-separate database/frontend/provider decisions.
 
 ## Individual ADR location
 
@@ -124,6 +127,7 @@ The register remains the authoritative index/status view.
 - `Architecture_vision.md`
 - `Architecture_definition.md`
 - `Solution_architecture_document.md`
+- `Evaluation_matrix_for_technology_selection.md`
 - `Technical_spikes.md`
 - `Proof_of_concept_report.md`
 - `../F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md`
@@ -134,3 +138,4 @@ The register remains the authoritative index/status view.
 |---|---|---|---|
 | 0.1 | 2026-09-26 | NuBlox Architecture | Established stable ADR register with first 20 proposed/deferred decisions |
 | 0.2 | 2026-09-26 | NuBlox Architecture | Accepted ADR-001 cohesive modular application, ADR-002 relational primary persistence model and ADR-007 layered tenant isolation; linked individual records |
+| 0.3 | 2026-09-26 | NuBlox Architecture | Accepted ADR-012 .NET 10 LTS/C# as the production server/core runtime and ASP.NET Core as the default server HTTP framework |
