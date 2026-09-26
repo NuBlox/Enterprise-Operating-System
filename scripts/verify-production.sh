@@ -8,6 +8,7 @@ kernel_project="src/NuBlox.Kernel/NuBlox.Kernel.csproj"
 kernel_test_project="tests/NuBlox.Kernel.Tests/NuBlox.Kernel.Tests.csproj"
 identity_project="src/NuBlox.Identity/NuBlox.Identity.csproj"
 identity_test_project="tests/NuBlox.Identity.Tests/NuBlox.Identity.Tests.csproj"
+authority_project="src/NuBlox.Authority/NuBlox.Authority.csproj"
 audit_project="src/NuBlox.Audit/NuBlox.Audit.csproj"
 audit_test_project="tests/NuBlox.Audit.Tests/NuBlox.Audit.Tests.csproj"
 observability_project="src/NuBlox.Observability/NuBlox.Observability.csproj"
@@ -38,6 +39,7 @@ dotnet restore "${work_products_postgres_test_project}" --nologo
 
 dotnet build "${kernel_project}" --configuration Release --no-restore --nologo
 dotnet build "${identity_project}" --configuration Release --no-restore --nologo
+dotnet build "${authority_project}" --configuration Release --no-restore --nologo
 dotnet build "${audit_project}" --configuration Release --no-restore --nologo
 dotnet build "${observability_project}" --configuration Release --no-restore --nologo
 dotnet build "${api_project}" --configuration Release --no-restore --nologo
