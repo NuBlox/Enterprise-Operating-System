@@ -2,6 +2,7 @@ var Sequence        = require('./Sequence');
 var Util            = require('util');
 var Packets         = require('../packets');
 var Auth            = require('../Auth');
+var AuthPlugins     = require('../AuthPlugins');
 var ClientConstants = require('../constants/client');
 
 module.exports = Handshake;
@@ -13,6 +14,8 @@ function Handshake(options, callback) {
 
   this._config                        = options.config;
   this._handshakeInitializationPacket = null;
+  this._authPlugin                    = null;
+  this._authPluginName                = null;
 }
 
 Handshake.prototype.determinePacket = function determinePacket(firstByte, parser) {
@@ -22,6 +25,10 @@ Handshake.prototype.determinePacket = function determinePacket(firstByte, parser
 
   if (!this._handshakeInitializationPacket) {
     return Packets.HandshakeInitializationPacket;
+  }
+
+  if (firstByte === 0x01) {
+    return Packets.AuthMoreDataPacket;
   }
 
   if (firstByte === 0xfe) {
@@ -34,29 +41,37 @@ Handshake.prototype.determinePacket = function determinePacket(firstByte, parser
 };
 
 Handshake.prototype['AuthSwitchRequestPacket'] = function (packet) {
-  var name = packet.authMethodName;
-  var data = Auth.auth(name, packet.authMethodData, {
-    password: this._config.password
-  });
+  this._beginAuthPlugin(packet.authMethodName, packet.authMethodData, true);
+};
 
-  if (data !== undefined) {
-    this.emit('packet', new Packets.AuthSwitchResponsePacket({
-      data: data
-    }));
-  } else {
-    var err   = new Error('MySQL is requesting the ' + name + ' authentication method, which is not supported.');
-    err.code  = 'UNSUPPORTED_AUTH_METHOD';
-    err.fatal = true;
-    this.end(err);
+Handshake.prototype['AuthMoreDataPacket'] = function (packet) {
+  var self = this;
+
+  if (!this._authPlugin) {
+    this._authFailure(createProtocolError('Authentication continuation received without an active plugin.'));
+    return;
+  }
+
+  try {
+    this._resolveAuthResult(this._authPlugin.next(packet.data), function (data) {
+      self._sendAuthResponse(data);
+    });
+  } catch (err) {
+    this._authFailure(err);
   }
 };
 
 Handshake.prototype['HandshakeInitializationPacket'] = function(packet) {
   this._handshakeInitializationPacket = packet;
-
   this._config.protocol41 = packet.protocol41;
 
   var serverSSLSupport = packet.serverCapabilities1 & ClientConstants.CLIENT_SSL;
+  var serverCapabilities = packet.serverCapabilities1
+    | ((packet.serverCapabilities2 || 0) << 16);
+
+  if (!(serverCapabilities & ClientConstants.CLIENT_PLUGIN_AUTH)) {
+    this._config.clientFlags &= ~ClientConstants.CLIENT_PLUGIN_AUTH;
+  }
 
   if (this._config.ssl) {
     if (!serverSSLSupport) {
@@ -87,17 +102,82 @@ Handshake.prototype._tlsUpgradeCompleteHandler = function() {
 
 Handshake.prototype._sendCredentials = function() {
   var packet = this._handshakeInitializationPacket;
-  this.emit('packet', new Packets.ClientAuthenticationPacket({
-    clientFlags   : this._config.clientFlags,
-    maxPacketSize : this._config.maxPacketSize,
-    charsetNumber : this._config.charsetNumber,
-    user          : this._config.user,
-    database      : this._config.database,
-    protocol41    : packet.protocol41,
-    scrambleBuff  : (packet.protocol41)
-      ? Auth.token(this._config.password, packet.scrambleBuff())
-      : Auth.scramble323(packet.scrambleBuff(), this._config.password)
+  var pluginName = (this._config.clientFlags & ClientConstants.CLIENT_PLUGIN_AUTH)
+    ? (packet.pluginData || this._config.defaultAuthPlugin)
+    : 'mysql_native_password';
+
+  this._beginAuthPlugin(pluginName, packet.scrambleBuff(), false);
+};
+
+Handshake.prototype._beginAuthPlugin = function(name, data, switched) {
+  var self = this;
+
+  try {
+    this._authPluginName = name;
+    this._authPlugin = AuthPlugins.create(name, this._config);
+    this._resolveAuthResult(this._authPlugin.initial(data), function (authData) {
+      if (switched) {
+        self._sendAuthResponse(authData);
+        return;
+      }
+
+      var packet = self._handshakeInitializationPacket;
+      self.emit('packet', new Packets.ClientAuthenticationPacket({
+        clientFlags    : self._config.clientFlags,
+        maxPacketSize  : self._config.maxPacketSize,
+        charsetNumber  : self._config.charsetNumber,
+        user           : self._config.user,
+        database       : self._config.database,
+        protocol41     : packet.protocol41,
+        scrambleBuff   : authData,
+        authPluginName : (self._config.clientFlags & ClientConstants.CLIENT_PLUGIN_AUTH)
+          ? name
+          : undefined
+      }));
+    });
+  } catch (err) {
+    this._authFailure(err);
+  }
+};
+
+Handshake.prototype._resolveAuthResult = function(result, onValue) {
+  var self = this;
+
+  if (result && typeof result.then === 'function') {
+    result.then(function (value) {
+      if (!self._ended) {
+        onValue(value);
+      }
+    }, function (err) {
+      self._authFailure(err);
+    });
+    return;
+  }
+
+  onValue(result);
+};
+
+Handshake.prototype._sendAuthResponse = function(data) {
+  if (data === null || data === undefined) {
+    return;
+  }
+
+  this.emit('packet', new Packets.AuthSwitchResponsePacket({
+    data: data
   }));
+};
+
+Handshake.prototype._authFailure = function(err) {
+  if (!err || typeof err !== 'object') {
+    err = new Error(String(err));
+  }
+
+  if (!err.code) {
+    err.code = 'AUTH_PLUGIN_ERROR';
+  }
+
+  err.fatal = true;
+  this.end(err);
 };
 
 Handshake.prototype['UseOldPasswordPacket'] = function() {
@@ -124,3 +204,12 @@ Handshake.prototype['ErrorPacket'] = function(packet) {
   err.fatal = true;
   this.end(err);
 };
+
+function createProtocolError(message) {
+  var err = new Error(message);
+
+  err.code = 'AUTH_PLUGIN_PROTOCOL_ERROR';
+  err.fatal = true;
+
+  return err;
+}

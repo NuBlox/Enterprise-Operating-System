@@ -1,7 +1,7 @@
 {
   "name": "@nublox/mysql",
   "description": "NuBlox mastered high-resilience MySQL client for modern Node.js applications.",
-  "version": "3.0.0-nublox.1",
+  "version": "3.1.0-nublox.1",
   "license": "MIT",
   "author": "Felix Geisendörfer <felix@debuggable.com> (http://debuggable.com/)",
   "contributors": [

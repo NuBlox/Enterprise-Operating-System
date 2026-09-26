@@ -8,6 +8,25 @@ declare namespace mysql {
     removeEventListener(type: 'abort', listener: () => void): void;
   }
 
+  interface AuthPluginContext {
+    readonly config: ConnectionOptions;
+    readonly pluginName: string;
+    readonly secure: boolean;
+  }
+
+  interface AuthPluginStep {
+    readonly phase: 'initial' | 'continue';
+    readonly pluginName: string;
+    readonly secure: boolean;
+    readonly step: number;
+  }
+
+  type AuthPluginHandler = (
+    data: Buffer,
+    step: AuthPluginStep
+  ) => Buffer | null | undefined | Promise<Buffer | null | undefined>;
+  type AuthPluginFactory = (context: AuthPluginContext) => AuthPluginHandler;
+
   interface SslOptions {
     ca?: string | Buffer | Array<string | Buffer>;
     cert?: string | Buffer;
@@ -40,6 +59,11 @@ declare namespace mysql {
     typeCast?: boolean | Function;
     queryFormat?: Function;
     Promise?: PromiseConstructor;
+    authPlugins?: Record<string, AuthPluginFactory>;
+    defaultAuthPlugin?: string;
+    allowPublicKeyRetrieval?: boolean;
+    serverPublicKey?: string | Buffer;
+    onServerPublicKey?: (key: string | Buffer) => void;
   }
 
   interface PoolOptions extends ConnectionOptions {

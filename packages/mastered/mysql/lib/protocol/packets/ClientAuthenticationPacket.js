@@ -1,17 +1,19 @@
 var Buffer = require('safe-buffer').Buffer;
+var Client = require('../constants/client');
 
 module.exports = ClientAuthenticationPacket;
 function ClientAuthenticationPacket(options) {
   options = options || {};
 
-  this.clientFlags   = options.clientFlags;
-  this.maxPacketSize = options.maxPacketSize;
-  this.charsetNumber = options.charsetNumber;
-  this.filler        = undefined;
-  this.user          = options.user;
-  this.scrambleBuff  = options.scrambleBuff;
-  this.database      = options.database;
-  this.protocol41    = options.protocol41;
+  this.clientFlags    = options.clientFlags;
+  this.maxPacketSize  = options.maxPacketSize;
+  this.charsetNumber  = options.charsetNumber;
+  this.filler         = undefined;
+  this.user           = options.user;
+  this.scrambleBuff   = options.scrambleBuff;
+  this.database       = options.database;
+  this.authPluginName = options.authPluginName;
+  this.protocol41     = options.protocol41;
 }
 
 ClientAuthenticationPacket.prototype.parse = function(parser) {
@@ -22,7 +24,14 @@ ClientAuthenticationPacket.prototype.parse = function(parser) {
     this.filler        = parser.parseFiller(23);
     this.user          = parser.parseNullTerminatedString();
     this.scrambleBuff  = parser.parseLengthCodedBuffer();
-    this.database      = parser.parseNullTerminatedString();
+
+    if (this.clientFlags & Client.CLIENT_CONNECT_WITH_DB) {
+      this.database = parser.parseNullTerminatedString();
+    }
+
+    if ((this.clientFlags & Client.CLIENT_PLUGIN_AUTH) && !parser.reachedPacketEnd()) {
+      this.authPluginName = parser.parseNullTerminatedString();
+    }
   } else {
     this.clientFlags   = parser.parseUnsignedNumber(2);
     this.maxPacketSize = parser.parseUnsignedNumber(3);
@@ -40,7 +49,14 @@ ClientAuthenticationPacket.prototype.write = function(writer) {
     writer.writeFiller(23);
     writer.writeNullTerminatedString(this.user);
     writer.writeLengthCodedBuffer(this.scrambleBuff);
-    writer.writeNullTerminatedString(this.database);
+
+    if (this.clientFlags & Client.CLIENT_CONNECT_WITH_DB) {
+      writer.writeNullTerminatedString(this.database || '');
+    }
+
+    if (this.clientFlags & Client.CLIENT_PLUGIN_AUTH) {
+      writer.writeNullTerminatedString(this.authPluginName || 'mysql_native_password');
+    }
   } else {
     writer.writeUnsignedNumber(2, this.clientFlags);
     writer.writeUnsignedNumber(3, this.maxPacketSize);

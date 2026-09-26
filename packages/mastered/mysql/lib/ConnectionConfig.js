@@ -9,47 +9,50 @@ function ConnectionConfig(options) {
     options = ConnectionConfig.parseUrl(options);
   }
 
-  this.host               = options.host || 'localhost';
-  this.port               = options.port || 3306;
-  this.localAddress       = options.localAddress;
-  this.socketPath         = options.socketPath;
-  this.user               = options.user || undefined;
-  this.password           = options.password || undefined;
-  this.database           = options.database;
-  this.connectTimeout     = (options.connectTimeout === undefined)
+  options = options || {};
+
+  this.host                    = options.host || 'localhost';
+  this.port                    = options.port || 3306;
+  this.localAddress            = options.localAddress;
+  this.socketPath              = options.socketPath;
+  this.user                    = options.user || undefined;
+  this.password                = options.password || undefined;
+  this.database                = options.database;
+  this.connectTimeout          = (options.connectTimeout === undefined)
     ? (10 * 1000)
     : options.connectTimeout;
-  this.insecureAuth       = options.insecureAuth || false;
-  this.supportBigNumbers  = options.supportBigNumbers || false;
-  this.bigNumberStrings   = options.bigNumberStrings || false;
-  this.dateStrings        = options.dateStrings || false;
-  this.debug              = options.debug;
-  this.trace              = options.trace !== false;
-  this.stringifyObjects   = options.stringifyObjects || false;
-  this.timezone           = options.timezone || 'local';
-  this.flags              = options.flags || '';
-  this.queryFormat        = options.queryFormat;
-  this.pool               = options.pool || undefined;
-  this.ssl                = (typeof options.ssl === 'string')
+  this.insecureAuth            = options.insecureAuth || false;
+  this.supportBigNumbers       = options.supportBigNumbers || false;
+  this.bigNumberStrings        = options.bigNumberStrings || false;
+  this.dateStrings             = options.dateStrings || false;
+  this.debug                   = options.debug;
+  this.trace                   = options.trace !== false;
+  this.stringifyObjects        = options.stringifyObjects || false;
+  this.timezone                = options.timezone || 'local';
+  this.flags                   = options.flags || '';
+  this.queryFormat             = options.queryFormat;
+  this.pool                    = options.pool || undefined;
+  this.authPlugins             = options.authPlugins || Object.create(null);
+  this.defaultAuthPlugin       = options.defaultAuthPlugin || 'mysql_native_password';
+  this.allowPublicKeyRetrieval = options.allowPublicKeyRetrieval === true;
+  this.serverPublicKey         = options.serverPublicKey;
+  this.onServerPublicKey       = options.onServerPublicKey;
+  this.ssl                     = (typeof options.ssl === 'string')
     ? ConnectionConfig.getSSLProfile(options.ssl)
     : (options.ssl || false);
-  this.localInfile        = (options.localInfile === undefined)
+  this.localInfile             = (options.localInfile === undefined)
     ? true
     : options.localInfile;
-  this.multipleStatements = options.multipleStatements || false;
-  this.typeCast           = (options.typeCast === undefined)
+  this.multipleStatements      = options.multipleStatements || false;
+  this.typeCast                = (options.typeCast === undefined)
     ? true
     : options.typeCast;
 
   if (this.timezone[0] === ' ') {
-    // "+" is a url encoded char for space so it
-    // gets translated to space when giving a
-    // connection string..
     this.timezone = '+' + this.timezone.substr(1);
   }
 
   if (this.ssl) {
-    // Default rejectUnauthorized to true
     this.ssl.rejectUnauthorized = this.ssl.rejectUnauthorized !== false;
   }
 
@@ -58,7 +61,6 @@ function ConnectionConfig(options) {
     ? ConnectionConfig.getCharsetNumber(options.charset)
     : options.charsetNumber || Charsets.UTF8_GENERAL_CI;
 
-  // Set the client flags
   var defaultFlags = ConnectionConfig.getDefaultFlags(options);
   this.clientFlags = ConnectionConfig.mergeFlags(defaultFlags, options.flags);
 }
@@ -67,18 +69,15 @@ ConnectionConfig.mergeFlags = function mergeFlags(defaultFlags, userFlags) {
   var allFlags = ConnectionConfig.parseFlagList(defaultFlags);
   var newFlags = ConnectionConfig.parseFlagList(userFlags);
 
-  // Merge the new flags
   for (var flag in newFlags) {
     if (allFlags[flag] !== false) {
       allFlags[flag] = newFlags[flag];
     }
   }
 
-  // Build flags
   var flags = 0x0;
   for (var flag in allFlags) {
     if (allFlags[flag]) {
-      // TODO: Throw here on some future release
       flags |= ClientConstants['CLIENT_' + flag] || 0x0;
     }
   }
@@ -98,32 +97,30 @@ ConnectionConfig.getCharsetNumber = function getCharsetNumber(charset) {
 
 ConnectionConfig.getDefaultFlags = function getDefaultFlags(options) {
   var defaultFlags = [
-    '-COMPRESS',          // Compression protocol *NOT* supported
-    '-CONNECT_ATTRS',     // Does *NOT* send connection attributes in Protocol::HandshakeResponse41
-    '+CONNECT_WITH_DB',   // One can specify db on connect in Handshake Response Packet
-    '+FOUND_ROWS',        // Send found rows instead of affected rows
-    '+IGNORE_SIGPIPE',    // Don't issue SIGPIPE if network failures
-    '+IGNORE_SPACE',      // Let the parser ignore spaces before '('
-    '+LOCAL_FILES',       // Can use LOAD DATA LOCAL
-    '+LONG_FLAG',         // Longer flags in Protocol::ColumnDefinition320
-    '+LONG_PASSWORD',     // Use the improved version of Old Password Authentication
-    '+MULTI_RESULTS',     // Can handle multiple resultsets for COM_QUERY
-    '+ODBC',              // Special handling of ODBC behaviour
-    '-PLUGIN_AUTH',       // Does *NOT* support auth plugins
-    '+PROTOCOL_41',       // Uses the 4.1 protocol
-    '+PS_MULTI_RESULTS',  // Can handle multiple resultsets for COM_STMT_EXECUTE
-    '+RESERVED',          // Unused
-    '+SECURE_CONNECTION', // Supports Authentication::Native41
-    '+TRANSACTIONS'       // Expects status flags
+    '-COMPRESS',          // Compression protocol is implemented in a later milestone.
+    '-CONNECT_ATTRS',     // Connection attributes are implemented in a later milestone.
+    '+CONNECT_WITH_DB',
+    '+FOUND_ROWS',
+    '+IGNORE_SIGPIPE',
+    '+IGNORE_SPACE',
+    '+LOCAL_FILES',
+    '+LONG_FLAG',
+    '+LONG_PASSWORD',
+    '+MULTI_RESULTS',
+    '+ODBC',
+    '+PLUGIN_AUTH',
+    '+PROTOCOL_41',
+    '+PS_MULTI_RESULTS',
+    '+RESERVED',
+    '+SECURE_CONNECTION',
+    '+TRANSACTIONS'
   ];
 
   if (options && options.localInfile !== undefined && !options.localInfile) {
-    // Disable LOCAL modifier for LOAD DATA INFILE
     defaultFlags.push('-LOCAL_FILES');
   }
 
   if (options && options.multipleStatements) {
-    // May send multiple statements per COM_QUERY and COM_STMT_PREPARE
     defaultFlags.push('+MULTI_STATEMENTS');
   }
 
@@ -161,7 +158,6 @@ ConnectionConfig.parseFlagList = function parseFlagList(flagList) {
     var state  = flag[0];
 
     if (state === undefined) {
-      // TODO: throw here on some future release
       continue;
     }
 
@@ -196,10 +192,8 @@ ConnectionConfig.parseUrl = function(url) {
       var value = url.query[key];
 
       try {
-        // Try to parse this as a JSON expression first
         options[key] = JSON.parse(value);
       } catch (err) {
-        // Otherwise assume it is a plain string
         options[key] = value;
       }
     }

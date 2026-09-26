@@ -1,3 +1,4 @@
+exports.AuthMoreDataPacket = require('./AuthMoreDataPacket');
 exports.AuthSwitchRequestPacket = require('./AuthSwitchRequestPacket');
 exports.AuthSwitchResponsePacket = require('./AuthSwitchResponsePacket');
 exports.ClientAuthenticationPacket = require('./ClientAuthenticationPacket');
