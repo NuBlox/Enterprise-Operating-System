@@ -11,6 +11,9 @@ namespace NuBlox.Observability.Tests;
 [TestClass]
 public sealed class NuBloxTelemetryTests
 {
+    private static readonly string[] MetricTagNames = ["operation.name", "operation.outcome"];
+    private static readonly string[] CorrelationScopeNames = ["CorrelationId", "TraceId", "SpanId", "TenantId", "PrincipalId"];
+
     [TestMethod]
     public void OpenTelemetrySdkReceivesNuBloxActivitiesWithApprovedCorrelation()
     {
@@ -58,9 +61,7 @@ public sealed class NuBloxTelemetryTests
         Assert.IsTrue(measurements.Count >= 2);
         foreach (var tags in measurements)
         {
-            CollectionAssert.AreEquivalent(
-                new[] { "operation.name", "operation.outcome" },
-                tags.Keys.ToArray());
+            CollectionAssert.AreEquivalent(MetricTagNames, tags.Keys.ToArray());
             Assert.AreEqual("platform.audit.append", tags["operation.name"]);
             Assert.AreEqual("succeeded", tags["operation.outcome"]);
             Assert.IsFalse(tags.Keys.Any(key =>
@@ -76,9 +77,7 @@ public sealed class NuBloxTelemetryTests
         var state = NuBloxTelemetry.CreateCorrelationScopeState(
             new TelemetryCorrelation("case-42", TenantId.New(), PrincipalId.New()));
 
-        CollectionAssert.AreEquivalent(
-            new[] { "CorrelationId", "TraceId", "SpanId", "TenantId", "PrincipalId" },
-            state.Keys.ToArray());
+        CollectionAssert.AreEquivalent(CorrelationScopeNames, state.Keys.ToArray());
         Assert.IsFalse(state.Keys.Any(key =>
             key.Contains("token", StringComparison.OrdinalIgnoreCase)
             || key.Contains("authorization", StringComparison.OrdinalIgnoreCase)
@@ -129,7 +128,7 @@ public sealed class NuBloxTelemetryTests
                 TimeSpan.Zero));
     }
 
-    private static IReadOnlyDictionary<string, object?> CopyTags(
+    private static Dictionary<string, object?> CopyTags(
         ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         var result = new Dictionary<string, object?>(StringComparer.Ordinal);
