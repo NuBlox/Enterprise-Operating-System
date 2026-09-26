@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.8  
+**Version:** 0.9  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.7  
+**Supersedes:** Version 0.8  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -34,7 +34,7 @@ Maintain the controlled implementation backlog that links NuBlox requirements an
 1. Every item states the requirement, architecture or control it advances.
 2. Candidate requirements are not treated as approved product semantics merely because implementation is technically possible.
 3. Spike code is evidence, not production source.
-4. A mastered NuBlox package may be adopted only when a product need and compatible architecture decision exist.
+4. A NuBlox-mastered or separately governed NuBlox package may be adopted only when a product need and compatible architecture decision exist.
 5. Every implementation item requires objective completion evidence.
 6. Security, tenant isolation, authority and audit controls require negative-path verification.
 
@@ -69,9 +69,9 @@ Maintain the controlled implementation backlog that links NuBlox requirements an
 | `DEV-102` | P1 | Deterministic production restore/build/test entrypoint | ADR-012 | Root SDK/build policy plus `scripts/verify-production.sh` used locally/CI | **Complete** |
 | `DEV-103` | P1 | Dependency and package provenance controls | ADR-012; H-003 | Central versions plus dependency inventory | **Complete — initial baseline** |
 | `DEV-104` | P1 | Production PostgreSQL persistence/migration scaffold | ADR-002/007/017/020/021; FR-005–FR-008 | Empty DB migration, journal/checksum, module schema ownership, tenant isolation and integration tests | **Complete — CI run 36272246291** |
-| `DEV-105` | P1 | Identity/context request boundary | ADR-007/008/011; FR-001–FR-004 | Provider-neutral Principal/Tenant context plus protected-request negative tests | **Ready** |
+| `DEV-105` | P1 | Identity/context request boundary | ADR-007/008/011; FR-001–FR-004 | Provider-neutral Principal/Tenant context plus protected-request negative tests | **Complete — CI run 36273403103** |
 | `DEV-106` | P1 | Production audit/telemetry primitives | ADR-016/018; NFR-AUD/OPS | Separate authoritative audit contract plus OTel trace/metric/log/health primitives and tests | **Ready** |
-| `DEV-107` | P1 | Complete CI quality gates | Development plan; NFRs | CI covers build/tests, persistence migrations/isolation, identity/security, telemetry/audit and dependency controls | **In progress — base build/test and PostgreSQL persistence gates active; identity/audit/API gates pending** |
+| `DEV-107` | P1 | Complete CI quality gates | Development plan; NFRs | CI covers build/tests, persistence migrations/isolation, identity/security, telemetry/audit and dependency controls | **In progress — base build/test, PostgreSQL persistence and identity/security gates active; audit/API gates pending** |
 | `DEV-108` | P1 | Production ASP.NET Core API host and contract primitives | ADR-008/011/012 | API host, health, RFC 9457 baseline, `/api/v1` grouping and OpenAPI infrastructure verified without invented business endpoints | **Ready** |
 
 ## Wave 2 — first governed vertical product slice
@@ -101,18 +101,19 @@ The exact workflow remains **Not Ready** until requirements work selects and val
 | `DEV-306` | P2 | Commercial/financial continuity slice | FR-023–FR-025 | Planned |
 | `DEV-307` | P2 | Expand by validated functional-governance, functional-delivery and built-environment outcomes | Product/requirements roadmap | Planned |
 
-## Mastered package workstream
+## Governed SQL package workstream
 
-`packages/mastered/mysql` remains a governed NuBlox-maintained package. ADR-021 deliberately selects PostgreSQL 18 as the initial production provider based on the current NuBlox evidence. The mastered MySQL package remains available for integrations/tooling or a later explicitly approved provider implementation; it is not pulled into the .NET PostgreSQL persistence layer.
+The separately governed `NuBlox/NuBloxSQL` repository is now the authoritative NuBlox location for the extracted MySQL driver capability previously maintained under `packages/mastered/mysql` in this repository. ADR-021 deliberately selects PostgreSQL 18 as the initial Enterprise Operating System production provider based on the current NuBlox evidence.
+
+NuBloxSQL remains available for integrations/tooling or a later explicitly approved provider implementation. Its existence does not make MySQL an Enterprise Operating System production dependency and it is not pulled into the .NET PostgreSQL persistence layer.
 
 ## Immediate execution order
 
-All P0 production-foundation architecture gates are now closed. The implementation sequence is:
+All P0 production-foundation architecture gates are closed. DEV-104 persistence and DEV-105 identity/context are complete. The remaining production-foundation sequence is:
 
 ```text
 EXECUTE IN PARALLEL WHERE SAFE:
 DEV-108 ASP.NET Core API host / contract primitives
-DEV-105 Principal/Tenant context boundary
 DEV-106 audit + OpenTelemetry primitives
         ↓
 DEV-107 integrate all production CI quality gates
@@ -122,7 +123,7 @@ DEV-201 select first approved business workflow
 DEV-202–DEV-208 first governed vertical product slice
 ```
 
-DEV-104 is complete. The remaining platform work above must stay semantic-light: it establishes production controls and infrastructure without inventing the first business workflow.
+The remaining platform work must stay semantic-light: it establishes production controls and infrastructure without inventing the first business workflow.
 
 ## References
 
@@ -148,3 +149,4 @@ DEV-104 is complete. The remaining platform work above must stay semantic-light:
 | 0.6 | 2026-09-26 | NuBlox Product / Engineering | Closed observability, release/schema evolution, provider and audit/evidence gates through ADR-016/018/020/021; unblocked DEV-104/106 |
 | 0.7 | 2026-09-26 | NuBlox Product / Engineering | Started DEV-104 production PostgreSQL migration, isolation and integration-verification implementation |
 | 0.8 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-104 after production PostgreSQL migration, RLS/runtime-role and checksum integration verification passed in CI run 36272246291 |
+| 0.9 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-105 after provider-neutral Principal/Tenant context resolution, fail-closed access checks and protected-request negative tests passed in CI run 36273403103; aligned the SQL package workstream with the NuBloxSQL extraction |

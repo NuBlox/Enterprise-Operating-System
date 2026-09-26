@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Identity</AssemblyName>
+    <RootNamespace>NuBlox.Identity</RootNamespace>
+    <Description>Provider-neutral NuBlox application principal and verified tenant-context boundary.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Kernel/NuBlox.Kernel.csproj" />
+  </ItemGroup>
+</Project>
