@@ -6,8 +6,8 @@ This spike implements bounded experiments defined by `NBEOS-G-013 Technical_spik
 
 ## Current scope
 
-Implemented verification covers `SPIKE-001` through `SPIKE-007`. `SPIKE-008`
-adds operational reporting, source drill-through and measured synthetic-volume
+Implemented verification covers `SPIKE-001` through `SPIKE-008`, including
+operational reporting, source drill-through and measured synthetic-volume
 queries. Each capability remains a bounded experiment under `Technical_spikes.md`.
 
 Technology used for the experiment:
@@ -61,26 +61,10 @@ volumes. The measure definitions and source trace are provisional for ADR-015.
 
 ## Structure
 
-```text
-spikes/foundation-architecture/
-├── src/
-│   ├── NuBlox.FoundationSpike.Shared/
-│   ├── NuBlox.FoundationSpike.Subjects/
-│   ├── NuBlox.FoundationSpike.Work/
-│   ├── NuBlox.FoundationSpike.Decisions/
-│   ├── NuBlox.FoundationSpike.Audit/
-│   ├── NuBlox.FoundationSpike.Application/
-│   ├── NuBlox.FoundationSpike.Infrastructure/
-│   └── NuBlox.FoundationSpike.Api/
-├── verification/
-│   └── NuBlox.FoundationSpike.Verification/
-├── migrations/
-│   ├── 0001_foundation.sql
-│   └── 0002_effective_history.sql
-├── docker-compose.yml
-├── Directory.Build.props
-└── global.json
-```
+- `src/` contains typed module projects, the transaction infrastructure and the minimal API harness;
+- `verification/` contains independent checks for the foundation, authority, integration, configuration, migration and reporting experiments;
+- `migrations/` contains ordered scripts `0001` through `0008`;
+- `docker-compose.yml` starts the local PostgreSQL dependency.
 
 ## SPIKE-001 architectural test
 
@@ -185,7 +169,7 @@ curl -sS -X POST http://localhost:5080/spike/governed-work \
   }'
 ```
 
-## Verification harness
+## Foundation verification harness
 
 The console verifier tests:
 
@@ -198,9 +182,10 @@ The console verifier tests:
 
 ## Current verification status
 
-`SPIKE-001` has passed GitHub Actions verification. `SPIKE-002` is executed by the same canonical `.github/workflows/foundation-spike.yml` pipeline and must pass at the current head before its result is treated as evidence.
-
-The local assistant execution container does not contain .NET or Docker, so GitHub Actions is the authoritative automated verifier for this spike.
+The independent CI workflows have passed `SPIKE-001` through `SPIKE-008`.
+The [controlled proof-of-concept report](../../software_project_docs/G_Architecture_Design/Proof_of_concept_report.md)
+lists their runs and limitations. SPIKE-008 was verified in
+[workflow run 36265786034](https://github.com/NuBlox/Enterprise-Operating-System/actions/runs/36265786034).
 
 ## Promotion rule
 

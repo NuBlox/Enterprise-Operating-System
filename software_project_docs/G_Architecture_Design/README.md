@@ -21,7 +21,7 @@ Templates remain under [`../../software_project_docs_templates/G_Architecture_De
 | `NBEOS-G-011` | [Data migration design](Data_migration_design.md) | Draft | 0.1 |
 | `NBEOS-G-012` | [Evaluation matrix for technology selection](Evaluation_matrix_for_technology_selection.md) | Draft | 0.1 |
 | `NBEOS-G-013` | [Technical spikes](Technical_spikes.md) | Draft | 0.1 |
-| `NBEOS-G-014` | [Proof of concept report](Proof_of_concept_report.md) | Draft | 0.1 |
+| `NBEOS-G-014` | [Proof of concept report](Proof_of_concept_report.md) | Draft | 0.5 |
 
 ## Current architecture hypothesis
 
@@ -39,46 +39,34 @@ cohesive modular application
 
 This remains provisional. Spike success provides evidence; it does not silently approve the production architecture.
 
-## Verified foundation evidence
+## Foundation experiment evidence
 
 The active disposable experiment is:
 
 [`../../spikes/foundation-architecture/`](../../spikes/foundation-architecture/)
 
-It currently demonstrates a generic governed-work transaction across explicit Subjects, Work, Decisions and Audit module boundaries using .NET 10 and PostgreSQL 18.
+Its independent .NET 10/PostgreSQL 18 checks cover modular transactions,
+effective history, customer row isolation, business authority, a simulated
+durable outbox, typed configuration and synthetic migration. SPIKE-008 adds
+two operational measures, source drill-through, isolation checks and query
+plans at synthetic volume on [PR #1](https://github.com/NuBlox/Enterprise-Operating-System/pull/1).
+Its [workflow run 36265786034](https://github.com/NuBlox/Enterprise-Operating-System/actions/runs/36265786034)
+passed on the tested commit.
 
-GitHub Actions workflow `.github/workflows/foundation-spike.yml` verifies the spike against PostgreSQL 18.
-
-### CI run 36256385149
-
-Commit tested: `6bb6d0595dd8f50853416de439e1fed96d611594`
-
-Result: **PASS**
-
-Verified in CI:
-
-- PostgreSQL 18 service startup;
-- versioned migration application;
-- .NET 10 restore/build for the API harness;
-- .NET 10 restore/build for the verification harness;
-- atomic commit of subject/work/decision/audit records;
-- database rejection of a cross-customer relationship;
-- explicit rollback leaving no partial subject/work state.
-
-The evidence and its limitations are recorded in [`Proof_of_concept_report.md`](Proof_of_concept_report.md).
+The [proof-of-concept report](Proof_of_concept_report.md) records the exact
+workflow runs, findings and limits. Passing experiments remain evidence for
+proposed ADRs, not approved production decisions.
 
 ## Architecture decisions requiring evidence next
 
 Highest-priority remaining decisions/spikes include:
 
-1. `ADR-002` historical/effective-dated persistence behaviour;
-2. `ADR-003` durable async/outbox mechanism;
-3. `ADR-007` customer/tenant isolation options beyond the current composite-key precursor;
-4. `ADR-008` identity/authentication boundary;
-5. `ADR-009` permission vs business authority enforcement;
-6. `ADR-010` workflow/orchestration approach;
-7. `ADR-015` operational reporting/read-model approach;
-8. `ADR-019` repeatable migration capability.
+1. `ADR-007` isolation options and privileged/support access beyond the tested shared-schema candidate;
+2. `ADR-008` identity/authentication boundary;
+3. `ADR-010` long-running workflow/orchestration approach;
+4. `ADR-015` historical work-state reporting, published snapshots and realistic volume;
+5. `ADR-019` representative source-data migration and scale;
+6. `SPIKE-009` reproducible build, testing and operability review.
 
 ## Next architecture documents/evidence
 
