@@ -9,10 +9,10 @@ The corresponding reusable templates are maintained under [`../../software_proje
 | ID | Document | Status | Version |
 |---|---|---|---|
 | `NBEOS-H-001` | [Development plan](Development_plan.md) | Draft | 0.1 |
-| `NBEOS-H-002` | [Product backlog](Product_backlog.md) | Draft | 0.18 |
+| `NBEOS-H-002` | [Product backlog](Product_backlog.md) | Draft | 0.20 |
 | `NBEOS-H-003` | [Dependency management document](Dependency_management_document.md) | Draft | 0.4 |
 | `NBEOS-H-004` | [First vertical slice definition](First_vertical_slice_definition.md) | Draft | 0.1 |
-| `NBEOS-H-005` | [First vertical slice verification and traceability](First_vertical_slice_verification_and_traceability.md) | Draft | 0.1 |
+| `NBEOS-H-005` | [First vertical slice verification and traceability](First_vertical_slice_verification_and_traceability.md) | Draft | 0.2 |
 
 ## Production foundation status
 
@@ -64,7 +64,7 @@ GitHub Actions runs the identical production verifier with PostgreSQL 18.6 avail
 
 The controlled implementation definition is [`First_vertical_slice_definition.md`](First_vertical_slice_definition.md).
 
-Implementation has progressed through:
+Implementation and verification have progressed through the complete Wave 2 chain:
 
 ```text
 DEV-202 governed Work Product + Revision records/persistence
@@ -85,6 +85,24 @@ DEV-208 consolidated traceability/verification
 The consolidated requirement → ADR/design → code → test → CI record is [`First_vertical_slice_verification_and_traceability.md`](First_vertical_slice_verification_and_traceability.md).
 
 The slice remains deliberately work-product-type neutral so the same core model can later support documents, drawings, models, specifications, reports, submissions and other governed outputs across functional governance, functional delivery and built-environment domains without prematurely hard-coding the full enterprise taxonomy.
+
+## Next controlled development stage
+
+With the first governed vertical slice complete, the next development work moves into Wave 3 capability expansion. Each new increment must retain the same discipline:
+
+```text
+validated requirement / backlog item
+        ↓
+architecture readiness
+        ↓
+end-to-end governed implementation
+        ↓
+automated negative + positive verification
+        ↓
+traceability + production CI evidence
+```
+
+The current Wave 3 backlog includes governed customer variation/configuration, search, controlled communication, external integration/reconciliation, reporting expansion, commercial/financial continuity and broader functional-governance / functional-delivery / built-environment outcomes.
 
 ## Development rule
 
