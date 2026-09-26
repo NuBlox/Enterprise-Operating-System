@@ -1,0 +1,82 @@
+name: Foundation Architecture Spike
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'spikes/foundation-architecture/**'
+      - '.github/workflows/foundation-architecture-spike.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and verify .NET/PostgreSQL spike
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18.6
+        env:
+          POSTGRES_DB: nublox_spike
+          POSTGRES_USER: nublox
+          POSTGRES_PASSWORD: nublox_spike_dev_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nublox -d nublox_spike"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 30
+
+    defaults:
+      run:
+        working-directory: spikes/foundation-architecture
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Apply spike migration
+        env:
+          PGPASSWORD: nublox_spike_dev_only
+        run: |
+          psql \
+            --host localhost \
+            --port 5432 \
+            --username nublox \
+            --dbname nublox_spike \
+            --set ON_ERROR_STOP=1 \
+            --file migrations/0001_foundation.sql
+
+      - name: Restore
+        run: |
+          dotnet restore src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj
+          dotnet restore verification/NuBlox.FoundationSpike.Verification/NuBlox.FoundationSpike.Verification.csproj
+
+      - name: Build
+        run: |
+          dotnet build src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj --configuration Release --no-restore
+          dotnet build verification/NuBlox.FoundationSpike.Verification/NuBlox.FoundationSpike.Verification.csproj --configuration Release --no-restore
+
+      - name: Execute architecture verification
+        env:
+          NUBLOX_SPIKE_CONNECTION_STRING: 'Host=localhost;Port=5432;Database=nublox_spike;Username=nublox;Password=nublox_spike_dev_only'
+        run: |
+          dotnet run \
+            --project verification/NuBlox.FoundationSpike.Verification/NuBlox.FoundationSpike.Verification.csproj \
+            --configuration Release \
+            --no-build
