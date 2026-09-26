@@ -9,8 +9,9 @@ var Classes = Object.create(null);
 exports.createConnection = function createConnection(config) {
   var Connection       = loadClass('Connection');
   var ConnectionConfig = loadClass('ConnectionConfig');
+  var connection       = new Connection({config: new ConnectionConfig(config)});
 
-  return new Connection({config: new ConnectionConfig(config)});
+  return decorateConnection(connection, getPromiseImplementation(config));
 };
 
 /**
@@ -22,8 +23,9 @@ exports.createConnection = function createConnection(config) {
 exports.createPool = function createPool(config) {
   var Pool       = loadClass('Pool');
   var PoolConfig = loadClass('PoolConfig');
+  var pool       = new Pool({config: new PoolConfig(config)});
 
-  return new Pool({config: new PoolConfig(config)});
+  return decoratePool(pool, getPromiseImplementation(config));
 };
 
 /**
@@ -115,6 +117,62 @@ Object.defineProperty(exports, 'Types', {
 });
 
 /**
+ * Promise connection wrapper constructor.
+ * @public
+ */
+Object.defineProperty(exports, 'PromiseConnection', {
+  get: loadClass.bind(null, 'PromiseConnection')
+});
+
+/**
+ * Promise pool wrapper constructor.
+ * @public
+ */
+Object.defineProperty(exports, 'PromisePool', {
+  get: loadClass.bind(null, 'PromisePool')
+});
+
+function decorateConnection(connection, PromiseImpl) {
+  if (typeof connection.promise !== 'function') {
+    Object.defineProperty(connection, 'promise', {
+      configurable : true,
+      enumerable   : false,
+      value        : function promise(overridePromise) {
+        var PromiseConnection = loadClass('PromiseConnection');
+
+        return new PromiseConnection(connection, overridePromise || PromiseImpl || global.Promise);
+      }
+    });
+  }
+
+  return connection;
+}
+
+function decoratePool(pool, PromiseImpl) {
+  if (typeof pool.promise !== 'function') {
+    Object.defineProperty(pool, 'promise', {
+      configurable : true,
+      enumerable   : false,
+      value        : function promise(overridePromise) {
+        var PromisePool = loadClass('PromisePool');
+
+        return new PromisePool(pool, overridePromise || PromiseImpl || global.Promise);
+      }
+    });
+  }
+
+  return pool;
+}
+
+function getPromiseImplementation(config) {
+  if (config && typeof config === 'object' && typeof config.Promise === 'function') {
+    return config.Promise;
+  }
+
+  return global.Promise;
+}
+
+/**
  * Load the given class.
  * @param {string} className Name of class to default
  * @return {function|object} Class constructor or exports
@@ -144,6 +202,12 @@ function loadClass(className) {
     case 'PoolConfig':
       Class = require('./lib/PoolConfig');
       break;
+    case 'PromiseConnection':
+      Class = require('./lib/PromiseConnection');
+      break;
+    case 'PromisePool':
+      Class = require('./lib/PromisePool');
+      break;
     case 'SqlString':
       Class = require('./lib/protocol/SqlString');
       break;
@@ -151,7 +215,7 @@ function loadClass(className) {
       Class = require('./lib/protocol/constants/types');
       break;
     default:
-      throw new Error('Cannot find class \'' + className + '\'');
+      throw new Error('Cannot find class \' ' + className + '\'');
   }
 
   // Store to prevent invoking require()

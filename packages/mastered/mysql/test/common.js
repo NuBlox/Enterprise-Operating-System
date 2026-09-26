@@ -1,5 +1,6 @@
 var common = exports;
 var fs     = require('fs');
+var os     = require('os');
 var path   = require('path');
 
 common.lib      = path.resolve(__dirname, '..', 'lib');
@@ -10,8 +11,8 @@ common.bogusPort     = 47378;
 // Useful for triggering ER_ACCESS_DENIED_ERROR errors on connect()
 common.bogusPassword = 'INVALID PASSWORD';
 
-// Used for simulating a fake mysql server
-common.fakeServerSocket = __dirname + '/fake_server.sock';
+// Used for simulating a fake mysql server. Keep this short for sockaddr_un limits.
+common.fakeServerSocket = path.join(os.tmpdir(), 'nublox-mysql-' + process.pid + '.sock');
 
 common.testDatabase = process.env.MYSQL_DATABASE || 'test';
 
@@ -143,9 +144,11 @@ common.getTestConfig = function(config) {
 };
 
 common.getSSLConfig = function getSSLConfig(config) {
+  var tlsFixtures = process.env.NUBLOX_MYSQL_TEST_TLS_DIR || common.fixtures;
+
   return common.extend({
-    ca   : fs.readFileSync(path.join(common.fixtures, 'server.crt'), 'ascii'),
-    cert : fs.readFileSync(path.join(common.fixtures, 'server.crt'), 'ascii'),
-    key  : fs.readFileSync(path.join(common.fixtures, 'server.key'), 'ascii')
+    ca   : fs.readFileSync(path.join(tlsFixtures, 'server.crt'), 'ascii'),
+    cert : fs.readFileSync(path.join(tlsFixtures, 'server.crt'), 'ascii'),
+    key  : fs.readFileSync(path.join(tlsFixtures, 'server.key'), 'ascii')
   }, config);
 };
