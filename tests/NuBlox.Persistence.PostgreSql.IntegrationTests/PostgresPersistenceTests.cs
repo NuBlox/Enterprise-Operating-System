@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Npgsql;
+using NuBlox.Kernel.Identity;
 using NuBlox.Persistence.PostgreSql;
 
 namespace NuBlox.Persistence.PostgreSql.IntegrationTests;
@@ -71,8 +72,8 @@ public sealed class PostgresPersistenceTests
         var runner = new PostgresMigrationRunner(migrationDataSource);
         await runner.ApplyAsync();
 
-        var tenantA = Guid.NewGuid();
-        var tenantB = Guid.NewGuid();
+        var tenantA = TenantId.New();
+        var tenantB = TenantId.New();
         await InsertTenantAsync(migrationDataSource, tenantA, "tenant-a");
         await InsertTenantAsync(migrationDataSource, tenantB, "tenant-b");
         await CreateRestrictedRuntimeRoleAsync(migrationDataSource);
@@ -104,7 +105,7 @@ public sealed class PostgresPersistenceTests
                 "INSERT INTO kernel.tenants (tenant_id, tenant_slug) VALUES (@tenant_id, @tenant_slug);",
                 runtimeConnection,
                 transaction);
-            crossTenantWrite.Parameters.AddWithValue("tenant_id", Guid.NewGuid());
+            crossTenantWrite.Parameters.AddWithValue("tenant_id", TenantId.New().Value);
             crossTenantWrite.Parameters.AddWithValue("tenant_slug", "forbidden-tenant");
 
             var exception = await Assert.ThrowsExactlyAsync<PostgresException>(() => crossTenantWrite.ExecuteNonQueryAsync());
@@ -129,7 +130,7 @@ public sealed class PostgresPersistenceTests
         await ExecuteAsync(connection, $"DROP OWNED BY {RuntimeRole}; DROP ROLE IF EXISTS {RuntimeRole};", ignoreUndefinedObject: true);
     }
 
-    private static async Task InsertTenantAsync(NpgsqlDataSource dataSource, Guid tenantId, string tenantSlug)
+    private static async Task InsertTenantAsync(NpgsqlDataSource dataSource, TenantId tenantId, string tenantSlug)
     {
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var transaction = await connection.BeginTransactionAsync();
@@ -139,7 +140,7 @@ public sealed class PostgresPersistenceTests
             "INSERT INTO kernel.tenants (tenant_id, tenant_slug) VALUES (@tenant_id, @tenant_slug);",
             connection,
             transaction);
-        command.Parameters.AddWithValue("tenant_id", tenantId);
+        command.Parameters.AddWithValue("tenant_id", tenantId.Value);
         command.Parameters.AddWithValue("tenant_slug", tenantSlug);
         await command.ExecuteNonQueryAsync();
         await transaction.CommitAsync();
