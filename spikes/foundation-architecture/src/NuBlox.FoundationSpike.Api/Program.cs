@@ -7,6 +7,8 @@ using NuBlox.FoundationSpike.Subjects;
 using NuBlox.FoundationSpike.Work;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
 
 var connectionString = builder.Configuration.GetConnectionString("Database")
     ?? throw new InvalidOperationException(
@@ -22,6 +24,25 @@ builder.Services.AddSingleton<CreateGovernedWorkHandler>();
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    var supplied = context.Request.Headers["X-Correlation-ID"].ToString();
+    var correlationId = Guid.TryParse(supplied, out var parsed) && parsed != Guid.Empty
+        ? parsed
+        : Guid.NewGuid();
+
+    context.Response.Headers["X-Correlation-ID"] = correlationId.ToString("D");
+    var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("NuBlox.FoundationSpike.Request");
+    using (logger.BeginScope(new Dictionary<string, object>
+    {
+        ["CorrelationId"] = correlationId.ToString("D")
+    }))
+    {
+        await next(context);
+    }
+});
+
 app.MapGet("/health", () => Results.Ok(new { status = "ok", spike = true }));
 
 app.MapPost(
@@ -29,6 +50,7 @@ app.MapPost(
     async (
         CreateGovernedWorkRequest request,
         CreateGovernedWorkHandler handler,
+        ILogger<Program> logger,
         CancellationToken cancellationToken) =>
     {
         if (request.CustomerId == Guid.Empty)
@@ -45,6 +67,11 @@ app.MapPost(
                     request.WorkSummary,
                     request.DecisionOutcome),
                 cancellationToken);
+
+            logger.LogInformation(
+                "Governed work created for customer {CustomerId}, work {WorkId}",
+                request.CustomerId,
+                result.WorkId.Value);
 
             return Results.Created(
                 $"/spike/governed-work/{result.WorkId.Value}",

@@ -1,0 +1,136 @@
+name: Build and operability spike
+
+on:
+  pull_request:
+    paths:
+      - 'spikes/foundation-architecture/**'
+      - '.github/workflows/operability-spike.yml'
+      - 'software_project_docs/G_Architecture_Design/Proof_of_concept_report.md'
+  push:
+    branches: [main]
+    paths:
+      - 'spikes/foundation-architecture/**'
+      - '.github/workflows/operability-spike.yml'
+      - 'software_project_docs/G_Architecture_Design/Proof_of_concept_report.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18.6
+        env:
+          POSTGRES_DB: nublox_spike
+          POSTGRES_USER: nublox
+          POSTGRES_PASSWORD: nublox_spike_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U nublox -d nublox_spike"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: nublox
+      PGDATABASE: nublox_spike
+      PGPASSWORD: nublox_spike_ci_only
+      NUBLOX_SPIKE_CONNECTION_STRING: Host=localhost;Port=5432;Database=nublox_spike;Username=nublox;Password=nublox_spike_ci_only
+      ConnectionStrings__Database: Host=localhost;Port=5432;Database=nublox_spike;Username=nublox;Password=nublox_spike_ci_only
+      NUBLOX_SPIKE_MIGRATION_MODE: host
+      NUBLOX_SPIKE_OPERABILITY_KEY: operability-restart-ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pinned .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.100'
+
+      - name: Verify SDK and database versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cd spikes/foundation-architecture && dotnet --version)" = '10.0.100'
+          psql -Atqc 'SHOW server_version;' | grep -E '^18\.6([[:space:]]|$)'
+
+      - name: Apply and replay ordered migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash spikes/foundation-architecture/scripts/apply-migrations.sh
+          before="$(psql -Atqc "SELECT (SELECT count(*) FROM pg_tables WHERE schemaname IN ('subjects','work','decisions','audit','access','authority','integration','configuration','migration'))::text || ':' || (SELECT count(*) FROM pg_indexes WHERE schemaname IN ('subjects','work','decisions','audit','access','authority','integration','configuration','migration'))::text || ':' || (SELECT count(*) FROM pg_policies WHERE schemaname IN ('subjects','work','decisions','audit','access','authority','integration','configuration','migration'))::text")"
+          bash spikes/foundation-architecture/scripts/apply-migrations.sh
+          after="$(psql -Atqc "SELECT (SELECT count(*) FROM pg_tables WHERE schemaname IN ('subjects','work','decisions','audit','access','authority','integration','configuration','migration'))::text || ':' || (SELECT count(*) FROM pg_indexes WHERE schemaname IN ('subjects','work','decisions','audit','access','authority','integration','configuration','migration'))::text || ':' || (SELECT count(*) FROM pg_policies WHERE schemaname IN ('subjects','work','decisions','audit','access','authority','integration','configuration','migration'))::text")"
+          test "$before" = "$after"
+          echo "PASS: ordered migration replay preserved table/index/policy counts ($after)."
+
+      - name: Restore and build API and process verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet restore spikes/foundation-architecture/src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj
+          dotnet build spikes/foundation-architecture/src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj --configuration Release --no-restore
+          dotnet restore spikes/foundation-architecture/verification/NuBlox.FoundationSpike.OperabilityVerification/NuBlox.FoundationSpike.OperabilityVerification.csproj
+          dotnet build spikes/foundation-architecture/verification/NuBlox.FoundationSpike.OperabilityVerification/NuBlox.FoundationSpike.OperabilityVerification.csproj --configuration Release --no-restore
+
+      - name: Verify cancellation and recovery across processes
+        shell: bash
+        run: |
+          set -euo pipefail
+          project=spikes/foundation-architecture/verification/NuBlox.FoundationSpike.OperabilityVerification/NuBlox.FoundationSpike.OperabilityVerification.csproj
+          dotnet run --project "$project" --configuration Release --no-build -- seed
+          dotnet run --project "$project" --configuration Release --no-build -- resume
+
+      - name: Verify correlated structured HTTP log
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet run --project spikes/foundation-architecture/src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj --configuration Release --no-build > "$RUNNER_TEMP/spike-api.log" 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid" 2>/dev/null || true; wait "$api_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in {1..20}; do
+            if curl -fsS http://localhost:5080/health > /dev/null; then ready=true; break; fi
+            sleep 1
+          done
+          test "$ready" = true
+          curl -fsS -D "$RUNNER_TEMP/spike-headers.txt" -o "$RUNNER_TEMP/spike-response.json" \
+            -X POST http://localhost:5080/spike/governed-work \
+            -H 'Content-Type: application/json' \
+            -H 'X-Correlation-ID: 99999999-9999-9999-9999-999999999999' \
+            -d '{"customerId":"11111111-1111-1111-1111-111111111111","subjectName":"private-marker-009","workSummary":"private-marker-009","decisionOutcome":"APPROVED"}'
+          python3 - "$RUNNER_TEMP/spike-api.log" "$RUNNER_TEMP/spike-headers.txt" "$RUNNER_TEMP/spike-response.json" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          logs = pathlib.Path(sys.argv[1]).read_text()
+          headers = pathlib.Path(sys.argv[2]).read_text().lower()
+          response = json.loads(pathlib.Path(sys.argv[3]).read_text())
+          correlation = '99999999-9999-9999-9999-999999999999'
+          assert f'x-correlation-id: {correlation}' in headers
+          assert response['workId']
+          records = []
+          for line in logs.splitlines():
+              try:
+                  records.append(json.loads(line))
+              except json.JSONDecodeError:
+                  pass
+          assert any('Governed work created' in record.get('Message', '')
+                     and correlation in json.dumps(record)
+                     and response['workId'] in json.dumps(record)
+                     for record in records)
+          assert 'private-marker-009' not in logs
+          print('PASS: JSON log links request correlation and persisted work without payload content.')
+          PY

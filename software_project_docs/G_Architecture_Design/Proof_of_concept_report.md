@@ -3,7 +3,7 @@
 **Section:** G_Architecture_Design  
 **Document ID:** NBEOS-G-014  
 **Document Type:** Proof of concept report  
-**Version:** 0.5  
+**Version:** 0.6  
 **Status:** Draft  
 **Author / Owner:** NuBlox Architecture / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Technical_spikes.md`, `Architecture_decision_records_ADRs.md`, `High-level_design_HLD.md`, `Data_architecture.md`, `Security_architecture.md`, `Data_migration_design.md`  
-**Supersedes:** Version 0.4  
+**Supersedes:** Version 0.5  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/G_Architecture_Design/Proof_of_concept_report.md`  
 **Storage Location:** `software_project_docs/G_Architecture_Design/Proof_of_concept_report.md`  
@@ -224,6 +224,23 @@ not a production workload benchmark or SLO.
 The verifier has no concurrent updates. Across separate reads or pages the
 current report can change; snapshot consistency, historical work states and
 stable published reports still require explicit design and testing.
+
+## SPIKE-009 — Build, developer workflow and operability
+
+The proposed experiment pins the .NET SDK, PostgreSQL image and Npgsql version,
+applies ordered migrations twice on a fresh CI database, and restores/builds
+the API and process verifier from checkout. The verifier runs in separate
+`seed` and `resume` processes: it cancels a claimed outbox delivery, observes
+the durable `PROCESSING` record after restart, rejects premature recovery,
+ages the test lease and completes the recovered work. An HTTP smoke test checks
+a JSON log's correlation ID and work ID against a response while excluding
+the sample request content.
+
+**Result: pending dedicated CI verification.** These checks test Linux CI and
+simulated orderly shutdown only. They do not establish Mac execution, production
+schema upgrades, worker fleet coordination, full telemetry or deployed runtime
+behaviour. The existing console verifiers all require PostgreSQL; no independent
+unit-test suite is yet present.
 
 ## What the POC does not yet prove
 
