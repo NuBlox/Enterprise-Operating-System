@@ -60,7 +60,7 @@ function createCustomPlugin(name, factory, config) {
         step       : step++
       });
     },
-    next    : function next(data) {
+    next: function next(data) {
       return handler(data, {
         phase      : 'continue',
         pluginName : name,
@@ -260,9 +260,15 @@ function clearPassword(password) {
 
 function normalizeScramble(data) {
   var buffer = Buffer.isBuffer(data) ? data : Buffer.from(data || []);
-  var length = Math.min(20, buffer.length);
 
-  return buffer.slice(0, length);
+  if (buffer.length < 20) {
+    throw createAuthError(
+      'AUTH_PLUGIN_PROTOCOL_ERROR',
+      'Authentication plugin scramble must contain at least 20 bytes.'
+    );
+  }
+
+  return buffer.slice(0, 20);
 }
 
 function normalizePublicKey(key) {
