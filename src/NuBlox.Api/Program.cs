@@ -1,4 +1,5 @@
 using NuBlox.Api;
+using NuBlox.Audit;
 using NuBlox.Observability;
 using NuBlox.WorkProducts.Application;
 
@@ -14,7 +15,12 @@ builder.Services.AddProblemDetails(options =>
     };
 });
 builder.Services.AddOpenApi("v1");
-builder.Services.AddScoped<IWorkProductHttpOperations, WorkProductHttpOperations>();
+builder.Services.AddScoped<WorkProductHttpOperations>();
+builder.Services.AddScoped<IWorkProductHttpOperations>(services =>
+    new AuditedObservedWorkProductHttpOperations(
+        services.GetRequiredService<WorkProductHttpOperations>(),
+        services.GetRequiredService<IAuditEvidenceAppender>(),
+        services.GetRequiredService<ILogger<AuditedObservedWorkProductHttpOperations>>()));
 
 var app = builder.Build();
 
