@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Audit</AssemblyName>
+    <RootNamespace>NuBlox.Audit</RootNamespace>
+    <Description>Provider-neutral append-oriented authoritative audit/evidence contracts.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Kernel/NuBlox.Kernel.csproj" />
+  </ItemGroup>
+</Project>
