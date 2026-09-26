@@ -5,6 +5,7 @@
     <Description>Provider-neutral governed Work Product application contracts and operations.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../NuBlox.Authority/NuBlox.Authority.csproj" />
     <ProjectReference Include="../NuBlox.WorkProducts.Domain/NuBlox.WorkProducts.Domain.csproj" />
   </ItemGroup>
 </Project>

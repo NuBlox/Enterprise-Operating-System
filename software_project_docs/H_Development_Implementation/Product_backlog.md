@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.14  
+**Version:** 0.15  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_definition.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.13  
+**Supersedes:** Version 0.14  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -83,11 +83,11 @@ Selected workflow: **Governed Work Product — Create, Review, Approve and Issue
 | `DEV-201` | P1 | Select and baseline the first representative business workflow | UC-001/002/003/010; functional validation priorities | Scope, actors, records, lifecycle, authority boundary and acceptance criteria baselined | **Complete — NBEOS-H-004 v0.1** |
 | `DEV-202` | P1 | Governed record creation/maintenance | FR-005–FR-008; NBEOS-H-004 | WorkProduct + Revision typed semantics, atomic persistence, module-owned migration, constraints, RLS isolation and automated tests | **Complete — CI run 36275665645** |
 | `DEV-203` | P1 | Work initiation/routing/state | FR-009–FR-014; NBEOS-H-004 | Access-evaluated Draft → InReview submission, immutable submission evidence, routed open ReviewRequest, atomic persistence/concurrency guard and tenant isolation | **Complete — CI run 36276125829** |
-| `DEV-204` | P1 | Review/decision/authority path | FR-015–FR-018; NBEOS-H-004 | Authority, evidence and outcome verified | **Ready** |
-| `DEV-205` | P1 | Work-product/evidence linkage | FR-019–FR-022; NBEOS-H-004 | Revisions/decisions/issue evidence traceably related | **Ready after DEV-204** |
+| `DEV-204` | P1 | Review/decision/authority path | FR-015–FR-018; NBEOS-H-004; ADR-009 | Permission-separated contextual authority evaluation, immutable decision evidence, atomic request completion/revision outcome and tenant-isolated PostgreSQL verification | **Complete — CI run 36277012364** |
+| `DEV-205` | P1 | Work-product/evidence linkage | FR-019–FR-022; NBEOS-H-004 | Revisions/decisions/issue evidence traceably related | **Ready** |
 | `DEV-206` | P1 | Operational management view/drill-through | FR-027–FR-029, FR-041; NBEOS-H-004 | Contributor/reviewer attention view and governed source drill-through | **Ready** |
-| `DEV-207` | P1 | Durable notification/integration consequence | FR-018, FR-030, FR-032–FR-035; NBEOS-H-004 | Restart/retry-safe consequence and reconciliation | **Ready after DEV-204/205** |
-| `DEV-208` | P1 | First-slice traceability/verification evidence | SRS verification; NBEOS-H-004 | Requirement → ADR/design → code → test links | **Ready after DEV-202–207** |
+| `DEV-207` | P1 | Durable notification/integration consequence | FR-018, FR-030, FR-032–FR-035; NBEOS-H-004 | Restart/retry-safe consequence and reconciliation | **Ready after DEV-205** |
+| `DEV-208` | P1 | First-slice traceability/verification evidence | SRS verification; NBEOS-H-004 | Requirement → ADR/design → code → test links | **Ready after DEV-205–207** |
 
 ## Wave 3 — cross-enterprise capability expansion
 
@@ -109,11 +109,9 @@ NuBloxSQL remains available for integrations/tooling or a later explicitly appro
 
 ## Immediate execution order
 
-The governed Work Product record and review-submission baselines are complete. The active sequence is:
+The governed Work Product record, review submission and authority-backed review decision baselines are complete. The active sequence is:
 
 ```text
-DEV-204 authority-backed review/approval decision
-        ↓
 DEV-205 evidence + issue relationships
         ↓
 DEV-206 attention/drill-through
@@ -123,7 +121,7 @@ DEV-207 durable consequence
 DEV-208 consolidated traceability/verification
 ```
 
-DEV-206 may proceed in parallel with DEV-204 where it consumes only the already-governed review request/read model. The first slice remains work-product-type neutral. Discipline/customer-specific semantics are introduced only through later validated requirements.
+DEV-206 may proceed in parallel with DEV-205 where it consumes only governed Work Product, review-request and decision read models. The first slice remains work-product-type neutral. Discipline/customer-specific semantics are introduced only through later validated requirements.
 
 ## References
 
@@ -155,3 +153,4 @@ DEV-206 may proceed in parallel with DEV-204 where it consumes only the already-
 | 0.12 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-201 by baselining Governed Work Product — Create, Review, Approve and Issue as the first representative production workflow |
 | 0.13 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-202 after WorkProduct/Revision domain, module-owned PostgreSQL persistence, tenant isolation and negative-path verification passed in CI run 36275665645 |
 | 0.14 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-203 after access-evaluated review submission, ReviewRequest routing, concurrency and tenant-isolation verification passed in CI run 36276125829 |
+| 0.15 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-204 after contextual business-authority separation, immutable decision evidence and atomic tenant-isolated decision persistence passed in CI run 36277012364 |
