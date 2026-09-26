@@ -118,11 +118,14 @@ public sealed class SubjectHistoryModule
             return null;
         }
 
+        static DateTimeOffset ToUtcOffset(DateTime value) =>
+            new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
+
         return new SubjectNameVersion(
             reader.GetString(0),
-            reader.GetFieldValue<DateTimeOffset>(1),
-            reader.IsDBNull(2) ? null : reader.GetFieldValue<DateTimeOffset>(2),
-            reader.GetFieldValue<DateTimeOffset>(3),
+            ToUtcOffset(reader.GetDateTime(1)),
+            reader.IsDBNull(2) ? null : ToUtcOffset(reader.GetDateTime(2)),
+            ToUtcOffset(reader.GetDateTime(3)),
             reader.GetString(4));
     }
 }
