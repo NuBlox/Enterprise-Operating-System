@@ -6,17 +6,16 @@ NuBlox is an enterprise operating system being defined and developed through a c
 
 ## Programme approach
 
-The project proceeds top-down from business intent through product definition, requirements, architecture, design, implementation, verification, release and operation.
+The programme proceeds top-down from business intent through product definition, market/customer evidence, requirements, architecture, design, implementation, verification, release and operation.
 
-The repository contains a comprehensive software-project document template library so that each controlled artifact can use a consistent structure, lifecycle and approval model.
+The repository separates **document templates** from **live controlled programme documents**:
+
+- [`software_project_docs_templates/`](software_project_docs_templates/) — reusable project-document templates;
+- [`software_project_docs/`](software_project_docs/) — live NuBlox controlled documents and current programme decisions/evidence.
 
 ## Project document templates
 
-The template library is located at:
-
-[`software_project_docs_templates/`](software_project_docs_templates/)
-
-It contains templates spanning:
+The template library spans:
 
 - enterprise and pre-project work;
 - legal, commercial and procurement;
@@ -36,7 +35,25 @@ The common document-control metadata requirements are defined in:
 
 [`software_project_docs_templates/00_Templates/Document_Control_Metadata_Template.md`](software_project_docs_templates/00_Templates/Document_Control_Metadata_Template.md)
 
-Controlled project documents should identify the template used and carry the applicable document-control fields, including status, version, owner, reviewer, approver, classification, retention, related documents and change history.
+Template files are reference structures. NuBlox decisions and evidence belong in the corresponding live document under `software_project_docs/`.
+
+## Current controlled documents
+
+The live programme index is:
+
+[`software_project_docs/README.md`](software_project_docs/README.md)
+
+The first Enterprise / Pre-Project baseline now includes controlled Draft v0.1 documents for:
+
+- Product vision statement;
+- Product strategy;
+- Market analysis;
+- Competitor analysis;
+- Customer research summary;
+- Business case;
+- Feasibility study.
+
+These drafts establish hypotheses and evidence requirements; they are not approved product or architecture baselines yet.
 
 ## Brand assets
 
@@ -52,17 +69,20 @@ Brand assets should be referenced from this directory rather than duplicated int
 
 ## Working principles
 
-- Start with the business and product need before defining the software solution.
+- Define the business and product need before defining the software solution.
 - Maintain traceability from strategy through requirements, architecture, implementation, testing, release and operation.
-- Use controlled documents where the project needs durable decisions, evidence, approvals or operating instructions.
 - Use the repository templates as the default structure for controlled project documents.
-- Keep important decisions, assumptions, risks, approvals and changes traceable.
-- Avoid creating multiple overlapping documents when one controlled artifact can satisfy the need clearly.
+- Keep hypotheses visibly separate from approved decisions.
+- Record important assumptions, risks, evidence, approvals and changes.
+- Prefer complete business outcomes over feature lists or module boundaries.
+- Avoid creating overlapping documents when one controlled artifact can satisfy the requirement clearly.
 - Keep implementation decisions subordinate to approved business, product and technical requirements.
 
-## Repository status
+## Current phase
 
-The repository currently contains project-definition material, document templates, project-document generation tooling and NuBlox brand assets. Product and software decisions should be introduced through the appropriate controlled project artifacts as the programme progresses.
+The programme is in **Enterprise / Pre-Project definition and validation**.
+
+The immediate work is to strengthen the Draft product/market case through customer evidence, cost/benefit analysis, financial modelling, risk/compliance work and enterprise-architecture principles before progressing into controlled requirements and software architecture.
 
 ## Licence
 
