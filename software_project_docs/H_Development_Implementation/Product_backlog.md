@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.6  
+**Version:** 0.8  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.5  
+**Supersedes:** Version 0.7  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -68,10 +68,10 @@ Maintain the controlled implementation backlog that links NuBlox requirements an
 | `DEV-101` | P1 | Create production source/test boundaries separate from `spikes/` | ADR-001/012 | Kernel/tests compile independently; boundary test rejects spike references | **Complete — CI run 36270844112** |
 | `DEV-102` | P1 | Deterministic production restore/build/test entrypoint | ADR-012 | Root SDK/build policy plus `scripts/verify-production.sh` used locally/CI | **Complete** |
 | `DEV-103` | P1 | Dependency and package provenance controls | ADR-012; H-003 | Central versions plus dependency inventory | **Complete — initial baseline** |
-| `DEV-104` | P1 | Production PostgreSQL persistence/migration scaffold | ADR-002/007/017/020/021; FR-005–FR-008 | Empty DB migration, journal/checksum, module schema ownership, tenant isolation and integration tests | **Ready** |
+| `DEV-104` | P1 | Production PostgreSQL persistence/migration scaffold | ADR-002/007/017/020/021; FR-005–FR-008 | Empty DB migration, journal/checksum, module schema ownership, tenant isolation and integration tests | **Complete — CI run 36272246291** |
 | `DEV-105` | P1 | Identity/context request boundary | ADR-007/008/011; FR-001–FR-004 | Provider-neutral Principal/Tenant context plus protected-request negative tests | **Ready** |
 | `DEV-106` | P1 | Production audit/telemetry primitives | ADR-016/018; NFR-AUD/OPS | Separate authoritative audit contract plus OTel trace/metric/log/health primitives and tests | **Ready** |
-| `DEV-107` | P1 | Complete CI quality gates | Development plan; NFRs | CI covers build/tests, persistence migrations/isolation, identity/security, telemetry/audit and dependency controls | **In progress — base build/test gate exists** |
+| `DEV-107` | P1 | Complete CI quality gates | Development plan; NFRs | CI covers build/tests, persistence migrations/isolation, identity/security, telemetry/audit and dependency controls | **In progress — base build/test and PostgreSQL persistence gates active; identity/audit/API gates pending** |
 | `DEV-108` | P1 | Production ASP.NET Core API host and contract primitives | ADR-008/011/012 | API host, health, RFC 9457 baseline, `/api/v1` grouping and OpenAPI infrastructure verified without invented business endpoints | **Ready** |
 
 ## Wave 2 — first governed vertical product slice
@@ -113,7 +113,6 @@ All P0 production-foundation architecture gates are now closed. The implementati
 EXECUTE IN PARALLEL WHERE SAFE:
 DEV-108 ASP.NET Core API host / contract primitives
 DEV-105 Principal/Tenant context boundary
-DEV-104 PostgreSQL persistence / migrations / isolation
 DEV-106 audit + OpenTelemetry primitives
         ↓
 DEV-107 integrate all production CI quality gates
@@ -123,7 +122,7 @@ DEV-201 select first approved business workflow
 DEV-202–DEV-208 first governed vertical product slice
 ```
 
-The platform work above must stay semantic-light: it establishes production controls and infrastructure without inventing the first business workflow.
+DEV-104 is complete. The remaining platform work above must stay semantic-light: it establishes production controls and infrastructure without inventing the first business workflow.
 
 ## References
 
@@ -147,3 +146,5 @@ The platform work above must stay semantic-light: it establishes production cont
 | 0.4 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-101/102/103 after production foundation CI passed |
 | 0.5 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-005/006/009; added provider selection and API-host foundation |
 | 0.6 | 2026-09-26 | NuBlox Product / Engineering | Closed observability, release/schema evolution, provider and audit/evidence gates through ADR-016/018/020/021; unblocked DEV-104/106 |
+| 0.7 | 2026-09-26 | NuBlox Product / Engineering | Started DEV-104 production PostgreSQL migration, isolation and integration-verification implementation |
+| 0.8 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-104 after production PostgreSQL migration, RLS/runtime-role and checksum integration verification passed in CI run 36272246291 |

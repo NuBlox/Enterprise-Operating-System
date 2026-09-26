@@ -30,7 +30,25 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18.6
+        env:
+          POSTGRES_DB: nublox_production_test
+          POSTGRES_USER: nublox_migrator
+          POSTGRES_PASSWORD: nublox_migrator_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U nublox_migrator -d nublox_production_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      NUBLOX_POSTGRES_CONNECTION_STRING: Host=localhost;Port=5432;Database=nublox_production_test;Username=nublox_migrator;Password=nublox_migrator_ci_only
 
     steps:
       - name: Checkout
