@@ -102,15 +102,31 @@ public sealed class IdentityContextResolverTests
     [TestMethod]
     public void ExternalIdentityRequiresIssuerAndSubject()
     {
-        CaptureException<ArgumentException>(() => new ExternalIdentity(" ", "subject"));
-        CaptureException<ArgumentException>(() => new ExternalIdentity("https://identity.example.test", " "));
+        CaptureException<ArgumentException>(() =>
+        {
+            var identity = new ExternalIdentity(" ", "subject");
+            GC.KeepAlive(identity);
+        });
+        CaptureException<ArgumentException>(() =>
+        {
+            var identity = new ExternalIdentity("https://identity.example.test", " ");
+            GC.KeepAlive(identity);
+        });
     }
 
     [TestMethod]
     public void StableIdentifiersRejectEmptyValues()
     {
-        CaptureException<ArgumentException>(() => new PrincipalId(Guid.Empty));
-        CaptureException<ArgumentException>(() => new TenantId(Guid.Empty));
+        CaptureException<ArgumentException>(() =>
+        {
+            var principalId = new PrincipalId(Guid.Empty);
+            GC.KeepAlive(principalId);
+        });
+        CaptureException<ArgumentException>(() =>
+        {
+            var tenantId = new TenantId(Guid.Empty);
+            GC.KeepAlive(tenantId);
+        });
     }
 
     [TestMethod]
@@ -175,7 +191,7 @@ public sealed class IdentityContextResolverTests
 
     private sealed class InMemoryTenantDirectory : ITenantDirectory
     {
-        private readonly IReadOnlyDictionary<string, TenantDirectoryEntry> _tenants;
+        private readonly Dictionary<string, TenantDirectoryEntry> _tenants;
 
         public InMemoryTenantDirectory(IEnumerable<TenantDirectoryEntry> tenants)
         {
