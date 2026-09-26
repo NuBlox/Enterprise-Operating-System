@@ -23,7 +23,7 @@ public sealed class PostgresWorkProductDeliveryStore : IWorkProductDeliveryStore
     {
         var canonicalWorker = CanonicalWorkerId(workerId);
         if (nowUtc == default) throw new ArgumentException("Claim timestamp is required.", nameof(nowUtc));
-        if (leaseDuration <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(leaseDuration));
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(leaseDuration, TimeSpan.Zero);
 
         var leaseExpiresAt = nowUtc.ToUniversalTime().Add(leaseDuration);
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -266,7 +266,7 @@ public sealed class PostgresWorkProductDeliveryStore : IWorkProductDeliveryStore
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(workerId);
         var value = workerId.Trim();
-        if (value.Length > 128) throw new ArgumentOutOfRangeException(nameof(workerId), "Worker identifier cannot exceed 128 characters.");
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(value.Length, 128, nameof(workerId));
         return value;
     }
 
@@ -274,7 +274,7 @@ public sealed class PostgresWorkProductDeliveryStore : IWorkProductDeliveryStore
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(failureCode);
         var value = failureCode.Trim();
-        if (value.Length > 120) throw new ArgumentOutOfRangeException(nameof(failureCode), "Failure code cannot exceed 120 characters.");
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(value.Length, 120, nameof(failureCode));
         return value;
     }
 
