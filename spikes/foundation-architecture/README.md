@@ -6,9 +6,11 @@ This spike implements bounded experiments defined by `NBEOS-G-013 Technical_spik
 
 ## Current scope
 
-Implemented verification covers `SPIKE-001` through `SPIKE-008`, including
+Implemented verification covers `SPIKE-001` through `SPIKE-009`, including
 operational reporting, source drill-through and measured synthetic-volume
-queries. Each capability remains a bounded experiment under `Technical_spikes.md`.
+queries, a reproducible build/migration path, correlated JSON API logging and
+a worker restart experiment. Each capability remains a bounded experiment
+under `Technical_spikes.md`.
 
 Technology used for the experiment:
 
@@ -58,6 +60,37 @@ runs on pull requests and pushes to `main` that change the spike.
 This test does not reconstruct earlier work states, preserve published report
 snapshots, prove field-level permissions, or establish realistic production
 volumes. The measure definitions and source trace are provisional for ADR-015.
+
+## SPIKE-009 build and operability
+
+The exact .NET SDK is `10.0.100` (`global.json`) and the development/CI
+PostgreSQL image is `18.6`. Npgsql is fixed at `10.0.3`. The ordered migration
+command is `bash scripts/apply-migrations.sh`, with `NUBLOX_SPIKE_MIGRATION_MODE=host`
+and standard `PG*` variables when using a host PostgreSQL client in CI. The CI
+job applies the migrations twice to an empty spike database and compares the
+table, index and row-policy counts after each run.
+
+The operability verifier has two modes that **must run as separate processes**.
+`seed` commits an outbox intent and cancels delivery after the worker claim;
+`resume` checks that an unexpired lease is untouched, ages only the test
+fixture's lease, recovers it and completes delivery. Use a fresh database or a
+unique `NUBLOX_SPIKE_OPERABILITY_KEY` for another run:
+
+```bash
+export NUBLOX_SPIKE_OPERABILITY_KEY="operability-$(date +%s)"
+dotnet run --project verification/NuBlox.FoundationSpike.OperabilityVerification/NuBlox.FoundationSpike.OperabilityVerification.csproj --configuration Release -- seed
+dotnet run --project verification/NuBlox.FoundationSpike.OperabilityVerification/NuBlox.FoundationSpike.OperabilityVerification.csproj --configuration Release -- resume
+```
+
+The HTTP harness logs JSON with a GUID `X-Correlation-ID` scope, echoes the ID
+on its response and logs only customer/work identifiers for the tested write.
+The CI check links the request, response and persisted work ID without logging
+the sample request content. Existing console verifiers are database integration
+checks; this spike does not add or claim a separate unit-test suite.
+
+This experiment uses orderly cancellation and an artificially aged lease. It
+does not test a real provider, forced termination, rolling deployments,
+production credentials, a populated-schema upgrade or a Mac runner.
 
 ## Structure
 
@@ -124,12 +157,7 @@ cd spikes/foundation-architecture
 
 docker compose up -d postgres
 
-for migration in migrations/*.sql; do
-  echo "Applying ${migration}"
-  docker compose exec -T postgres \
-    psql -U nublox -d nublox_spike -v ON_ERROR_STOP=1 \
-    < "${migration}"
-done
+bash scripts/apply-migrations.sh
 
 dotnet restore src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj
 dotnet build src/NuBlox.FoundationSpike.Api/NuBlox.FoundationSpike.Api.csproj --no-restore
@@ -182,7 +210,8 @@ The console verifier tests:
 
 ## Current verification status
 
-The independent CI workflows have passed `SPIKE-001` through `SPIKE-008`.
+The independent CI workflows have passed `SPIKE-001` through `SPIKE-009`.
+SPIKE-009 passed in [workflow run 36266900336](https://github.com/NuBlox/Enterprise-Operating-System/actions/runs/36266900336).
 The [controlled proof-of-concept report](../../software_project_docs/G_Architecture_Design/Proof_of_concept_report.md)
 lists their runs and limitations. SPIKE-008 was verified in
 [workflow run 36265786034](https://github.com/NuBlox/Enterprise-Operating-System/actions/runs/36265786034).

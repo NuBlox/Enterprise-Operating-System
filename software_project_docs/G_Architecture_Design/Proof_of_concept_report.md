@@ -3,7 +3,7 @@
 **Section:** G_Architecture_Design  
 **Document ID:** NBEOS-G-014  
 **Document Type:** Proof of concept report  
-**Version:** 0.5  
+**Version:** 0.6  
 **Status:** Draft  
 **Author / Owner:** NuBlox Architecture / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Technical_spikes.md`, `Architecture_decision_records_ADRs.md`, `High-level_design_HLD.md`, `Data_architecture.md`, `Security_architecture.md`, `Data_migration_design.md`  
-**Supersedes:** Version 0.4  
+**Supersedes:** Version 0.5  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/G_Architecture_Design/Proof_of_concept_report.md`  
 **Storage Location:** `software_project_docs/G_Architecture_Design/Proof_of_concept_report.md`  
@@ -225,6 +225,28 @@ The verifier has no concurrent updates. Across separate reads or pages the
 current report can change; snapshot consistency, historical work states and
 stable published reports still require explicit design and testing.
 
+## SPIKE-009 — Build, developer workflow and operability
+
+The experiment pins the .NET SDK at `10.0.100`, PostgreSQL at `18.6` and Npgsql
+at `10.0.3`. It applies ordered migrations twice on a fresh CI database and
+restores/builds the API and process verifier from checkout. The verifier runs in separate
+`seed` and `resume` processes: it cancels a claimed outbox delivery, observes
+the durable `PROCESSING` record after restart, rejects premature recovery,
+ages the test lease and completes the recovered work. An HTTP smoke test checks
+a JSON log's correlation ID and work ID against a response while excluding
+the sample request content.
+
+**Result: PASS** in [build and operability workflow run 36266900336](https://github.com/NuBlox/Enterprise-Operating-System/actions/runs/36266900336)
+on commit `fd14fb7b817e6f59b13d54acd4eba322d2f3b4d2`. Both builds completed
+with zero warnings and errors. Migration replay preserved 15 tables, 33 indexes
+and 15 row policies; the cancellation, separate-process recovery and correlated
+JSON log checks each passed. These checks test Linux CI and simulated orderly
+shutdown only. They do not establish Mac execution, production schema upgrades,
+worker fleet coordination, full telemetry or deployed runtime behaviour. The
+existing console verifiers all require PostgreSQL; no independent unit-test
+suite is yet present. The SDK, database image and direct Npgsql package are
+fixed, while transitive package locks and action SHA pins remain to be reviewed.
+
 ## What the POC does not yet prove
 
 The evidence does not yet establish:
@@ -257,6 +279,7 @@ Current evidence supports continuing the hypothesis that NuBlox can use:
 - typed, effective customer configuration with mandatory invariants;
 - migration exception accounting and deterministic rerun for a small source fixture;
 - customer-scoped operational counts with source drill-through at modest synthetic volume.
+- repeatable CI build/migration smoke checks and recovery of a stranded work intent across two processes.
 
 These approaches are technically credible, but remain evidence rather than final production decisions.
 
@@ -267,7 +290,7 @@ Continue the bounded spike sequence with:
 1. complete isolation-options comparison and privileged/support-access model;
 2. test real provider contracts and realistic migration sources/volume;
 3. define historical work-state and report snapshot requirements;
-4. run SPIKE-009 build/operability assessment and review material ADRs.
+4. review transitive dependency locks, full telemetry, Mac workflow and material ADRs.
 
 ## CI evidence
 
@@ -281,12 +304,13 @@ Continue the bounded spike sequence with:
 | SPIKE-006 typed configuration | `36258663919` | `a3be15d` | success |
 | SPIKE-007 synthetic migration | `36258793007` | `6bb6146c003a334ef5d71b0c42ebfa0a800d2757` | success |
 | SPIKE-008 operational reporting | `36265786034` | `437e2e05e0b2e4ca67c1d8e9fcd06d48c39291aa` | success |
+| SPIKE-009 build/operability | `36266900336` | `fd14fb7b817e6f59b13d54acd4eba322d2f3b4d2` | success |
 
 ## Recommendation
 
 Retain `spikes/foundation-architecture/` as disposable evidence. Progress to
-SPIKE-009 and the unresolved isolation,
-identity and production-volume questions. Promotion requires review of the
+the unresolved isolation, identity and production-volume questions, plus Mac
+developer validation. Promotion requires review of the
 material ADRs and normal product delivery controls.
 
 ## Change History
@@ -298,3 +322,4 @@ material ADRs and normal product delivery controls.
 | 0.3 | 2026-09-26 | NuBlox Architecture / Engineering | Added shared-schema row-level isolation evidence |
 | 0.4 | 2026-09-26 | NuBlox Architecture / Engineering | Added verified separation of operation permission and effective business authority |
 | 0.5 | 2026-09-26 | NuBlox Architecture / Engineering | Reconciled SPIKE-005 to 007 evidence and recorded verified SPIKE-008 findings and limits |
+| 0.6 | 2026-09-26 | NuBlox Architecture / Engineering | Recorded SPIKE-009 CI build, migration replay, correlated logging and process recovery evidence |
