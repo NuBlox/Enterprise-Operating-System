@@ -6,6 +6,8 @@ cd "${repo_root}"
 
 kernel_project="src/NuBlox.Kernel/NuBlox.Kernel.csproj"
 kernel_test_project="tests/NuBlox.Kernel.Tests/NuBlox.Kernel.Tests.csproj"
+identity_project="src/NuBlox.Identity/NuBlox.Identity.csproj"
+identity_test_project="tests/NuBlox.Identity.Tests/NuBlox.Identity.Tests.csproj"
 persistence_project="src/NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj"
 persistence_test_project="tests/NuBlox.Persistence.PostgreSql.IntegrationTests/NuBlox.Persistence.PostgreSql.IntegrationTests.csproj"
 
@@ -15,19 +17,27 @@ printf '.NET SDK: '
 dotnet --version
 
 dotnet restore "${kernel_test_project}" --nologo
+dotnet restore "${identity_test_project}" --nologo
 dotnet restore "${persistence_test_project}" --nologo
 
 dotnet build "${kernel_project}" \
   --configuration Release \
   --no-restore \
   --nologo
-
+dotnet build "${identity_project}" \
+  --configuration Release \
+  --no-restore \
+  --nologo
 dotnet build "${persistence_project}" \
   --configuration Release \
   --no-restore \
   --nologo
 
 dotnet test "${kernel_test_project}" \
+  --configuration Release \
+  --no-restore \
+  --nologo
+dotnet test "${identity_test_project}" \
   --configuration Release \
   --no-restore \
   --nologo
