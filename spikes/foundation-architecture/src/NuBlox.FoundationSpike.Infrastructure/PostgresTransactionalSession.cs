@@ -14,6 +14,45 @@ public sealed class PostgresTransactionalSessionFactory(string connectionString)
     }
 }
 
+public sealed class PostgresCustomerScopedTransactionalSessionFactory(
+    string connectionString) : ICustomerScopedTransactionalSessionFactory
+{
+    public async Task<ITransactionalSession> OpenAsync(
+        CustomerId customerId,
+        CancellationToken cancellationToken = default)
+    {
+        var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken);
+        var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        var session = new PostgresTransactionalSession(connection, transaction);
+
+        try
+        {
+            await using (var roleCommand = connection.CreateCommand())
+            {
+                roleCommand.Transaction = transaction;
+                roleCommand.CommandText = "SET LOCAL ROLE nublox_app;";
+                await roleCommand.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            await using (var contextCommand = connection.CreateCommand())
+            {
+                contextCommand.Transaction = transaction;
+                contextCommand.CommandText = "SELECT set_config('app.customer_id', @customer_id, true);";
+                contextCommand.Parameters.AddWithValue("customer_id", customerId.Value.ToString());
+                await contextCommand.ExecuteScalarAsync(cancellationToken);
+            }
+
+            return session;
+        }
+        catch
+        {
+            await session.DisposeAsync();
+            throw;
+        }
+    }
+}
+
 internal sealed class PostgresTransactionalSession(
     NpgsqlConnection connection,
     NpgsqlTransaction transaction) : ITransactionalSession
