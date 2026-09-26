@@ -23,6 +23,10 @@ Nothing is canonical here because it existed in V1, V2 or V3. Concepts are promo
 
 ## Governing documents
 
+The authoritative index is [`docs/DOCUMENT-REGISTER.md`](docs/DOCUMENT-REGISTER.md). Document identity, lifecycle, ownership and dependency rules are governed by [`docs/08-document-governance.md`](docs/08-document-governance.md).
+
+Current governing documents:
+
 - [`docs/00-product-definition.md`](docs/00-product-definition.md)
 - [`docs/01-enterprise-model.md`](docs/01-enterprise-model.md)
 - [`docs/02-work-model.md`](docs/02-work-model.md)
@@ -31,6 +35,7 @@ Nothing is canonical here because it existed in V1, V2 or V3. Concepts are promo
 - [`docs/05-control-model.md`](docs/05-control-model.md)
 - [`docs/06-evidence-reconciliation.md`](docs/06-evidence-reconciliation.md)
 - [`docs/07-wave-1-enterprise-identity-reconciliation.md`](docs/07-wave-1-enterprise-identity-reconciliation.md)
+- [`docs/08-document-governance.md`](docs/08-document-governance.md)
 
 ## Reconciliation status
 
