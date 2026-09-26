@@ -10,9 +10,17 @@ public interface ITransactionalSession : IAsyncDisposable
     Task RollbackAsync(CancellationToken cancellationToken = default);
 }
 
+// Spike/admin harness only. Application use cases should prefer the customer-scoped factory.
 public interface ITransactionalSessionFactory
 {
     Task<ITransactionalSession> OpenAsync(CancellationToken cancellationToken = default);
+}
+
+public interface ICustomerScopedTransactionalSessionFactory
+{
+    Task<ITransactionalSession> OpenAsync(
+        CustomerId customerId,
+        CancellationToken cancellationToken = default);
 }
 
 public static class DbCommandExtensions
