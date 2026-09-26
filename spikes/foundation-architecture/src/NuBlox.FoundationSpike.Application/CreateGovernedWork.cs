@@ -19,7 +19,7 @@ public sealed record CreateGovernedWorkResult(
     AuditEventId AuditEventId);
 
 public sealed class CreateGovernedWorkHandler(
-    ITransactionalSessionFactory sessionFactory,
+    ICustomerScopedTransactionalSessionFactory sessionFactory,
     SubjectModule subjects,
     WorkModule work,
     DecisionModule decisions,
@@ -33,7 +33,9 @@ public sealed class CreateGovernedWorkHandler(
         ArgumentException.ThrowIfNullOrWhiteSpace(command.WorkSummary);
         ArgumentException.ThrowIfNullOrWhiteSpace(command.DecisionOutcome);
 
-        await using var session = await sessionFactory.OpenAsync(cancellationToken);
+        await using var session = await sessionFactory.OpenAsync(
+            command.CustomerId,
+            cancellationToken);
 
         try
         {
