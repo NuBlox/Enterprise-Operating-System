@@ -247,7 +247,7 @@ public sealed class WorkProductApplicationService
         {
             ReviewDecisionOutcome.Approved => "work-products.revision.approve",
             ReviewDecisionOutcome.Rejected => "work-products.revision.reject",
-            _ => throw new ArgumentOutOfRangeException(nameof(command.Outcome))
+            _ => throw new InvalidOperationException($"Unknown review decision outcome '{command.Outcome}'.")
         };
 
         var authority = await _authorityEvaluator.EvaluateAsync(
