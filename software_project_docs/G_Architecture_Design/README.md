@@ -12,7 +12,7 @@ Templates remain under [`../../software_project_docs_templates/G_Architecture_De
 | `NBEOS-G-002` | [Architecture definition](Architecture_definition.md) | Draft | 0.1 |
 | `NBEOS-G-003` | [System context diagram](System_context_diagram.md) | Draft | 0.1 |
 | `NBEOS-G-004` | [Solution architecture document](Solution_architecture_document.md) | Draft | 0.1 |
-| `NBEOS-G-005` | [Architecture decision records (ADR register)](Architecture_decision_records_ADRs.md) | Draft | 0.4 |
+| `NBEOS-G-005` | [Architecture decision records (ADR register)](Architecture_decision_records_ADRs.md) | Draft | 0.5 |
 | `NBEOS-G-006` | [High-level design (HLD)](High-level_design_HLD.md) | Draft | 0.1 |
 | `NBEOS-G-007` | [Container diagram](Container_diagram.md) | Draft | 0.1 |
 | `NBEOS-G-008` | [Data architecture](Data_architecture.md) | Draft | 0.1 |
@@ -23,37 +23,44 @@ Templates remain under [`../../software_project_docs_templates/G_Architecture_De
 | `NBEOS-G-013` | [Technical spikes](Technical_spikes.md) | Draft | 0.1 |
 | `NBEOS-G-014` | [Proof of concept report](Proof_of_concept_report.md) | Draft | 0.6 |
 
-## Accepted architecture foundation
+## Accepted production-foundation decisions
 
-The initial implementation foundation now has seven accepted decisions:
+The implementation foundation is now explicit across application shape, runtime, identity, API, data, operations and release evolution:
 
 | ADR | Decision |
 |---|---|
-| [`ADR-001`](adr/ADR-001-cohesive-modular-application.md) | Cohesive modular application with explicit module/data ownership; independent services require later evidence |
-| [`ADR-002`](adr/ADR-002-transactional-relational-primary-persistence.md) | Transactional relational persistence is the primary authoritative model; database provider remains separate |
-| [`ADR-007`](adr/ADR-007-layered-tenant-isolation.md) | One tenant-aware logical model with layered enforcement; shared database/schema default plus dedicated-database profile when justified |
-| [`ADR-008`](adr/ADR-008-federated-application-identity.md) | Enterprise identity remains separate from application Principal; OIDC-primary federation and governed service identities |
-| [`ADR-011`](adr/ADR-011-http-api-standards.md) | HTTPS/JSON/OpenAPI remote APIs with explicit major versions, RFC 9457 errors, server-side context/security and idempotency/compatibility rules |
+| [`ADR-001`](adr/ADR-001-cohesive-modular-application.md) | Cohesive modular application with explicit module/data ownership |
+| [`ADR-002`](adr/ADR-002-transactional-relational-primary-persistence.md) | Transactional relational persistence as the authoritative persistence model |
+| [`ADR-007`](adr/ADR-007-layered-tenant-isolation.md) | Tenant-aware logical model with layered isolation and shared/dedicated profiles |
+| [`ADR-008`](adr/ADR-008-federated-application-identity.md) | Federated application Principal separate from Person; OIDC-primary human federation and service identities |
+| [`ADR-011`](adr/ADR-011-http-api-standards.md) | HTTPS/JSON/OpenAPI remote API standard with governed errors/versioning/idempotency |
 | [`ADR-012`](adr/ADR-012-dotnet10-server-runtime.md) | .NET 10 LTS / C# server/core runtime; ASP.NET Core default server HTTP framework |
-| [`ADR-017`](adr/ADR-017-module-owned-data-boundaries.md) | Module-owned authoritative data/persistence; cross-module behaviour through explicit contracts and provider-specific details behind infrastructure boundaries |
+| [`ADR-016`](adr/ADR-016-opentelemetry-observability-baseline.md) | OpenTelemetry traces/metrics/logs and OTLP preferred export boundary |
+| [`ADR-017`](adr/ADR-017-module-owned-data-boundaries.md) | Module-owned authoritative data/persistence and explicit cross-module contracts |
+| [`ADR-018`](adr/ADR-018-business-audit-evidence.md) | Append-oriented authoritative business audit/evidence separate from technical telemetry |
+| [`ADR-020`](adr/ADR-020-release-schema-configuration-evolution.md) | Expand/migrate/contract release evolution with controlled migration journal and recovery strategy |
+| [`ADR-021`](adr/ADR-021-postgresql18-primary-provider.md) | PostgreSQL 18 initial primary provider; Npgsql 10.0.3 .NET provider baseline |
 
-Together they establish:
+Together these establish:
 
 ```text
 cohesive modular application
-+ explicit module/data ownership
-+ transactional relational persistence
++ .NET 10 LTS / C# / ASP.NET Core
++ federated Principal + verified Tenant context
++ governed HTTPS/JSON/OpenAPI contracts
++ module-owned relational data
++ PostgreSQL 18 / Npgsql
 + layered tenant isolation
-+ federated application Principal model
-+ .NET 10 LTS / C# server/core
-+ governed HTTPS/JSON/OpenAPI remote contracts
++ append-oriented business audit evidence
++ OpenTelemetry / OTLP technical observability
++ expand/migrate/contract schema/configuration evolution
 ```
 
-They do **not** yet select the relational database product, identity-provider vendor, frontend framework, cloud provider or observability vendor.
+No identity-provider vendor, frontend framework, cloud provider or monitoring backend/vendor is selected by these decisions.
 
 ## Production implementation status
 
-The first real production code path now exists outside `spikes/`:
+The first real production code path exists outside `spikes/`:
 
 ```text
 src/NuBlox.Kernel/
@@ -62,36 +69,52 @@ scripts/verify-production.sh
 .github/workflows/production-foundation.yml
 ```
 
-The production foundation is built and tested on the pinned .NET 10 SDK and is governed through the H-section Development & Implementation documents.
+The current production foundation is built/tested on the pinned .NET 10 SDK. With the foundation ADRs accepted, implementation can now expand in controlled parallel slices:
+
+```text
+ASP.NET Core API host / contract infrastructure
+Principal + Tenant request context
+PostgreSQL persistence + migrations + tenant isolation
+business audit + OpenTelemetry primitives
+CI integration tests / quality gates
+```
+
+These platform slices must remain semantic-light until the first approved business workflow is selected from controlled requirements.
+
+## Provider position
+
+PostgreSQL 18 is the initial production database provider because the complete NuBlox architecture-spike programme already exercised its transactions, tenant row security, effective-history constraints, migrations and reporting patterns.
+
+`packages/mastered/mysql` remains a governed NuBlox asset. It may serve integrations/tooling or future explicitly approved MySQL product support; it does not change the initial PostgreSQL production provider decision.
 
 ## Foundation experiment evidence
 
 The disposable architecture experiment remains under [`../../spikes/foundation-architecture/`](../../spikes/foundation-architecture/).
 
-`SPIKE-001` through `SPIKE-009` are complete and remain evidence rather than production source.
+`SPIKE-001` through `SPIKE-009` are complete and remain evidence rather than production source. The [proof-of-concept report](Proof_of_concept_report.md) records exact CI evidence, findings and limitations.
 
-The [proof-of-concept report](Proof_of_concept_report.md) records the exact CI evidence, findings and limitations.
+## Decisions still intentionally open/deferred
 
-## Architecture decisions requiring resolution next
+The production platform foundation no longer has an unresolved P0 architecture decision in the current backlog, but important product/domain decisions remain evidence-driven:
 
-The remaining near-term production-foundation gates are:
+- `ADR-003` durable async processing — promoted when the first production async/integration slice is built;
+- `ADR-004` binary content storage — promoted when work-product content is implemented;
+- `ADR-005` configuration/extensibility — promoted with governed tenant variation;
+- `ADR-006` information authority — promoted with concrete integration boundaries;
+- `ADR-009` business authority — promoted with the first decision/approval workflow;
+- `ADR-010` workflow/orchestration — promoted when validated processes justify it;
+- `ADR-013` cloud/deployment provider — remains deferred pending residency/resilience/economics;
+- `ADR-014` search — remains deferred pending validated search workload;
+- `ADR-015` analytics — promoted when operational reporting no longer satisfies workload/retention needs;
+- `ADR-019` migration architecture — promoted with full product/legacy migration capability.
 
-1. `ADR-016` production observability baseline;
-2. `ADR-020` release/configuration/schema evolution;
-3. relational database product/provider selection under ADR-002/ADR-007/ADR-017;
-4. `ADR-018` audit/evidence design as production audit capability begins.
-
-Identity-provider vendor selection is an environment/deployment/procurement decision behind accepted ADR-008 and does not block provider-neutral Principal/context implementation.
-
-Additional domain/process decisions such as `ADR-003`, `ADR-005`, `ADR-009`, `ADR-010`, `ADR-015` and `ADR-019` are promoted as the relevant product slices require them.
+Identity-provider vendor, hosting topology, frontend framework and monitoring backend remain deployment/product decisions behind stable architectural boundaries.
 
 ## Development handoff
 
-The controlled transition into implementation is maintained under [`../H_Development_Implementation/`](../H_Development_Implementation/).
+The controlled implementation sequence is maintained under [`../H_Development_Implementation/`](../H_Development_Implementation/).
 
-Accepted ADR-008 and ADR-011 now permit provider-neutral Principal/Tenant request-context abstractions and an ASP.NET Core API host to be added without yet committing to a specific hosted identity-provider product.
-
-Accepted ADR-017 removes the schema-modularity blocker from the production persistence scaffold; provider selection and release/schema-evolution rules remain before authoritative production schema work.
+All current P0 architecture gates for the production platform foundation are closed. `DEV-104`, `DEV-105`, `DEV-106` and `DEV-108` can now proceed, followed by consolidation through `DEV-107` CI quality gates.
 
 ## Architecture gate
 
