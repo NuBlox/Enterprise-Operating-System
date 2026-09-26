@@ -80,57 +80,50 @@ Each working document records:
 | `NBEOS-F-004` | [Functional requirements specification](F_Requirements_Analysis/Functional_requirements_specification.md) | Draft | 0.1 |
 | `NBEOS-F-005` | [Non-functional requirements specification](F_Requirements_Analysis/Non-functional_requirements_specification.md) | Draft | 0.1 |
 
+## Architecture & Design baseline
+
+The live architecture set is indexed at [`G_Architecture_Design/README.md`](G_Architecture_Design/README.md). It includes the architecture vision/definition, solution and data/integration/security designs, ADR register, technology evaluation matrix, nine-spike programme and proof-of-concept evidence.
+
+The bounded architecture experiments `SPIKE-001` through `SPIKE-009` have completed. Their code remains experimental and is not automatically production code.
+
+## Development & Implementation baseline
+
+| ID | Document | Status | Version |
+|---|---|---|---|
+| `NBEOS-H-001` | [Development plan](H_Development_Implementation/Development_plan.md) | Draft | 0.1 |
+| `NBEOS-H-002` | [Product backlog](H_Development_Implementation/Product_backlog.md) | Draft | 0.1 |
+
+The H-section index is [`H_Development_Implementation/README.md`](H_Development_Implementation/README.md).
+
 ## Current programme position
 
-NuBlox now has controlled Draft baselines spanning pre-project strategy, formal project initiation and the governing first layer of requirements.
+NuBlox now has controlled Draft baselines spanning strategy, project initiation, software requirements, architecture evidence and the entry into Development & Implementation.
 
-The programme has defined:
+The programme has established:
 
 - product and market hypotheses;
 - investment, feasibility, risk and funding controls;
-- architecture/data/security principles;
-- programme and project stage gates;
-- project scope, objectives, governance, assumptions, constraints, risks, dependencies, schedule, budget and resources;
-- business and stakeholder needs;
-- an SRS envelope;
-- initial candidate functional and non-functional software requirements.
+- business and stakeholder requirements plus an initial software-requirements envelope;
+- candidate functional and non-functional requirements;
+- a controlled architecture/ADR framework;
+- nine bounded architecture spikes covering modular transactions, history, isolation, authority, durable asynchronous work, controlled configuration, migration, reporting and operability;
+- a NuBlox-mastered package area for governed third-party foundations;
+- a gated development plan and first controlled implementation backlog.
 
-The strongest current product hypothesis remains that NuBlox can create value by reducing the operational divide between:
+No Draft document is an approved product, architecture or investment baseline merely because it exists. The current transition is from architecture evidence to explicit implementation decisions and then to the first verified production vertical slice.
 
-```text
-operating the organisation
-+
-delivering the work through which it creates value
-```
+## Immediate controlled work
 
-The current launch-market hypothesis is UK mid-market multidisciplinary built-environment consultancies and project-services firms. This remains subject to direct customer validation.
+The next engineering sequence is:
 
-No Draft document is an approved product, architecture or investment baseline yet.
+1. promote implementation-critical architecture decisions using the completed spike evidence;
+2. resolve runtime/framework, primary persistence, tenant isolation, identity, API, observability and release/schema-evolution decisions;
+3. create production source/test/toolchain boundaries separate from `spikes/`;
+4. select and validate the first representative end-to-end business workflow;
+5. implement and verify that vertical slice with requirement → decision/design → code → test traceability;
+6. expand functional-governance, functional-delivery and built-environment capabilities from validated product priorities rather than pre-creating disconnected modules.
 
-## Next controlled documents — Requirements detail and traceability
-
-The next requirements wave should develop:
-
-1. Business rules
-2. User stories / epics
-3. Use cases
-4. User journeys
-5. Process flows / BPMN
-6. Data requirements
-7. Data dictionary
-8. Interface requirements
-9. Integration requirements
-10. API requirements
-11. Reporting requirements
-12. Analytics requirements
-13. Acceptance criteria
-14. Requirements traceability matrix (RTM)
-15. Requirements prioritisation
-16. Business glossary / acronym list
-17. Definition of Ready / Definition of Done
-18. Requirements sign-off
-
-Primary customer research must continue in parallel and update `NBEOS-A-005` and all downstream requirements where evidence changes assumptions.
+Requirements detail, customer research and commercial/product evidence continue in parallel and may change downstream priorities.
 
 ## Approval discipline
 

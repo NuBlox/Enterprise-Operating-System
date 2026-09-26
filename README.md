@@ -13,59 +13,45 @@ The repository separates **document templates** from **live controlled programme
 - [`software_project_docs_templates/`](software_project_docs_templates/) — reusable project-document templates;
 - [`software_project_docs/`](software_project_docs/) — live NuBlox controlled documents and current programme decisions/evidence.
 
-## Project document templates
+Experimental architecture code is kept separately under [`spikes/`](spikes/). Successful spike code is evidence and is **not** production application code by default.
 
-The template library spans:
+NuBlox-maintained third-party foundations and governed forks are maintained under [`packages/mastered/`](packages/mastered/), with provenance and synchronisation controls kept separate from product architecture decisions.
 
-- enterprise and pre-project work;
-- legal, commercial and procurement;
-- product, market and UX;
-- project initiation;
-- planning and governance;
-- requirements and analysis;
-- architecture and design;
-- development and implementation;
-- testing and quality assurance;
-- deployment and release;
-- operations and maintenance;
-- project closure;
-- cross-cutting project controls.
-
-The common document-control metadata requirements are defined in:
-
-[`software_project_docs_templates/00_Templates/Document_Control_Metadata_Template.md`](software_project_docs_templates/00_Templates/Document_Control_Metadata_Template.md)
-
-Template files are reference structures. NuBlox decisions and evidence belong in the corresponding live document under `software_project_docs/`.
-
-## Current controlled documents
+## Current controlled programme
 
 The live programme index is:
 
 [`software_project_docs/README.md`](software_project_docs/README.md)
 
-The first Enterprise / Pre-Project baseline now includes controlled Draft v0.1 documents for:
+Controlled Draft work now spans:
 
-- Product vision statement;
-- Product strategy;
-- Market analysis;
-- Competitor analysis;
-- Customer research summary;
-- Business case;
-- Feasibility study.
+- Enterprise / Pre-Project strategy and evidence;
+- Project Initiation;
+- Requirements & Analysis;
+- Architecture & Design;
+- Development & Implementation entry planning.
 
-These drafts establish hypotheses and evidence requirements; they are not approved product or architecture baselines yet.
+Architecture experimentation has completed the bounded `SPIKE-001` through `SPIKE-009` programme. The current engineering transition is to convert that evidence into explicit architecture decisions and then establish a production source/test/toolchain foundation without copying synthetic spike semantics into the product.
 
-## Brand assets
+The Development & Implementation baseline is maintained at:
 
-Canonical NuBlox brand assets are maintained under:
+[`software_project_docs/H_Development_Implementation/`](software_project_docs/H_Development_Implementation/)
 
-[`brand/`](brand/)
+Its initial controlled documents are:
 
-For light-background usage, the primary logo asset is:
+- [`Development_plan.md`](software_project_docs/H_Development_Implementation/Development_plan.md);
+- [`Product_backlog.md`](software_project_docs/H_Development_Implementation/Product_backlog.md).
 
-[`brand/NuBlox_Logo_On_Light_Background.svg`](brand/NuBlox_Logo_On_Light_Background.svg)
+## Repository areas
 
-Brand assets should be referenced from this directory rather than duplicated into project-document or application folders.
+| Area | Purpose |
+|---|---|
+| `software_project_docs/` | Live controlled programme documents and decisions |
+| `software_project_docs_templates/` | Reusable document templates |
+| `spikes/` | Disposable architecture experiments and verification harnesses |
+| `packages/mastered/` | NuBlox-governed/mastered packages with provenance controls |
+| `docs/` | Supporting/reference documentation |
+| `brand/` | Canonical NuBlox brand assets |
 
 ## Working principles
 
@@ -77,12 +63,34 @@ Brand assets should be referenced from this directory rather than duplicated int
 - Prefer complete business outcomes over feature lists or module boundaries.
 - Avoid creating overlapping documents when one controlled artifact can satisfy the requirement clearly.
 - Keep implementation decisions subordinate to approved business, product and technical requirements.
+- Treat mastered packages as governed implementation assets, not automatic enterprise architecture decisions.
+- Do not promote spike code into the product without an explicit ADR/design/review/verification path.
 
 ## Current phase
 
-The programme is in **Enterprise / Pre-Project definition and validation**.
+The programme is entering **Development & Implementation planning**, while requirements, architecture and market/customer evidence remain controlled Drafts and continue to mature in parallel.
 
-The immediate work is to strengthen the Draft product/market case through customer evidence, cost/benefit analysis, financial modelling, risk/compliance work and enterprise-architecture principles before progressing into controlled requirements and software architecture.
+The immediate engineering sequence is:
+
+```text
+completed architecture spikes
+        ↓
+implementation-critical ADR decisions
+        ↓
+production source/test/toolchain foundation
+        ↓
+first approved end-to-end business workflow
+        ↓
+verified vertical product slice
+        ↓
+controlled capability expansion
+```
+
+The first production slice will be selected from validated requirements; the synthetic subjects used by architecture spikes will not define the production business taxonomy.
+
+## Brand assets
+
+Canonical NuBlox brand assets are maintained under [`brand/`](brand/). Brand assets should be referenced from that directory rather than duplicated into project-document or application folders.
 
 ## Licence
 
