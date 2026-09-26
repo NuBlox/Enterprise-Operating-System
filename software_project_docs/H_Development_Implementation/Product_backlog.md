@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.9  
+**Version:** 0.10  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.8  
+**Supersedes:** Version 0.9  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -70,8 +70,8 @@ Maintain the controlled implementation backlog that links NuBlox requirements an
 | `DEV-103` | P1 | Dependency and package provenance controls | ADR-012; H-003 | Central versions plus dependency inventory | **Complete — initial baseline** |
 | `DEV-104` | P1 | Production PostgreSQL persistence/migration scaffold | ADR-002/007/017/020/021; FR-005–FR-008 | Empty DB migration, journal/checksum, module schema ownership, tenant isolation and integration tests | **Complete — CI run 36272246291** |
 | `DEV-105` | P1 | Identity/context request boundary | ADR-007/008/011; FR-001–FR-004 | Provider-neutral Principal/Tenant context plus protected-request negative tests | **Complete — CI run 36273403103** |
-| `DEV-106` | P1 | Production audit/telemetry primitives | ADR-016/018; NFR-AUD/OPS | Separate authoritative audit contract plus OTel trace/metric/log/health primitives and tests | **Ready** |
-| `DEV-107` | P1 | Complete CI quality gates | Development plan; NFRs | CI covers build/tests, persistence migrations/isolation, identity/security, telemetry/audit and dependency controls | **In progress — base build/test, PostgreSQL persistence and identity/security gates active; audit/API gates pending** |
+| `DEV-106` | P1 | Production audit/telemetry primitives | ADR-016/018; NFR-AUD/OPS | Separate authoritative audit contract plus OTel trace/metric/log/health primitives and tests | **Complete — CI run 36274166788** |
+| `DEV-107` | P1 | Complete CI quality gates | Development plan; NFRs | CI covers build/tests, persistence migrations/isolation, identity/security, telemetry/audit and dependency controls | **In progress — base build/test, PostgreSQL persistence, identity/security and audit/observability gates active; API-host gate pending** |
 | `DEV-108` | P1 | Production ASP.NET Core API host and contract primitives | ADR-008/011/012 | API host, health, RFC 9457 baseline, `/api/v1` grouping and OpenAPI infrastructure verified without invented business endpoints | **Ready** |
 
 ## Wave 2 — first governed vertical product slice
@@ -109,14 +109,12 @@ NuBloxSQL remains available for integrations/tooling or a later explicitly appro
 
 ## Immediate execution order
 
-All P0 production-foundation architecture gates are closed. DEV-104 persistence and DEV-105 identity/context are complete. The remaining production-foundation sequence is:
+All P0 production-foundation architecture gates are closed. DEV-104 persistence, DEV-105 identity/context and DEV-106 audit/observability are complete. The remaining production-foundation sequence is:
 
 ```text
-EXECUTE IN PARALLEL WHERE SAFE:
 DEV-108 ASP.NET Core API host / contract primitives
-DEV-106 audit + OpenTelemetry primitives
         ↓
-DEV-107 integrate all production CI quality gates
+DEV-107 complete the integrated production CI quality gate
         ↓
 DEV-201 select first approved business workflow
         ↓
@@ -150,3 +148,4 @@ The remaining platform work must stay semantic-light: it establishes production 
 | 0.7 | 2026-09-26 | NuBlox Product / Engineering | Started DEV-104 production PostgreSQL migration, isolation and integration-verification implementation |
 | 0.8 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-104 after production PostgreSQL migration, RLS/runtime-role and checksum integration verification passed in CI run 36272246291 |
 | 0.9 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-105 after provider-neutral Principal/Tenant context resolution, fail-closed access checks and protected-request negative tests passed in CI run 36273403103; aligned the SQL package workstream with the NuBloxSQL extraction |
+| 0.10 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-106 after append-oriented audit evidence, OpenTelemetry trace/metric/log correlation, health semantics and full production regression verification passed in CI run 36274166788 |
