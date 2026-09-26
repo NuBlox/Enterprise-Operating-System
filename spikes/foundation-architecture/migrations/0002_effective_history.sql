@@ -29,7 +29,49 @@ CREATE TABLE IF NOT EXISTS subjects.business_subject_names (
         )
 );
 
+-- Migration 0001 carried the initial display name on the base subject row.
+-- Move that business fact into the effective-dated history table once, then
+-- remove the duplicate authoritative representation from the base identity.
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'subjects'
+          AND table_name = 'business_subjects'
+          AND column_name = 'display_name'
+    ) THEN
+        INSERT INTO subjects.business_subject_names (
+            customer_id,
+            subject_id,
+            effective_from,
+            effective_to,
+            display_name,
+            change_reason,
+            recorded_at
+        )
+        SELECT
+            customer_id,
+            id,
+            created_at,
+            NULL,
+            display_name,
+            'migration-0002-initial-name',
+            created_at
+        FROM subjects.business_subjects
+        ON CONFLICT DO NOTHING;
+
+        ALTER TABLE subjects.business_subjects
+            DROP COLUMN display_name;
+    END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS ix_subject_name_as_of
-    ON subjects.business_subject_names (customer_id, subject_id, effective_from DESC);
+    ON subjects.business_subject_names
+        (customer_id, subject_id, effective_from DESC);
+
+CREATE INDEX IF NOT EXISTS ix_subject_name_recorded
+    ON subjects.business_subject_names
+        (customer_id, subject_id, recorded_at DESC);
 
 COMMIT;
