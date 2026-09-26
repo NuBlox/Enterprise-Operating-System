@@ -6,11 +6,11 @@ This spike implements bounded experiments defined by `NBEOS-G-013 Technical_spik
 
 ## Current scope
 
-Implemented verification covers `SPIKE-001` through `SPIKE-008`, including
+Implemented verification covers `SPIKE-001` through `SPIKE-009`, including
 operational reporting, source drill-through and measured synthetic-volume
-queries. `SPIKE-009` adds a reproducible build/migration path, correlated JSON
-API logging and a worker restart experiment. Each capability remains a bounded
-experiment under `Technical_spikes.md`.
+queries, a reproducible build/migration path, correlated JSON API logging and
+a worker restart experiment. Each capability remains a bounded experiment
+under `Technical_spikes.md`.
 
 Technology used for the experiment:
 
@@ -210,8 +210,8 @@ The console verifier tests:
 
 ## Current verification status
 
-The independent CI workflows have passed `SPIKE-001` through `SPIKE-008`.
-`SPIKE-009` requires its dedicated workflow to pass before recording a result.
+The independent CI workflows have passed `SPIKE-001` through `SPIKE-009`.
+SPIKE-009 passed in [workflow run 36266900336](https://github.com/NuBlox/Enterprise-Operating-System/actions/runs/36266900336).
 The [controlled proof-of-concept report](../../software_project_docs/G_Architecture_Design/Proof_of_concept_report.md)
 lists their runs and limitations. SPIKE-008 was verified in
 [workflow run 36265786034](https://github.com/NuBlox/Enterprise-Operating-System/actions/runs/36265786034).
