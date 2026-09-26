@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.FoundationSpike.Application/NuBlox.FoundationSpike.Application.csproj" />
+    <ProjectReference Include="../NuBlox.FoundationSpike.Infrastructure/NuBlox.FoundationSpike.Infrastructure.csproj" />
+    <ProjectReference Include="../NuBlox.FoundationSpike.Subjects/NuBlox.FoundationSpike.Subjects.csproj" />
+    <ProjectReference Include="../NuBlox.FoundationSpike.Work/NuBlox.FoundationSpike.Work.csproj" />
+    <ProjectReference Include="../NuBlox.FoundationSpike.Decisions/NuBlox.FoundationSpike.Decisions.csproj" />
+    <ProjectReference Include="../NuBlox.FoundationSpike.Audit/NuBlox.FoundationSpike.Audit.csproj" />
+  </ItemGroup>
+</Project>
