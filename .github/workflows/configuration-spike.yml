@@ -1,0 +1,73 @@
+name: Governed configuration spike
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spikes/foundation-architecture/migrations/**'
+      - 'spikes/foundation-architecture/src/NuBlox.FoundationSpike.Configuration/**'
+      - 'spikes/foundation-architecture/src/NuBlox.FoundationSpike.Shared/**'
+      - 'spikes/foundation-architecture/src/NuBlox.FoundationSpike.Infrastructure/**'
+      - 'spikes/foundation-architecture/verification/NuBlox.FoundationSpike.ConfigurationVerification/**'
+      - '.github/workflows/configuration-spike.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: nublox_spike
+          POSTGRES_USER: nublox
+          POSTGRES_PASSWORD: nublox_spike_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U nublox -d nublox_spike"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      NUBLOX_SPIKE_CONNECTION_STRING: Host=localhost;Port=5432;Database=nublox_spike;Username=nublox;Password=nublox_spike_ci_only
+      PGPASSWORD: nublox_spike_ci_only
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Apply spike migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          for migration in spikes/foundation-architecture/migrations/*.sql; do
+            echo "Applying ${migration}"
+            psql \
+              --host=localhost \
+              --port=5432 \
+              --username=nublox \
+              --dbname=nublox_spike \
+              --set=ON_ERROR_STOP=1 \
+              --file="${migration}"
+          done
+
+      - name: Restore configuration verifier
+        run: dotnet restore spikes/foundation-architecture/verification/NuBlox.FoundationSpike.ConfigurationVerification/NuBlox.FoundationSpike.ConfigurationVerification.csproj
+
+      - name: Build configuration verifier
+        run: dotnet build spikes/foundation-architecture/verification/NuBlox.FoundationSpike.ConfigurationVerification/NuBlox.FoundationSpike.ConfigurationVerification.csproj --configuration Release --no-restore
+
+      - name: Run configuration verifier
+        run: dotnet run --project spikes/foundation-architecture/verification/NuBlox.FoundationSpike.ConfigurationVerification/NuBlox.FoundationSpike.ConfigurationVerification.csproj --configuration Release --no-build
