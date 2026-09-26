@@ -25,17 +25,13 @@ public sealed class WorkProductPersistenceTests
         {
             Assert.Inconclusive($"Set {ConnectionStringVariable} to run PostgreSQL integration tests.");
         }
-
         await ResetAsync();
     }
 
     [TestCleanup]
     public async Task CleanupAsync()
     {
-        if (!string.IsNullOrWhiteSpace(_connectionString))
-        {
-            await ResetAsync();
-        }
+        if (!string.IsNullOrWhiteSpace(_connectionString)) await ResetAsync();
     }
 
     [TestMethod]
@@ -44,22 +40,15 @@ public sealed class WorkProductPersistenceTests
         await using var dataSource = NpgsqlDataSource.Create(_connectionString);
         await ApplyMigrationsAsync(dataSource);
         await ApplyMigrationsAsync(dataSource);
-
         await using var connection = await dataSource.OpenConnectionAsync();
 
-        Assert.AreEqual(2L, await ScalarInt64Async(
-            connection,
-            "SELECT count(*) FROM nublox_meta.schema_migrations;"));
-        Assert.AreEqual(1L, await ScalarInt64Async(
-            connection,
-            "SELECT count(*) FROM pg_namespace WHERE nspname = 'work_products';"));
-        Assert.AreEqual(2L, await ScalarInt64Async(
-            connection,
-            "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'work_products';"));
+        Assert.AreEqual(3L, await ScalarInt64Async(connection, "SELECT count(*) FROM nublox_meta.schema_migrations;"));
+        Assert.AreEqual(1L, await ScalarInt64Async(connection, "SELECT count(*) FROM pg_namespace WHERE nspname = 'work_products';"));
+        Assert.AreEqual(3L, await ScalarInt64Async(connection, "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'work_products';"));
     }
 
     [TestMethod]
-    public async Task RestrictedRepositoryPersistsAtomicInitialRecordAndCannotSeeAnotherTenant()
+    public async Task RestrictedRepositoryPersistsAndRoutesReviewInsideTenantBoundary()
     {
         await using var migrationDataSource = NpgsqlDataSource.Create(_connectionString);
         await ApplyMigrationsAsync(migrationDataSource);
@@ -75,36 +64,48 @@ public sealed class WorkProductPersistenceTests
             Username = RuntimeRole,
             Password = RuntimePassword
         }.ConnectionString;
-
         await using var runtimeDataSource = NpgsqlDataSource.Create(runtimeConnectionString);
         var repository = new PostgresWorkProductRepository(runtimeDataSource);
         var actor = PrincipalId.New();
-        var timestamp = new DateTimeOffset(2026, 9, 26, 22, 0, 0, TimeSpan.Zero);
-        var service = new WorkProductApplicationService(repository, new FixedClock(timestamp));
+        var reviewer = PrincipalId.New();
+        var createdAt = new DateTimeOffset(2026, 9, 26, 22, 0, 0, TimeSpan.Zero);
+        var submittedAt = createdAt.AddMinutes(30);
+        var service = new WorkProductApplicationService(repository, new AllowSubmissionAccessEvaluator(), new FixedClock(createdAt));
 
         var created = await service.CreateAsync(new CreateWorkProductCommand(
-            tenantA,
-            actor,
-            "Configuration Management Plan",
-            "governed-document"));
+            tenantA, actor, "Configuration Management Plan", "governed-document"));
+        service = new WorkProductApplicationService(repository, new AllowSubmissionAccessEvaluator(), new FixedClock(submittedAt));
+        var submission = await service.SubmitForReviewAsync(new SubmitWorkProductForReviewCommand(
+            tenantA, created.WorkProduct.Id, actor, reviewer));
 
         var foundForTenantA = await service.FindAsync(tenantA, created.WorkProduct.Id);
         var foundForTenantB = await service.FindAsync(tenantB, created.WorkProduct.Id);
-
         Assert.IsNotNull(foundForTenantA);
-        Assert.AreEqual(created.WorkProduct.Id, foundForTenantA.WorkProduct.Id);
-        Assert.AreEqual(WorkProductRevisionState.Draft, foundForTenantA.CurrentRevision.State);
+        Assert.AreEqual(WorkProductRevisionState.InReview, foundForTenantA.CurrentRevision.State);
+        Assert.AreEqual(actor, foundForTenantA.CurrentRevision.SubmittedByPrincipalId);
+        Assert.AreEqual(submittedAt, foundForTenantA.CurrentRevision.SubmittedAtUtc);
         Assert.IsNull(foundForTenantB);
 
         await using var runtimeConnection = await runtimeDataSource.OpenConnectionAsync();
+        await using var tenantATransaction = await runtimeConnection.BeginTransactionAsync();
+        await PostgresTenantSession.SetTenantAsync(runtimeConnection, tenantATransaction, tenantA.Value);
+        await using var routed = new NpgsqlCommand(
+            "SELECT count(*) FROM work_products.review_requests WHERE review_request_id = @request AND requested_principal_id = @reviewer AND state = 'OPEN';",
+            runtimeConnection,
+            tenantATransaction);
+        routed.Parameters.AddWithValue("request", submission.ReviewRequest.Id.Value);
+        routed.Parameters.AddWithValue("reviewer", reviewer.Value);
+        Assert.AreEqual(1L, Convert.ToInt64(await routed.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
+        await tenantATransaction.RollbackAsync();
+
         await using var tenantBTransaction = await runtimeConnection.BeginTransactionAsync();
         await PostgresTenantSession.SetTenantAsync(runtimeConnection, tenantBTransaction, tenantB.Value);
-        await using var hiddenRows = new NpgsqlCommand(
-            "SELECT count(*) FROM work_products.work_products WHERE work_product_id = @work_product_id;",
+        await using var hidden = new NpgsqlCommand(
+            "SELECT count(*) FROM work_products.review_requests WHERE review_request_id = @request;",
             runtimeConnection,
             tenantBTransaction);
-        hiddenRows.Parameters.AddWithValue("work_product_id", created.WorkProduct.Id.Value);
-        Assert.AreEqual(0L, Convert.ToInt64(await hiddenRows.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
+        hidden.Parameters.AddWithValue("request", submission.ReviewRequest.Id.Value);
+        Assert.AreEqual(0L, Convert.ToInt64(await hidden.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
         await tenantBTransaction.RollbackAsync();
     }
 
@@ -113,31 +114,17 @@ public sealed class WorkProductPersistenceTests
     {
         await using var migrationDataSource = NpgsqlDataSource.Create(_connectionString);
         await ApplyMigrationsAsync(migrationDataSource);
-
         var tenant = TenantId.New();
         await SeedTenantAsync(migrationDataSource, tenant, "tenant-a");
-
         var actor = PrincipalId.New();
-        var workProduct = WorkProduct.Create(
-            tenant,
-            "Design Basis",
-            "governed-document",
-            actor,
-            actor,
-            DateTimeOffset.UtcNow);
+        var workProduct = WorkProduct.Create(tenant, "Design Basis", "governed-document", actor, actor, DateTimeOffset.UtcNow);
         var revision = WorkProductRevision.CreateInitial(workProduct);
 
         await using var connection = await migrationDataSource.OpenConnectionAsync();
         await using var transaction = await connection.BeginTransactionAsync();
         await PostgresTenantSession.SetTenantAsync(connection, transaction, tenant.Value);
-
         await using (var productInsert = new NpgsqlCommand(
-            """
-            INSERT INTO work_products.work_products
-                (tenant_id, work_product_id, title, product_type, owner_principal_id,
-                 created_by_principal_id, created_at, lifecycle, current_revision_number)
-            VALUES (@tenant, @product, @title, @type, @owner, @creator, @created, 'ACTIVE', 1);
-            """,
+            "INSERT INTO work_products.work_products (tenant_id, work_product_id, title, product_type, owner_principal_id, created_by_principal_id, created_at, lifecycle, current_revision_number) VALUES (@tenant, @product, @title, @type, @owner, @creator, @created, 'ACTIVE', 1);",
             connection,
             transaction))
         {
@@ -152,17 +139,9 @@ public sealed class WorkProductPersistenceTests
         }
 
         await InsertRevisionAsync(connection, transaction, revision.Id.Value, tenant.Value, workProduct.Id.Value, actor.Value, revision.CreatedAtUtc);
-
         var duplicateException = await Assert.ThrowsAsync<PostgresException>(() => InsertRevisionAsync(
-            connection,
-            transaction,
-            Guid.NewGuid(),
-            tenant.Value,
-            workProduct.Id.Value,
-            actor.Value,
-            revision.CreatedAtUtc));
+            connection, transaction, Guid.NewGuid(), tenant.Value, workProduct.Id.Value, actor.Value, revision.CreatedAtUtc));
         Assert.AreEqual(PostgresErrorCodes.UniqueViolation, duplicateException.SqlState);
-
         await transaction.RollbackAsync();
     }
 
@@ -177,10 +156,7 @@ public sealed class WorkProductPersistenceTests
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var transaction = await connection.BeginTransactionAsync();
         await PostgresTenantSession.SetTenantAsync(connection, transaction, tenantId.Value);
-        await using var command = new NpgsqlCommand(
-            "INSERT INTO kernel.tenants (tenant_id, tenant_slug) VALUES (@tenant_id, @slug);",
-            connection,
-            transaction);
+        await using var command = new NpgsqlCommand("INSERT INTO kernel.tenants (tenant_id, tenant_slug) VALUES (@tenant_id, @slug);", connection, transaction);
         command.Parameters.AddWithValue("tenant_id", tenantId.Value);
         command.Parameters.AddWithValue("slug", slug);
         await command.ExecuteNonQueryAsync();
@@ -195,22 +171,10 @@ public sealed class WorkProductPersistenceTests
         await ExecuteAsync(connection, $"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA work_products TO {RuntimeRole};");
     }
 
-    private static async Task InsertRevisionAsync(
-        NpgsqlConnection connection,
-        NpgsqlTransaction transaction,
-        Guid revisionId,
-        Guid tenantId,
-        Guid workProductId,
-        Guid actorId,
-        DateTimeOffset createdAt)
+    private static async Task InsertRevisionAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, Guid revisionId, Guid tenantId, Guid workProductId, Guid actorId, DateTimeOffset createdAt)
     {
         await using var command = new NpgsqlCommand(
-            """
-            INSERT INTO work_products.revisions
-                (tenant_id, work_product_revision_id, work_product_id, revision_number,
-                 title_snapshot, state, created_by_principal_id, created_at)
-            VALUES (@tenant, @revision, @product, 1, 'Design Basis', 'DRAFT', @actor, @created);
-            """,
+            "INSERT INTO work_products.revisions (tenant_id, work_product_revision_id, work_product_id, revision_number, title_snapshot, state, created_by_principal_id, created_at) VALUES (@tenant, @revision, @product, 1, 'Design Basis', 'DRAFT', @actor, @created);",
             connection,
             transaction);
         command.Parameters.AddWithValue("tenant", tenantId);
@@ -246,5 +210,14 @@ public sealed class WorkProductPersistenceTests
     private sealed class FixedClock(DateTimeOffset timestamp) : ISystemClock
     {
         public DateTimeOffset UtcNow => timestamp;
+    }
+
+    private sealed class AllowSubmissionAccessEvaluator : IWorkProductAccessEvaluator
+    {
+        public ValueTask<bool> CanSubmitForReviewAsync(WorkProductRecord record, PrincipalId actorPrincipalId, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(true);
+        }
     }
 }
