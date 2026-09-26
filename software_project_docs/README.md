@@ -84,49 +84,51 @@ Each working document records:
 
 The live architecture set is indexed at [`G_Architecture_Design/README.md`](G_Architecture_Design/README.md). It includes the architecture vision/definition, solution and data/integration/security designs, ADR register, technology evaluation matrix, nine-spike programme and proof-of-concept evidence.
 
-The bounded architecture experiments `SPIKE-001` through `SPIKE-009` have completed. Their code remains experimental and is not automatically production code.
+The bounded architecture experiments `SPIKE-001` through `SPIKE-009` have completed. Their code remains experimental and is not automatically production code. The implementation-critical production-foundation ADR gates have also been resolved and are tracked in the architecture index/register.
 
 ## Development & Implementation baseline
 
 | ID | Document | Status | Version |
 |---|---|---|---|
 | `NBEOS-H-001` | [Development plan](H_Development_Implementation/Development_plan.md) | Draft | 0.1 |
-| `NBEOS-H-002` | [Product backlog](H_Development_Implementation/Product_backlog.md) | Draft | 0.1 |
+| `NBEOS-H-002` | [Product backlog](H_Development_Implementation/Product_backlog.md) | Draft | 0.12 |
+| `NBEOS-H-003` | [Dependency management document](H_Development_Implementation/Dependency_management_document.md) | Draft | 0.4 |
+| `NBEOS-H-004` | [First vertical slice selection and validation plan](H_Development_Implementation/First_vertical_slice_selection.md) | Draft — Candidate for validation | 0.1 |
 
 The H-section index is [`H_Development_Implementation/README.md`](H_Development_Implementation/README.md).
 
 ## Current programme position
 
-NuBlox now has controlled Draft baselines spanning strategy, project initiation, software requirements, architecture evidence and the entry into Development & Implementation.
+NuBlox now has a verified production platform foundation and is moving from platform enablement into controlled workflow validation.
 
 The programme has established:
 
-- product and market hypotheses;
-- investment, feasibility, risk and funding controls;
-- business and stakeholder requirements plus an initial software-requirements envelope;
-- candidate functional and non-functional requirements;
-- a controlled architecture/ADR framework;
-- nine bounded architecture spikes covering modular transactions, history, isolation, authority, durable asynchronous work, controlled configuration, migration, reporting and operability;
-- a NuBlox-mastered package area for governed third-party foundations;
-- a gated development plan and first controlled implementation backlog.
+- product and market hypotheses plus customer-research controls;
+- project initiation, risk, governance and funding controls;
+- Candidate business/stakeholder/software requirements;
+- a controlled architecture/ADR framework and nine bounded architecture spikes;
+- explicit production decisions for modularity, persistence, tenant isolation, identity, API, runtime, observability, data ownership, audit/evidence, evolution and PostgreSQL;
+- production Kernel, Identity, Audit, Observability, PostgreSQL persistence and ASP.NET Core API boundaries;
+- deterministic production restore/build/test and an integrated PostgreSQL-backed CI quality gate;
+- 33 passing foundation tests on the DEV-108 verification baseline;
+- a controlled candidate first workflow for primary validation: governed work-product review and issue.
 
-No Draft document is an approved product, architecture or investment baseline merely because it exists. The current transition is from architecture evidence to explicit implementation decisions and then to the first verified production vertical slice.
+No Draft/Candidate document becomes an approved product requirement merely because the platform can implement it. `NBEOS-A-005` explicitly records that primary customer discovery has not yet reached the product-approval threshold.
 
 ## Immediate controlled work
 
-The next engineering sequence is:
+The next programme sequence is:
 
-1. promote implementation-critical architecture decisions using the completed spike evidence;
-2. resolve runtime/framework, primary persistence, tenant isolation, identity, API, observability and release/schema-evolution decisions;
-3. create production source/test/toolchain boundaries separate from `spikes/`;
-4. select and validate the first representative end-to-end business workflow;
-5. implement and verify that vertical slice with requirement → decision/design → code → test traceability;
-6. expand functional-governance, functional-delivery and built-environment capabilities from validated product priorities rather than pre-creating disconnected modules.
+1. validate the `NBEOS-H-004` governed work-product review/issue candidate with primary customer/process evidence;
+2. confirm or revise the initial actors, information subjects, states, authority rules, issue/handoff consequences and measurable outcomes;
+3. obtain approval for the initial workflow scope and acceptance criteria sufficient to close `DEV-201`;
+4. implement `DEV-202`–`DEV-208` as the first traced production business vertical slice;
+5. expand functional-governance, functional-delivery and built-environment capabilities from validated product priorities rather than pre-creating disconnected modules.
 
-Requirements detail, customer research and commercial/product evidence continue in parallel and may change downstream priorities.
+Cross-cutting platform improvements may continue while validation proceeds, but they must not encode unvalidated workflow terminology as canonical product semantics.
 
 ## Approval discipline
 
-A Draft document records current programme thinking; it is not an approved baseline.
+A Draft/Candidate document records current programme thinking and validation intent; it is not an approved product, architecture or investment baseline.
 
 Documents should progress through review and approval only when their material assumptions are supported by sufficient evidence for the decision being made.
