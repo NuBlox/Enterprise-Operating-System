@@ -50,11 +50,13 @@ public sealed class PostgresWorkProductRepository : IWorkProductRepository
             INSERT INTO work_products.revisions (
                 tenant_id, work_product_revision_id, work_product_id, revision_number,
                 title_snapshot, state, created_by_principal_id, created_at,
-                submitted_by_principal_id, submitted_at)
+                submitted_by_principal_id, submitted_at,
+                issued_by_principal_id, issued_at)
             VALUES (
                 @tenant_id, @revision_id, @work_product_id, @revision_number,
                 @title_snapshot, @state, @created_by_principal_id, @created_at,
-                @submitted_by_principal_id, @submitted_at);
+                @submitted_by_principal_id, @submitted_at,
+                @issued_by_principal_id, @issued_at);
             """,
             connection,
             transaction))
@@ -82,7 +84,8 @@ public sealed class PostgresWorkProductRepository : IWorkProductRepository
                 p.created_by_principal_id, p.created_at, p.lifecycle, p.current_revision_number,
                 r.work_product_revision_id, r.revision_number, r.title_snapshot,
                 r.state, r.created_by_principal_id, r.created_at,
-                r.submitted_by_principal_id, r.submitted_at
+                r.submitted_by_principal_id, r.submitted_at,
+                r.issued_by_principal_id, r.issued_at
             FROM work_products.work_products p
             JOIN work_products.revisions r
               ON r.tenant_id = p.tenant_id
@@ -108,10 +111,13 @@ public sealed class PostgresWorkProductRepository : IWorkProductRepository
 
                 var submittedBy = reader.IsDBNull(14) ? (PrincipalId?)null : new PrincipalId(reader.GetGuid(14));
                 var submittedAt = reader.IsDBNull(15) ? (DateTimeOffset?)null : reader.GetFieldValue<DateTimeOffset>(15);
+                var issuedBy = reader.IsDBNull(16) ? (PrincipalId?)null : new PrincipalId(reader.GetGuid(16));
+                var issuedAt = reader.IsDBNull(17) ? (DateTimeOffset?)null : reader.GetFieldValue<DateTimeOffset>(17);
                 var revision = WorkProductRevision.Restore(
                     new WorkProductRevisionId(reader.GetGuid(8)), tenantId, workProduct.Id,
                     reader.GetInt32(9), reader.GetString(10), ParseRevisionState(reader.GetString(11)),
-                    new PrincipalId(reader.GetGuid(12)), reader.GetFieldValue<DateTimeOffset>(13), submittedBy, submittedAt);
+                    new PrincipalId(reader.GetGuid(12)), reader.GetFieldValue<DateTimeOffset>(13),
+                    submittedBy, submittedAt, issuedBy, issuedAt);
 
                 result = new WorkProductRecord(workProduct, revision);
             }
@@ -209,6 +215,8 @@ public sealed class PostgresWorkProductRepository : IWorkProductRepository
         command.Parameters.AddWithValue("created_at", revision.CreatedAtUtc);
         command.Parameters.AddWithValue("submitted_by_principal_id", revision.SubmittedByPrincipalId is { } submittedBy ? submittedBy.Value : DBNull.Value);
         command.Parameters.AddWithValue("submitted_at", revision.SubmittedAtUtc is { } submittedAt ? submittedAt : DBNull.Value);
+        command.Parameters.AddWithValue("issued_by_principal_id", revision.IssuedByPrincipalId is { } issuedBy ? issuedBy.Value : DBNull.Value);
+        command.Parameters.AddWithValue("issued_at", revision.IssuedAtUtc is { } issuedAt ? issuedAt : DBNull.Value);
     }
 
     private static string FormatLifecycle(WorkProductLifecycle lifecycle) => lifecycle switch
