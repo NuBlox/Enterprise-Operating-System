@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.4  
+**Version:** 0.5  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.3  
+**Supersedes:** Version 0.4  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -53,11 +53,12 @@ Maintain the controlled implementation backlog that links NuBlox requirements an
 | `DEV-002` | P0 | Resolve primary persistence model | ADR-002; FR-005–FR-008; SPIKE-001/002 | Accepted ADR states authoritative model and transaction principles without silently selecting a provider | **Complete — ADR-002 ACCEPTED** |
 | `DEV-003` | P0 | Resolve tenant/customer isolation model | ADR-007; FR-002/003; SPIKE-003 | Accepted ADR records logical tenant invariants, physical profiles and provider-independent enforcement | **Complete — ADR-007 ACCEPTED** |
 | `DEV-004` | P0 | Resolve production runtime/language/framework baseline | ADR-012; SPIKE-001–009; technology evaluation matrix | Accepted runtime ADR backed by current vendor/support evidence and NuBlox spike evidence | **Complete — ADR-012 ACCEPTED (.NET 10 LTS/C# server/core)** |
-| `DEV-005` | P0 | Resolve identity/authentication boundary | ADR-008; FR-001–FR-004 | Identity ADR defines IdP/federation, account/service identity and tenant-resolution responsibilities | Ready |
-| `DEV-006` | P0 | Define API standards and compatibility rules | ADR-011; FR-032–FR-035 | API ADR defines contract style, errors, versioning, idempotency, auth context and observability requirements | Ready |
+| `DEV-005` | P0 | Resolve identity/authentication boundary | ADR-008; FR-001–FR-004 | Identity ADR defines federation, Principal/service identity and tenant-context responsibilities | **Complete — ADR-008 ACCEPTED** |
+| `DEV-006` | P0 | Define API standards and compatibility rules | ADR-011; API-001–API-015; FR-032–FR-035 | API ADR defines remote contract style, errors, versioning, idempotency, auth context and compatibility | **Complete — ADR-011 ACCEPTED** |
 | `DEV-007` | P0 | Define production observability baseline | ADR-016; FR-034/039/040; SPIKE-009 | Observability ADR separates audit evidence from logs and defines correlation, metrics/tracing and export boundary | Ready |
 | `DEV-008` | P0 | Define release/configuration/schema evolution strategy | ADR-020; FR-036/037 | ADR defines backward-safe deployment, migration, rollback/forward-fix and configuration compatibility rules | Ready |
-| `DEV-009` | P0 | Resolve schema/data modularity rules | ADR-017; ADR-001/002 | ADR defines module-owned persistence boundaries and prevents unrestricted cross-module persistence access | Ready |
+| `DEV-009` | P0 | Resolve schema/data modularity rules | ADR-017; ADR-001/002 | ADR defines module-owned persistence boundaries and prevents unrestricted cross-module persistence access | **Complete — ADR-017 ACCEPTED** |
+| `DEV-010` | P0 | Select initial relational database provider/profile | ADR-002/007/017; provider evaluation; SPIKE-001–009 | ADR records PostgreSQL/MySQL/other credible alternatives, isolation/integrity/operations evidence and selected initial provider | Ready |
 
 ## Wave 1 — production engineering foundation
 
@@ -66,10 +67,11 @@ Maintain the controlled implementation backlog that links NuBlox requirements an
 | `DEV-101` | P1 | Create production source/test boundaries separate from `spikes/` | Development plan; ADR-001/012 | `src/NuBlox.Kernel` and `tests/NuBlox.Kernel.Tests` compile independently of spike projects; boundary test rejects `FoundationSpike` references | **Complete — CI run 36270844112** |
 | `DEV-102` | P1 | Establish deterministic production restore/build/test entrypoint | ADR-012; SPIKE-009 | Root SDK/build policy plus `bash scripts/verify-production.sh` executes restore/build/test locally and in CI | **Complete — SDK 10.0.401; 0 warnings/errors; 2/2 tests passed in CI run 36270844112** |
 | `DEV-103` | P1 | Establish dependency and package provenance controls | ADR-012; mastered-package policy | Central package versions and `NBEOS-H-003` inventory record direct dependency purpose/version/provenance/licence boundary | **Complete — initial baseline** |
-| `DEV-104` | P1 | Establish production persistence/migration scaffold | ADR-002/007/017/020; FR-005–FR-008 | Empty production schema can be created, upgraded and verified deterministically with no synthetic spike taxonomy | Blocked by DEV-008/009 and database-provider decision |
-| `DEV-105` | P1 | Establish identity/context request boundary | ADR-007/008/011; FR-001–FR-004 | Requests resolve authenticated identity and approved working/tenant context server-side with negative tests | Blocked by DEV-005/006 |
-| `DEV-106` | P1 | Establish production audit/telemetry primitives | ADR-016/018; FR-039/040 | Business audit evidence and technical telemetry are separate, correlated and testable | Blocked by DEV-007 |
+| `DEV-104` | P1 | Establish production persistence/migration scaffold | ADR-002/007/017/020; FR-005–FR-008 | Empty production schema can be created, upgraded and verified deterministically with no synthetic spike taxonomy | Blocked by DEV-008/010 |
+| `DEV-105` | P1 | Establish identity/context request boundary | ADR-007/008/011; FR-001–FR-004 | Provider-neutral Principal/Tenant context plus protected-request negative tests; hosted IdP configuration remains environment-specific | **Ready** |
+| `DEV-106` | P1 | Establish production audit/telemetry primitives | ADR-016/018; FR-039/040 | Business audit evidence and technical telemetry are separate, correlated and testable | Blocked by DEV-007 and ADR-018 |
 | `DEV-107` | P1 | Establish complete CI quality gates for production paths | Development plan; NFRs | CI verifies build/tests plus migration, identity/security, telemetry and dependency/provenance controls as those paths exist | **In progress — base build/test gate established; blocked by DEV-104–106 for full scope** |
+| `DEV-108` | P1 | Establish production ASP.NET Core API host and contract primitives | ADR-008/011/012; API-001–API-015 | API host builds/tests separately from spike code; health endpoints, problem-details baseline, versioned API grouping and OpenAPI infrastructure are verified without inventing business endpoints | **Ready** |
 
 ## Wave 2 — first governed vertical product slice
 
@@ -100,32 +102,38 @@ The exact workflow remains **Not Ready** until requirements work selects and val
 
 ## Mastered package workstream
 
-`packages/mastered/mysql` remains a governed NuBlox-maintained package. It is not a dependency of the current .NET production kernel and does not pre-judge the relational database/provider decision under ADR-002.
+`packages/mastered/mysql` remains a governed NuBlox-maintained package. It is not a dependency of the current .NET production kernel and does not pre-judge DEV-010 relational database/provider selection.
 
 Package capability development, product adoption, database/provider decisions, and upstream synchronisation/vulnerability maintenance remain distinct workstreams.
 
 ## Immediate execution order
 
 ```text
-COMPLETE:
+COMPLETE DECISIONS:
 DEV-001 decomposition
 DEV-002 persistence model
 DEV-003 tenant isolation
 DEV-004 .NET 10 server/core runtime
-DEV-101 production source/test boundary
-DEV-102 deterministic restore/build/test
+DEV-005 identity/authentication boundary
+DEV-006 API standards
+DEV-009 data/schema modularity
+
+COMPLETE FOUNDATION:
+DEV-101 source/test boundary
+DEV-102 deterministic build/test
 DEV-103 dependency/provenance baseline
         ↓
-NEXT P0 DECISIONS:
-DEV-005 identity
-DEV-006 API standards
-DEV-009 schema/data modularity
+EXECUTE NOW:
+DEV-108 API host / contract primitives
+DEV-105 Principal/Tenant request-context boundary
+        +
+NEXT P0:
 DEV-007 observability
 DEV-008 release/schema evolution
-+ relational database/provider selection
+DEV-010 relational provider selection
+ADR-018 audit/evidence
         ↓
 DEV-104 persistence/migrations
-DEV-105 identity/context
 DEV-106 audit/telemetry
 DEV-107 complete CI gate
         ↓
@@ -140,6 +148,7 @@ DEV-202–DEV-208 first governed vertical slice
 - `Dependency_management_document.md`
 - `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`
 - `../F_Requirements_Analysis/Functional_requirements_specification.md`
+- `../F_Requirements_Analysis/API_requirements.md`
 - `../F_Requirements_Analysis/Non-functional_requirements_specification.md`
 - `../G_Architecture_Design/Architecture_decision_records_ADRs.md`
 - `../G_Architecture_Design/Technical_spikes.md`
@@ -153,3 +162,4 @@ DEV-202–DEV-208 first governed vertical slice
 | 0.2 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-001/002/003 following accepted ADR-001/002/007; separated ADR-017 schema modularity into DEV-009 |
 | 0.3 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-004 after ADR-012 accepted .NET 10 LTS/C# for the server/core |
 | 0.4 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-101/102/103 after production foundation CI passed; recorded partial DEV-107 build/test gate |
+| 0.5 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-005/006/009 following ADR-008/011/017; added DEV-010 provider selection and DEV-108 API-host foundation |
