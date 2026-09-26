@@ -2,9 +2,9 @@ using NuBlox.FoundationSpike.Shared;
 
 namespace NuBlox.FoundationSpike.Subjects;
 
-public sealed class SubjectModule(SubjectNameHistory? nameHistory = null)
+public sealed class SubjectModule(SubjectHistoryModule? history = null)
 {
-    private readonly SubjectNameHistory _nameHistory = nameHistory ?? new SubjectNameHistory();
+    private readonly SubjectHistoryModule _history = history ?? new SubjectHistoryModule();
 
     public async Task<SubjectId> CreateAsync(
         ITransactionalSession session,
@@ -14,34 +14,39 @@ public sealed class SubjectModule(SubjectNameHistory? nameHistory = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
 
-        var id = SubjectId.New();
-        var effectiveFrom = DateTimeOffset.UtcNow;
+        var id = await CreateIdentityAsync(session, customerId, cancellationToken);
 
-        await using (var command = session.Connection.CreateCommand())
-        {
-            command.Transaction = session.Transaction;
-            command.CommandText = """
-                INSERT INTO subjects.business_subjects
-                    (customer_id, id)
-                VALUES
-                    (@customer_id, @id);
-                """;
-            command.AddParameter("customer_id", customerId.Value);
-            command.AddParameter("id", id.Value);
-
-            await command.ExecuteNonQueryAsync(cancellationToken);
-        }
-
-        await _nameHistory.AddVersionAsync(
+        await _history.InitialiseAsync(
             session,
             customerId,
             id,
             displayName,
-            changeReason: "initial-name",
-            effectiveFrom,
-            effectiveTo: null,
+            DateTimeOffset.UtcNow,
+            "initial-name",
             cancellationToken);
 
+        return id;
+    }
+
+    public async Task<SubjectId> CreateIdentityAsync(
+        ITransactionalSession session,
+        CustomerId customerId,
+        CancellationToken cancellationToken = default)
+    {
+        var id = SubjectId.New();
+
+        await using var command = session.Connection.CreateCommand();
+        command.Transaction = session.Transaction;
+        command.CommandText = """
+            INSERT INTO subjects.business_subjects
+                (customer_id, id)
+            VALUES
+                (@customer_id, @id);
+            """;
+        command.AddParameter("customer_id", customerId.Value);
+        command.AddParameter("id", id.Value);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
         return id;
     }
 }
