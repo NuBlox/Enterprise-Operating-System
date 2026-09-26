@@ -3,7 +3,7 @@
 **Section:** G_Architecture_Design  
 **Document ID:** NBEOS-G-014  
 **Document Type:** Proof of concept report  
-**Version:** 0.2  
+**Version:** 0.3  
 **Status:** Draft  
 **Author / Owner:** NuBlox Architecture / Engineering  
 **Reviewer:** [TBD]  
@@ -17,13 +17,13 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Technical_spikes.md`, `Architecture_decision_records_ADRs.md`, `High-level_design_HLD.md`, `Data_architecture.md`, `Security_architecture.md`, `Data_migration_design.md`  
-**Supersedes:** Version 0.1  
+**Supersedes:** Version 0.2  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/G_Architecture_Design/Proof_of_concept_report.md`  
 **Storage Location:** `software_project_docs/G_Architecture_Design/Proof_of_concept_report.md`  
 **Access Permissions:** Repository access controls  
 **Digital Signature:** Not yet signed  
-**Audit Trail:** Git history / GitHub Actions runs `36256385149`, `36256979645`  
+**Audit Trail:** Git history / GitHub Actions runs `36256385149`, `36256979645`, `36257231581`  
 
 ## Purpose
 
@@ -42,6 +42,7 @@ The disposable experiment under `spikes/foundation-architecture/` currently test
 - ordered SQL migrations;
 - customer-context relational constraints;
 - business-effective history with as-of reconstruction;
+- shared-schema row-level customer isolation under a restricted application role;
 - GitHub Actions CI.
 
 The experiment does **not** define the final NuBlox business taxonomy, tenancy model, identity model, UI, navigation, deployment topology or approved production architecture.
@@ -116,14 +117,7 @@ CI applies all numbered spike migrations in lexical order. `0002_effective_histo
 
 ### POC-E-008 — Business-effective time separated from technical recording time
 
-`subjects.business_subject_names` stores:
-
-- `effective_from`;
-- optional `effective_to`;
-- `recorded_at`;
-- change reason.
-
-The verification harness proved that technical recording time remains distinct from historical business-effective time.
+`subjects.business_subject_names` stores `effective_from`, optional `effective_to`, `recorded_at` and a change reason. The verification harness proved that technical recording time remains distinct from historical business-effective time.
 
 **Result:** PASS.
 
@@ -146,15 +140,57 @@ The database uses a GiST exclusion constraint over customer, subject and effecti
 
 ### POC-E-011 — SPIKE-002 CI reproducibility
 
-GitHub Actions workflow `Foundation architecture spike`, run `36256979645`, completed successfully on commit `44ef93d99319894337de3108588afca81c444885`.
+GitHub Actions run `36256979645` completed successfully on commit `44ef93d99319894337de3108588afca81c444885`.
 
-The run successfully:
+**Result:** PASS.
 
-1. started PostgreSQL 18;
-2. applied `0001_foundation.sql` and `0002_effective_history.sql`;
-3. restored and built the API harness with warnings treated as errors;
-4. restored and built the verification harness;
-5. executed SPIKE-001 and SPIKE-002 verification successfully.
+## SPIKE-003 — Customer/isolation context: shared-schema RLS candidate
+
+This part of SPIKE-003 evaluates one isolation option: shared schema with mandatory customer context and PostgreSQL row-level security. It does **not** yet complete the full operational comparison with schema-per-customer or database-per-customer approaches.
+
+### POC-E-012 — Restricted application role
+
+Migration `0003_customer_row_isolation.sql` creates a non-login, non-superuser `nublox_app` database role with only the required schema/table privileges and applies row-level policies to the sample customer-owned tables.
+
+**Result:** PASS.
+
+### POC-E-013 — Own-customer visibility and cross-customer read isolation
+
+Under `nublox_app` with Customer A context set in the database transaction:
+
+- Customer A's subject remained visible;
+- Customer B's subject was not visible even when its identifier was known.
+
+**Result:** PASS.
+
+### POC-E-014 — Missing customer context fails closed
+
+The restricted application role was activated without setting a customer context. Customer-owned rows were not visible.
+
+**Result:** PASS.
+
+### POC-E-015 — Wrong-customer write rejected
+
+With Customer A context active, the verifier attempted to insert a row carrying Customer B's `customer_id`. PostgreSQL row-level security rejected the write.
+
+**Result:** PASS.
+
+### POC-E-016 — Layered isolation evidence
+
+The spike now demonstrates two different database protections:
+
+1. composite foreign keys prevent cross-customer relationships from being formed;
+2. row-level security prevents a restricted application role from reading or writing rows outside the active customer context.
+
+These controls address different failure modes and can operate together.
+
+**Result:** PASS.
+
+### POC-E-017 — SPIKE-003 shared-schema CI reproducibility
+
+GitHub Actions workflow `Foundation architecture spike`, run `36257231581`, completed successfully on commit `bb6142073d06ab6669692339b625c05479086741`.
+
+The run applied migrations `0001` through `0003`, built the API and verifier with warnings treated as errors, and executed SPIKE-001 through SPIKE-003 verification successfully.
 
 **Result:** PASS.
 
@@ -163,7 +199,11 @@ The run successfully:
 The evidence does not yet establish:
 
 - production performance or representative-volume history-query performance;
-- final customer/tenant isolation strategy;
+- the final customer/tenant isolation strategy;
+- operational comparison of shared-schema RLS versus schema-per-customer versus database-per-customer;
+- privileged support/platform-access governance;
+- connection-pool/customer-context reset behaviour under concurrency;
+- backup, restore, export and legal-hold behaviour across isolation models;
 - final authentication/identity architecture;
 - business-authority evaluation;
 - long-running workflow/orchestration;
@@ -182,15 +222,16 @@ Current evidence supports continuing the hypothesis that NuBlox can use:
 - strongly typed modules;
 - relational transactions and constraints;
 - stable identity separated from effective-dated attributes/state;
-- explicit historical query semantics.
+- explicit historical query semantics;
+- layered customer-context protection in a shared relational model.
 
-The successful spikes make these approaches credible. They do **not** make them final production decisions.
+The shared-schema RLS candidate is technically credible. The final isolation choice remains open until the operational/security trade-offs of alternative patterns are evaluated.
 
 ## Next evidence required
 
 Continue the bounded spike sequence with:
 
-1. customer/isolation context options;
+1. complete the isolation-options comparison and privileged/support-access model;
 2. permission versus business authority;
 3. durable asynchronous integration/outbox;
 4. governed configuration;
@@ -198,7 +239,7 @@ Continue the bounded spike sequence with:
 6. operational reporting/drill-through;
 7. build/operability assessment throughout.
 
-The history design must also be tested later at representative synthetic volume before an NFR/performance conclusion is made.
+The history and isolation designs must also be tested later at representative synthetic volume before NFR/performance conclusions are made.
 
 ## CI evidence
 
@@ -206,10 +247,11 @@ The history design must also be tested later at representative synthetic volume 
 |---|---:|---|---|
 | SPIKE-001 | `36256385149` | `6bb6d0595dd8f50853416de439e1fed96d611594` | success |
 | SPIKE-002 | `36256979645` | `44ef93d99319894337de3108588afca81c444885` | success |
+| SPIKE-003 shared-schema/RLS candidate | `36257231581` | `bb6142073d06ab6669692339b625c05479086741` | success |
 
 ## Recommendation
 
-Retain `spikes/foundation-architecture/` as disposable evidence and proceed to SPIKE-003. Do not promote the current spike code into the production application until the material ADRs have been reviewed after the remaining high-risk uncertainties are tested.
+Retain `spikes/foundation-architecture/` as disposable evidence. Continue the isolation comparison and then SPIKE-004. Do not promote current spike code into the production application until the material ADRs are reviewed after the remaining high-risk uncertainties are tested.
 
 ## Change History
 
@@ -217,3 +259,4 @@ Retain `spikes/foundation-architecture/` as disposable evidence and proceed to S
 |---|---|---|---|
 | 0.1 | 2026-09-26 | NuBlox Architecture / Engineering | Recorded successful foundation transaction CI verification and evidence boundaries |
 | 0.2 | 2026-09-26 | NuBlox Architecture / Engineering | Added successful effective-dated history, as-of reconstruction and overlap-prevention evidence |
+| 0.3 | 2026-09-26 | NuBlox Architecture / Engineering | Added successful shared-schema row-level customer-isolation evidence and limitations |
