@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Npgsql;
+using NuBlox.Enterprise;
 using NuBlox.Identity;
 using NuBlox.Kernel;
 using NuBlox.Persistence.PostgreSql;
@@ -147,17 +148,137 @@ public sealed class WorkProductRuntimeCompositionTests
         Assert.AreEqual(0L, Convert.ToInt64(await payloadLeakCommand.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
     }
 
+    [TestMethod]
+    public async Task RealHostCreatesTenantScopedOrganisationAgainstPostgreSql()
+    {
+        var tenantA = new TenantDirectoryEntry(TenantId.New(), new TenantRouteSlug("tenant-a"), true);
+        var tenantB = new TenantDirectoryEntry(TenantId.New(), new TenantRouteSlug("tenant-b"), true);
+        var administratorA = AuthenticatedPrincipal.CreateHuman(
+            PrincipalId.New(),
+            new ExternalIdentity("https://identity.example.test", "organisation-admin-a"));
+        var administratorB = AuthenticatedPrincipal.CreateHuman(
+            PrincipalId.New(),
+            new ExternalIdentity("https://identity.example.test", "organisation-admin-b"));
+        var deniedPrincipal = AuthenticatedPrincipal.CreateHuman(
+            PrincipalId.New(),
+            new ExternalIdentity("https://identity.example.test", "organisation-denied"));
+
+        await SeedTenantAsync(tenantA);
+        await SeedTenantAsync(tenantB);
+
+        var runtimeConnectionString = new NpgsqlConnectionStringBuilder(_migrationConnectionString)
+        {
+            Username = RuntimeRole,
+            Password = RuntimePassword,
+            Pooling = false
+        }.ConnectionString;
+
+        var administratorAContext = await ResolveAsync(administratorA, tenantA);
+        var administratorBContext = await ResolveAsync(administratorB, tenantB);
+        var deniedContext = await ResolveAsync(deniedPrincipal, tenantA);
+        var organisationAdministrators = new[] { administratorA.PrincipalId, administratorB.PrincipalId };
+
+        using var administratorAFactory = CreateRuntimeFactory(
+            runtimeConnectionString,
+            administratorA.PrincipalId,
+            administratorAContext,
+            organisationAdministrators);
+        using var administratorAClient = CreateHttpsClient(administratorAFactory);
+
+        const string sensitiveDisplayName = "Acme Strategic Design Ltd";
+        using var createResponse = await administratorAClient.PostAsJsonAsync(
+            "/api/v1/tenant-a/organisations",
+            new CreateOrganisationRequest(
+                sensitiveDisplayName,
+                TenantId: tenantB.TenantId.Value,
+                ActorPrincipalId: deniedPrincipal.PrincipalId.Value));
+        Assert.AreEqual(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<OrganisationContract>();
+        Assert.IsNotNull(created);
+        Assert.AreEqual(PartyKind.Organisation.ToString(), created.PartyKind);
+        Assert.AreEqual(sensitiveDisplayName, created.DisplayName);
+
+        using var sameTenantRead = await administratorAClient.GetAsync(
+            $"/api/v1/tenant-a/organisations/{created.PartyId:D}");
+        Assert.AreEqual(HttpStatusCode.OK, sameTenantRead.StatusCode);
+
+        using var deniedFactory = CreateRuntimeFactory(
+            runtimeConnectionString,
+            administratorA.PrincipalId,
+            deniedContext,
+            organisationAdministrators);
+        using var deniedClient = CreateHttpsClient(deniedFactory);
+        using var deniedCreate = await deniedClient.PostAsJsonAsync(
+            "/api/v1/tenant-a/organisations",
+            new CreateOrganisationRequest("Denied Organisation"));
+        Assert.AreEqual(HttpStatusCode.Forbidden, deniedCreate.StatusCode);
+
+        using var administratorBFactory = CreateRuntimeFactory(
+            runtimeConnectionString,
+            administratorA.PrincipalId,
+            administratorBContext,
+            organisationAdministrators);
+        using var administratorBClient = CreateHttpsClient(administratorBFactory);
+        using var crossTenantRead = await administratorBClient.GetAsync(
+            $"/api/v1/tenant-b/organisations/{created.PartyId:D}");
+        Assert.AreEqual(HttpStatusCode.NotFound, crossTenantRead.StatusCode);
+
+        await using var migrationDataSource = NpgsqlDataSource.Create(_migrationConnectionString);
+        await using var connection = await migrationDataSource.OpenConnectionAsync();
+
+        await using (var actorCommand = new NpgsqlCommand(
+            """
+            SELECT actor_principal_id
+            FROM audit.events
+            WHERE tenant_id = @tenant_id
+              AND action_code = 'enterprise.organisation.create'
+              AND subject_id = @party_id;
+            """,
+            connection))
+        {
+            actorCommand.Parameters.AddWithValue("tenant_id", tenantA.TenantId.Value);
+            actorCommand.Parameters.AddWithValue("party_id", created.PartyId.ToString("D"));
+            var auditActor = await actorCommand.ExecuteScalarAsync();
+            Assert.AreEqual(administratorA.PrincipalId.Value, Assert.IsInstanceOfType<Guid>(auditActor));
+        }
+
+        Assert.AreEqual(1L, await ScalarInt64Async(
+            connection,
+            "SELECT count(*) FROM audit.events WHERE tenant_id = @tenant_id AND action_code = 'enterprise.organisation.create';",
+            tenantA.TenantId.Value));
+        Assert.AreEqual(0L, await ScalarInt64Async(
+            connection,
+            "SELECT count(*) FROM audit.events WHERE tenant_id = @tenant_id AND action_code = 'enterprise.organisation.create';",
+            tenantB.TenantId.Value));
+
+        await using var payloadLeakCommand = new NpgsqlCommand(
+            """
+            SELECT count(*)
+            FROM audit.events
+            WHERE tenant_id = @tenant_id
+              AND (subject_id = @display_name OR reason_reference = @display_name);
+            """,
+            connection);
+        payloadLeakCommand.Parameters.AddWithValue("tenant_id", tenantA.TenantId.Value);
+        payloadLeakCommand.Parameters.AddWithValue("display_name", sensitiveDisplayName);
+        Assert.AreEqual(0L, Convert.ToInt64(await payloadLeakCommand.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
+    }
+
     private static WebApplicationFactory<Program> CreateRuntimeFactory(
         string runtimeConnectionString,
         PrincipalId approvalPrincipal,
-        AuthenticatedRequestContext context) =>
+        AuthenticatedRequestContext context,
+        IEnumerable<PrincipalId>? organisationAdministrators = null) =>
         new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
                 builder.UseEnvironment("Testing");
                 builder.ConfigureTestServices(services =>
                 {
-                    services.AddNuBloxPostgresRuntime(runtimeConnectionString, [approvalPrincipal]);
+                    services.AddNuBloxPostgresRuntime(
+                        runtimeConnectionString,
+                        [approvalPrincipal],
+                        organisationAdministrators);
                     services.AddSingleton<IStartupFilter>(new VerifiedContextStartupFilter(context));
                 });
             });
@@ -196,7 +317,7 @@ public sealed class WorkProductRuntimeCompositionTests
         await using var dataSource = NpgsqlDataSource.Create(_migrationConnectionString);
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(
-            "DROP SCHEMA IF EXISTS audit CASCADE; DROP SCHEMA IF EXISTS work_products CASCADE; DROP SCHEMA IF EXISTS kernel CASCADE; DROP SCHEMA IF EXISTS nublox_meta CASCADE;",
+            "DROP SCHEMA IF EXISTS audit CASCADE; DROP SCHEMA IF EXISTS work_products CASCADE; DROP SCHEMA IF EXISTS enterprise CASCADE; DROP SCHEMA IF EXISTS kernel CASCADE; DROP SCHEMA IF EXISTS nublox_meta CASCADE;",
             connection);
         await command.ExecuteNonQueryAsync();
     }
@@ -223,7 +344,8 @@ public sealed class WorkProductRuntimeCompositionTests
 
         await using var grants = new NpgsqlCommand(
             $"""
-            GRANT USAGE ON SCHEMA work_products, audit TO {RuntimeRole};
+            GRANT USAGE ON SCHEMA enterprise, work_products, audit TO {RuntimeRole};
+            GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA enterprise TO {RuntimeRole};
             GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA work_products TO {RuntimeRole};
             GRANT SELECT, INSERT ON audit.events, audit.evidence_references TO {RuntimeRole};
             """,
