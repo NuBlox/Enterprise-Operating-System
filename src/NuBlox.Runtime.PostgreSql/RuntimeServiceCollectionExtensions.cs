@@ -16,13 +16,15 @@ public static class RuntimeServiceCollectionExtensions
         this IServiceCollection services,
         string connectionString,
         IEnumerable<PrincipalId>? workProductApprovalPrincipals = null,
-        IEnumerable<PrincipalId>? organisationAdministratorPrincipals = null)
+        IEnumerable<PrincipalId>? organisationAdministratorPrincipals = null,
+        IEnumerable<PrincipalId>? personAdministratorPrincipals = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
         var approvalPrincipals = workProductApprovalPrincipals?.ToArray() ?? [];
         var organisationAdministrators = organisationAdministratorPrincipals?.ToArray() ?? [];
+        var personAdministrators = personAdministratorPrincipals?.ToArray() ?? [];
 
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
 
@@ -44,6 +46,13 @@ public static class RuntimeServiceCollectionExtensions
             provider.GetRequiredService<ConfiguredOrganisationAccessEvaluator>());
         services.AddScoped<IOrganisationRepository, PostgresOrganisationRepository>();
         services.AddScoped<OrganisationApplicationService>();
+
+        services.AddSingleton<ConfiguredPersonAccessEvaluator>(_ =>
+            new ConfiguredPersonAccessEvaluator(personAdministrators));
+        services.AddSingleton<IPersonAccessEvaluator>(static provider =>
+            provider.GetRequiredService<ConfiguredPersonAccessEvaluator>());
+        services.AddScoped<IPersonRepository, PostgresPersonRepository>();
+        services.AddScoped<PersonApplicationService>();
 
         services.AddSingleton<ISystemClock, SystemClock>();
         services.AddScoped<IWorkProductRepository, PostgresGovernedWorkProductRepository>();
