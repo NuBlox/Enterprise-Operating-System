@@ -9,6 +9,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../NuBlox.Audit/NuBlox.Audit.csproj" />
+    <ProjectReference Include="../NuBlox.Enterprise.Application/NuBlox.Enterprise.Application.csproj" />
     <ProjectReference Include="../NuBlox.Identity/NuBlox.Identity.csproj" />
     <ProjectReference Include="../NuBlox.Observability/NuBlox.Observability.csproj" />
     <ProjectReference Include="../NuBlox.Runtime.PostgreSql/NuBlox.Runtime.PostgreSql.csproj" />
