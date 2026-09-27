@@ -1,3 +1,4 @@
+using NuBlox.Enterprise.Infrastructure.PostgreSql;
 using NuBlox.Persistence.PostgreSql;
 using NuBlox.WorkProducts.Infrastructure.PostgreSql;
 
@@ -8,6 +9,7 @@ public static class PostgresRuntimeMigrations
     public static IReadOnlyList<PostgresMigration> LoadAll()
     {
         var migrations = PostgresMigrationCatalog.Load()
+            .Concat(EnterprisePostgresMigrations.Load())
             .Concat(WorkProductsPostgresMigrations.Load())
             .Concat(PostgresMigrationCatalog.Load(typeof(PostgresRuntimeMigrations).Assembly))
             .OrderBy(static migration => migration.Id, StringComparer.Ordinal)
