@@ -1,6 +1,8 @@
 using NuBlox.Api;
 using NuBlox.Audit;
+using NuBlox.Kernel;
 using NuBlox.Observability;
+using NuBlox.Runtime.PostgreSql;
 using NuBlox.WorkProducts.Application;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +17,24 @@ builder.Services.AddProblemDetails(options =>
     };
 });
 builder.Services.AddOpenApi("v1");
+
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    var connectionString = builder.Configuration.GetConnectionString("PostgreSql")
+        ?? builder.Configuration["NuBlox:PostgreSql:ConnectionString"]
+        ?? throw new InvalidOperationException("NuBlox PostgreSQL runtime connection string is required outside the Testing environment.");
+
+    var approvalPrincipals = builder.Configuration
+        .GetSection("NuBlox:WorkProducts:ApprovalPrincipals")
+        .GetChildren()
+        .Select(static child => child.Value)
+        .Where(static value => Guid.TryParse(value, out _))
+        .Select(static value => new PrincipalId(Guid.Parse(value!)))
+        .ToArray();
+
+    builder.Services.AddNuBloxPostgresRuntime(connectionString, approvalPrincipals);
+}
+
 builder.Services.AddScoped<WorkProductHttpOperations>();
 builder.Services.AddScoped<IWorkProductHttpOperations>(services =>
     new AuditedObservedWorkProductHttpOperations(

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Runtime.PostgreSql</AssemblyName>
+    <RootNamespace>NuBlox.Runtime.PostgreSql</RootNamespace>
+    <Description>Production PostgreSQL runtime composition for NuBlox platform and bounded business modules.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Audit/NuBlox.Audit.csproj" />
+    <ProjectReference Include="../NuBlox.Authority/NuBlox.Authority.csproj" />
+    <ProjectReference Include="../NuBlox.Kernel/NuBlox.Kernel.csproj" />
+    <ProjectReference Include="../NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj" />
+    <ProjectReference Include="../NuBlox.WorkProducts.Application/NuBlox.WorkProducts.Application.csproj" />
+    <ProjectReference Include="../NuBlox.WorkProducts.Infrastructure.PostgreSql/NuBlox.WorkProducts.Infrastructure.PostgreSql.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations/*.sql" />
+  </ItemGroup>
+</Project>

@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.21  
+**Version:** 0.22  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_definition.md`, `First_vertical_slice_verification.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.20  
+**Supersedes:** Version 0.21  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -27,7 +27,9 @@
 
 ## Purpose
 
-Maintain the controlled implementation backlog linking NuBlox requirements and architecture decisions to executable product increments. The production foundation is complete. The first governed vertical slice now has verified HTTP/request-context and audit/telemetry composition; real production runtime dependency composition remains before final acceptance.
+Maintain the controlled implementation backlog linking NuBlox requirements and architecture decisions to executable product increments. The production foundation is complete and the first governed vertical slice, **Governed Work Product — Create, Review, Approve and Issue**, has now passed bounded end-to-end technical verification through the real HTTP/application/PostgreSQL runtime graph.
+
+The backlog remains Draft because wider product requirements, customer evidence and subsequent capability priorities remain controlled but not fully approved.
 
 ## Backlog rules
 
@@ -88,22 +90,32 @@ Selected workflow: **Governed Work Product — Create, Review, Approve and Issue
 | `DEV-205` | P1 | Work-product/evidence linkage | approved-only issue + exact approval evidence + supersession | **Complete — CI 36277625604** |
 | `DEV-206` | P1 | Operational attention/drill-through | Principal-scoped attention + governed source evidence | **Complete — CI 36278067339** |
 | `DEV-207` | P1 | Durable notification/integration consequence | atomic issue intent + RLS + lease/retry/idempotency/reconciliation | **Complete — CI 36279181900** |
-| `DEV-208` | P1 | First-slice traceability/verification | NBEOS-H-005 acceptance assessment + RTM | **In Progress — DEV-211 remains before final rerun/acceptance** |
+| `DEV-208` | P1 | First-slice traceability/verification | NBEOS-H-005 v0.3 + NBEOS-F-015 v0.3 + all 12 acceptance criteria | **Complete — bounded technical acceptance; final documentation-head CI required before merge** |
 | `DEV-209` | P1 | WorkProducts HTTP composition + verified request context | Work Product create/read/submit/decide/issue endpoints derive Principal/Tenant only from verified context; fail-closed, route/body/header tamper, RFC 9457 and OpenAPI tests | **Complete — final-head CI 36280622610** |
-| `DEV-210` | P1 | WorkProducts audit + correlated telemetry composition | successful material operations append minimised authoritative audit evidence; audit/telemetry share correlation but remain separate; read/failure/minimisation tests | **Complete — CI 36281051957 before documentation-final rerun** |
-| `DEV-211` | P1 | Production WorkProducts runtime composition | provider-neutral HTTP host resolves the complete real WorkProducts application graph via an explicit composition root; durable audit appender, PostgreSQL repositories/data source, clock and authority/access implementations are registered without making `NuBlox.Api` the PostgreSQL infrastructure owner; at least one real HTTP→application→PostgreSQL flow executes without replacing `IWorkProductHttpOperations` | **Ready** |
+| `DEV-210` | P1 | WorkProducts audit + correlated telemetry composition | successful material operations append minimised authoritative audit evidence; audit/telemetry share correlation but remain separate; read/failure/minimisation tests | **Complete — merged PR #31 after green production verification** |
+| `DEV-211` | P1 | Production WorkProducts runtime composition | `NuBlox.Runtime.PostgreSql` composition root, concrete governed repository graph, restricted runtime role, durable PostgreSQL audit appender, combined migrations and real HTTP→application→PostgreSQL smoke flow | **Complete — implementation-head CI 36281993924; final documentation-head CI required before merge** |
+
+## DEV-211 verification finding retained
+
+The first real composition run exposed a defect that component tests had not detected: the runtime initially registered `PostgresWorkProductRepository`, whose base interface behaviour could not reconstruct governed review-decision context. The real reviewer decision returned `404` after create and submit had already succeeded.
+
+The production composition now registers `PostgresGovernedWorkProductRepository`. The same real HTTP create → submit → approve → issue flow then passed against PostgreSQL 18.6, including Tenant B isolation and durable audit verification.
+
+This finding reinforces the backlog rule that component success does not replace composition-root verification.
 
 ## Wave 3 — cross-enterprise capability expansion
 
+The first bounded slice is technically verified. Wave 3 should now be ordered from validated product/customer priorities rather than selected by implementation convenience.
+
 | ID | Priority | Backlog item | Traceability | Status |
 |---|---|---|---|---|
-| `DEV-301` | P2 | Governed customer variation/configuration | FR-036–FR-038; ADR-005 | Planned |
-| `DEV-302` | P2 | Search permitted information | FR-026; ADR-014 | Planned |
-| `DEV-303` | P2 | Controlled notifications/communication context | FR-030/031 | Planned |
-| `DEV-304` | P2 | External API/integration catalogue/reconciliation | FR-032–FR-035 | Planned |
-| `DEV-305` | P2 | Operational reporting/export expansion | FR-028/029, FR-041/042; ADR-015 | Planned |
-| `DEV-306` | P2 | Commercial/financial continuity slice | FR-023–FR-025 | Planned |
-| `DEV-307` | P2 | Expand by validated functional-governance, functional-delivery and built-environment outcomes | Product/requirements roadmap | Planned |
+| `DEV-301` | P2 | Governed customer variation/configuration | FR-036–FR-038; ADR-005 | Planned — priority not yet baselined |
+| `DEV-302` | P2 | Search permitted information | FR-026; ADR-014 | Planned — priority not yet baselined |
+| `DEV-303` | P2 | Controlled notifications/communication context | FR-030/031 | Planned — priority not yet baselined |
+| `DEV-304` | P2 | External API/integration catalogue/reconciliation | FR-032–FR-035 | Planned — priority not yet baselined |
+| `DEV-305` | P2 | Operational reporting/export expansion | FR-028/029, FR-041/042; ADR-015 | Planned — priority not yet baselined |
+| `DEV-306` | P2 | Commercial/financial continuity slice | FR-023–FR-025 | Planned — priority not yet baselined |
+| `DEV-307` | P2 | Expand by validated functional-governance, functional-delivery and built-environment outcomes | Product/requirements roadmap | Planned — priority not yet baselined |
 
 ## Governed SQL package workstream
 
@@ -111,19 +123,21 @@ The separately governed `NuBlox/NuBloxSQL` repository is the authoritative NuBlo
 
 ## Immediate execution order
 
-DEV-209 and DEV-210 close the two adapter/composition gaps originally identified by NBEOS-H-005, but the re-verification found one deeper production-host gap:
+The first production vertical slice has reached bounded technical acceptance. The next controlled sequence is:
 
 ```text
-DEV-211 real WorkProducts runtime composition
+final documentation-head production verifier
         ↓
-real HTTP → verified context → WorkProducts → PostgreSQL smoke/integration proof
+merge DEV-211 + DEV-208 acceptance evidence
         ↓
-DEV-208 rerun/consolidate all 12 acceptance criteria
+baseline next product/customer priority from Wave 3 or a newly validated workflow
         ↓
-first vertical slice accepted or explicit deviation approved
+trace requirement → ADR/design → implementation → verification
+        ↓
+implement next end-to-end product increment
 ```
 
-The repository will not claim end-to-end completion merely because adapter tests pass. The real host must resolve and execute the production dependency graph while preserving the provider-neutral API boundary.
+NuBlox should not select the next business capability solely because its infrastructure is easiest to build. The next slice must be justified by controlled product/customer evidence and the requirements roadmap.
 
 ## References
 
@@ -159,4 +173,5 @@ The repository will not claim end-to-end completion merely because adapter tests
 | 0.18 | 2026-09-26 | NuBlox Product / Engineering | Closed DEV-207 after accepted ADR-003 was implemented with atomic durable issue intent, tenant-scoped recoverable claiming, retry/idempotency/concurrency and reconciliation verification in CI run 36279181900 |
 | 0.19 | 2026-09-26 | NuBlox Product / Engineering | Started DEV-208 verification; recorded HTTP/request-context and audit/telemetry composition gaps as DEV-209/210 rather than falsely accepting the first slice |
 | 0.20 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-209 after WorkProducts HTTP verified-context composition, tenant/actor tamper protection, RFC 9457 failure mapping and OpenAPI verification passed in final-head CI run 36280622610 |
-| 0.21 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-210 after minimised authoritative audit and correlated telemetry composition passed CI run 36281051957; re-verification recorded DEV-211 real production runtime composition as the remaining first-slice blocker |
+| 0.21 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-210 after minimised authoritative audit and correlated telemetry composition; re-verification recorded DEV-211 real production runtime composition as the remaining first-slice blocker |
+| 0.22 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-211 and DEV-208 after real production composition verified the WorkProducts HTTP/application/PostgreSQL graph, corrected the governed-repository registration defect, proved tenant isolation and durable audit persistence, and completed all twelve first-slice acceptance criteria |
