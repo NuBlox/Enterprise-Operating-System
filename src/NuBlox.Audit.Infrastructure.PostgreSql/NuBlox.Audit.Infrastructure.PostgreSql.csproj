@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Audit.Infrastructure.PostgreSql</AssemblyName>
+    <RootNamespace>NuBlox.Audit.Infrastructure.PostgreSql</RootNamespace>
+    <Description>PostgreSQL persistence for authoritative NuBlox audit evidence.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Audit/NuBlox.Audit.csproj" />
+    <ProjectReference Include="../NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations/*.sql" />
+  </ItemGroup>
+</Project>
