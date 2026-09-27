@@ -1,6 +1,7 @@
 using NuBlox.Api;
 using NuBlox.Audit;
 using NuBlox.Observability;
+using NuBlox.Runtime;
 using NuBlox.WorkProducts.Application;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.Services.AddProblemDetails(options =>
     };
 });
 builder.Services.AddOpenApi("v1");
+builder.Services.AddNuBloxProductionRuntime(builder.Configuration);
 builder.Services.AddScoped<WorkProductHttpOperations>();
 builder.Services.AddScoped<IWorkProductHttpOperations>(services =>
     new AuditedObservedWorkProductHttpOperations(
