@@ -44,6 +44,7 @@ public sealed record Organisation
     {
         Id = id;
         TenantId = tenantId;
+        Kind = PartyKind.Organisation;
         DisplayName = displayName;
         CreatedByPrincipalId = createdByPrincipalId;
         CreatedAtUtc = createdAtUtc;
@@ -53,7 +54,7 @@ public sealed record Organisation
 
     public TenantId TenantId { get; }
 
-    public PartyKind Kind => PartyKind.Organisation;
+    public PartyKind Kind { get; }
 
     public string DisplayName { get; }
 
