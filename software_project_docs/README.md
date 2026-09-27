@@ -72,11 +72,13 @@ The live Requirements & Analysis set includes the controlled business/stakeholde
 | `NBEOS-F-003` | [Software requirements specification (SRS)](F_Requirements_Analysis/Software_requirements_specification_SRS.md) | Draft | 0.1 |
 | `NBEOS-F-004` | [Functional requirements specification](F_Requirements_Analysis/Functional_requirements_specification.md) | Draft | 0.1 |
 | `NBEOS-F-005` | [Non-functional requirements specification](F_Requirements_Analysis/Non-functional_requirements_specification.md) | Draft | 0.1 |
-| `NBEOS-F-015` | [Requirements traceability matrix (RTM)](F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md) | Draft | 0.3 |
+| `NBEOS-F-015` | [Requirements traceability matrix (RTM)](F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md) | Draft | 0.4 |
 
 ## Architecture & Design baseline
 
 The live architecture set is indexed at [`G_Architecture_Design/README.md`](G_Architecture_Design/README.md). It includes the architecture vision/definition, solution and data/integration/security designs, accepted/proposed/deferred ADRs, technology evaluation, nine-spike programme and proof-of-concept evidence.
+
+The accepted architecture now also includes `ADR-022`, which fixes the clean-slate enterprise identity invariant that Tenant is not Party, Party identity begins with Person and Organisation, and contextual labels such as Employee/Customer/Supplier are relationships or roles rather than Party kinds.
 
 The bounded architecture experiments `SPIKE-001` through `SPIKE-009` are complete. Their code remains experimental and is not automatically production code.
 
@@ -85,10 +87,12 @@ The bounded architecture experiments `SPIKE-001` through `SPIKE-009` are complet
 | ID | Document | Status | Version |
 |---|---|---|---|
 | `NBEOS-H-001` | [Development plan](H_Development_Implementation/Development_plan.md) | Draft | 0.1 |
-| `NBEOS-H-002` | [Product backlog](H_Development_Implementation/Product_backlog.md) | Draft | 0.22 |
+| `NBEOS-H-002` | [Product backlog](H_Development_Implementation/Product_backlog.md) | Draft | 0.24 |
 | `NBEOS-H-003` | [Dependency management document](H_Development_Implementation/Dependency_management_document.md) | Draft | 0.4 |
 | `NBEOS-H-004` | [First vertical slice definition](H_Development_Implementation/First_vertical_slice_definition.md) | Draft | 0.1 |
 | `NBEOS-H-005` | [First vertical slice verification](H_Development_Implementation/First_vertical_slice_verification.md) | Draft | 0.3 |
+| `NBEOS-H-006` | [Second vertical slice definition](H_Development_Implementation/Second_vertical_slice_definition.md) | Draft | 0.1 |
+| `NBEOS-H-007` | [Second vertical slice verification](H_Development_Implementation/Second_vertical_slice_verification.md) | Draft | 0.1 |
 
 The H-section index is [`H_Development_Implementation/README.md`](H_Development_Implementation/README.md).
 
@@ -99,29 +103,34 @@ NuBlox has progressed beyond architecture-spike entry planning into verified pro
 The programme has established:
 
 - controlled Draft strategy, initiation, requirements and architecture baselines;
-- explicit accepted production decisions for the current server/runtime, persistence, tenant isolation, identity/API, observability, release/schema evolution and database provider;
+- explicit accepted production decisions for the current server/runtime, persistence, tenant isolation, identity/API, observability, release/schema evolution, database provider and canonical Party/Organisation identity;
 - a production .NET 10 source/test/toolchain foundation separate from `spikes/`;
 - PostgreSQL 18 persistence, migration, RLS and restricted-runtime-role controls;
 - verified Principal/Tenant request context, contextual business authority, authoritative audit and correlated telemetry boundaries;
 - the first governed vertical slice, **Governed Work Product — Create, Review, Approve and Issue**;
 - real HTTP → application → PostgreSQL runtime composition with durable audit evidence;
-- NBEOS-H-005 v0.3 technical verification of all twelve bounded first-slice acceptance criteria.
+- NBEOS-H-005 v0.3 technical verification of all twelve bounded first-slice acceptance criteria;
+- the bounded **Governed Organisation Party — Register and Retrieve** increment with stable `PartyId`, module-owned Enterprise persistence, forced tenant RLS, verified-context API operations and attributable payload-minimised audit evidence;
+- NBEOS-H-007 v0.1 technical verification of all ten DEV-308/NBEOS-H-006 acceptance criteria on CI run `36310775633`.
 
-No Draft document becomes an approved product/investment baseline merely because implementation evidence exists. The first-slice result is a bounded technical acceptance and validation milestone.
+No Draft document becomes an approved product/investment baseline merely because implementation evidence exists. These results are bounded technical acceptance and validation milestones.
 
 ## Immediate controlled work
 
-The production foundation and first bounded vertical slice are technically verified. The next business capability is intentionally **not** selected by engineering convenience.
+The production foundation, first Work Product vertical slice and canonical Organisation Party foundation are technically verified. The next relationship-bearing business capability is intentionally **not** selected by engineering convenience.
 
 The next controlled sequence is:
 
-1. use product/customer/requirements evidence to baseline the next priority workflow or Wave 3 capability;
-2. trace the selected outcome to requirements, architecture/design and objective acceptance criteria;
-3. implement it end to end through the established production boundaries;
-4. verify real composition, tenant/security negatives, audit/evidence and operational behavior in the production CI path;
-5. update the RTM/backlog/evidence before declaring the increment complete.
+1. use product/customer/requirements evidence to baseline the next priority business outcome;
+2. model that outcome against canonical Organisation `PartyId` rather than introducing customer/vendor identity duplicates or Party-role type shortcuts;
+3. trace the selected outcome to requirements, architecture/design and objective acceptance criteria;
+4. implement it end to end through the established production boundaries;
+5. verify real composition, tenant/security negatives, audit/evidence and operational behavior in the production CI path;
+6. update the RTM/backlog/evidence before declaring the increment complete.
 
-Candidate expansion areas currently include governed customer variation/configuration, permitted search, notifications/communication context, external integration/reconciliation, operational reporting/export, commercial/financial continuity and further functional-governance/delivery/CBE outcomes.
+Candidate expansion areas currently include governed customer variation/configuration, permitted search, notifications/communication context, external integration/reconciliation, operational reporting/export, commercial/project/financial continuity and further functional-governance/delivery/CBE outcomes.
+
+Commercial/project continuity is a strong candidate because it tests NuBlox's intended continuity between running the organisation and delivering work, but primary customer/product evidence must support the actual priority decision.
 
 Requirements detail, customer research and commercial/product evidence continue in parallel and may change those priorities.
 

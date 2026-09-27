@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Enterprise.Infrastructure.PostgreSql</AssemblyName>
+    <RootNamespace>NuBlox.Enterprise.Infrastructure.PostgreSql</RootNamespace>
+    <Description>PostgreSQL persistence implementation for canonical enterprise Party and Organisation data.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Enterprise.Application/NuBlox.Enterprise.Application.csproj" />
+    <ProjectReference Include="../NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations/*.sql" />
+  </ItemGroup>
+</Project>

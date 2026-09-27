@@ -32,8 +32,23 @@ if (!builder.Environment.IsEnvironment("Testing"))
         .Select(static value => new PrincipalId(Guid.Parse(value!)))
         .ToArray();
 
-    builder.Services.AddNuBloxPostgresRuntime(connectionString, approvalPrincipals);
+    var organisationAdministrators = builder.Configuration
+        .GetSection("NuBlox:Enterprise:OrganisationAdministratorPrincipals")
+        .GetChildren()
+        .Select(static child => child.Value)
+        .Where(static value => Guid.TryParse(value, out _))
+        .Select(static value => new PrincipalId(Guid.Parse(value!)))
+        .ToArray();
+
+    builder.Services.AddNuBloxPostgresRuntime(
+        connectionString,
+        approvalPrincipals,
+        organisationAdministrators);
 }
+
+builder.Services.AddScoped<OrganisationHttpOperations>();
+builder.Services.AddScoped<IOrganisationHttpOperations>(static services =>
+    services.GetRequiredService<OrganisationHttpOperations>());
 
 builder.Services.AddScoped<WorkProductHttpOperations>();
 builder.Services.AddScoped<IWorkProductHttpOperations>(services =>
@@ -63,6 +78,7 @@ app.MapGet(NuBloxApiRoutes.Readiness, () =>
     .ExcludeFromDescription();
 
 var api = app.MapNuBloxApiV1();
+_ = api.MapOrganisationEndpoints();
 _ = api.MapWorkProductEndpoints();
 
 app.Run();

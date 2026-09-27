@@ -11,6 +11,8 @@
   <ItemGroup>
     <ProjectReference Include="../NuBlox.Audit/NuBlox.Audit.csproj" />
     <ProjectReference Include="../NuBlox.Authority/NuBlox.Authority.csproj" />
+    <ProjectReference Include="../NuBlox.Enterprise.Application/NuBlox.Enterprise.Application.csproj" />
+    <ProjectReference Include="../NuBlox.Enterprise.Infrastructure.PostgreSql/NuBlox.Enterprise.Infrastructure.PostgreSql.csproj" />
     <ProjectReference Include="../NuBlox.Kernel/NuBlox.Kernel.csproj" />
     <ProjectReference Include="../NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj" />
     <ProjectReference Include="../NuBlox.WorkProducts.Application/NuBlox.WorkProducts.Application.csproj" />

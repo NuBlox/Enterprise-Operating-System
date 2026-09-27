@@ -3,7 +3,7 @@
 **Section:** H_Development_Implementation  
 **Document ID:** NBEOS-H-002  
 **Document Type:** Product backlog  
-**Version:** 0.22  
+**Version:** 0.24  
 **Status:** Draft  
 **Author / Owner:** NuBlox Product / Engineering  
 **Reviewer:** [TBD]  
@@ -16,8 +16,8 @@
 **Retention Period:** Product lifetime + [TBD]  
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
-**Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_definition.md`, `First_vertical_slice_verification.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`  
-**Supersedes:** Version 0.21  
+**Related Documents:** `Development_plan.md`, `Dependency_management_document.md`, `First_vertical_slice_definition.md`, `First_vertical_slice_verification.md`, `Second_vertical_slice_definition.md`, `Second_vertical_slice_verification.md`, `../F_Requirements_Analysis/Software_requirements_specification_SRS.md`, `../F_Requirements_Analysis/Functional_requirements_specification.md`, `../G_Architecture_Design/Architecture_decision_records_ADRs.md`, `../G_Architecture_Design/adr/ADR-022-canonical-party-organisation-identity.md`  
+**Supersedes:** Version 0.23  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/H_Development_Implementation/Product_backlog.md`  
 **Storage Location:** `software_project_docs/H_Development_Implementation/Product_backlog.md`  
@@ -27,7 +27,9 @@
 
 ## Purpose
 
-Maintain the controlled implementation backlog linking NuBlox requirements and architecture decisions to executable product increments. The production foundation is complete and the first governed vertical slice, **Governed Work Product — Create, Review, Approve and Issue**, has now passed bounded end-to-end technical verification through the real HTTP/application/PostgreSQL runtime graph.
+Maintain the controlled implementation backlog linking NuBlox requirements and architecture decisions to executable product increments. The production foundation is complete and the first governed vertical slice, **Governed Work Product — Create, Review, Approve and Issue**, has passed bounded end-to-end technical verification through the real HTTP/application/PostgreSQL runtime graph.
+
+Wave 3 now includes a technically verified canonical enterprise-identity prerequisite: `DEV-308 — Governed Organisation Party foundation`. This does not claim that primary customer discovery has approved a wider commercial, workforce or market-solution priority.
 
 The backlog remains Draft because wider product requirements, customer evidence and subsequent capability priorities remain controlled but not fully approved.
 
@@ -40,6 +42,7 @@ The backlog remains Draft because wider product requirements, customer evidence 
 5. Every implementation item requires objective completion evidence.
 6. Security, tenant isolation, authority and audit controls require negative-path verification.
 7. Adapter/component tests do not substitute for real production composition-root verification where end-to-end acceptance requires actual dependency resolution and infrastructure.
+8. Contextual business roles such as employee, customer/client and supplier/vendor must not be promoted into Party identity kinds contrary to ADR-022 merely to accelerate a feature slice.
 
 ## Priority model
 
@@ -90,10 +93,10 @@ Selected workflow: **Governed Work Product — Create, Review, Approve and Issue
 | `DEV-205` | P1 | Work-product/evidence linkage | approved-only issue + exact approval evidence + supersession | **Complete — CI 36277625604** |
 | `DEV-206` | P1 | Operational attention/drill-through | Principal-scoped attention + governed source evidence | **Complete — CI 36278067339** |
 | `DEV-207` | P1 | Durable notification/integration consequence | atomic issue intent + RLS + lease/retry/idempotency/reconciliation | **Complete — CI 36279181900** |
-| `DEV-208` | P1 | First-slice traceability/verification | NBEOS-H-005 v0.3 + NBEOS-F-015 v0.3 + all 12 acceptance criteria | **Complete — bounded technical acceptance; final documentation-head CI required before merge** |
+| `DEV-208` | P1 | First-slice traceability/verification | NBEOS-H-005 v0.3 + NBEOS-F-015 v0.3 + all 12 acceptance criteria | **Complete — final acceptance-head CI 36282295519; merged PR #32** |
 | `DEV-209` | P1 | WorkProducts HTTP composition + verified request context | Work Product create/read/submit/decide/issue endpoints derive Principal/Tenant only from verified context; fail-closed, route/body/header tamper, RFC 9457 and OpenAPI tests | **Complete — final-head CI 36280622610** |
 | `DEV-210` | P1 | WorkProducts audit + correlated telemetry composition | successful material operations append minimised authoritative audit evidence; audit/telemetry share correlation but remain separate; read/failure/minimisation tests | **Complete — merged PR #31 after green production verification** |
-| `DEV-211` | P1 | Production WorkProducts runtime composition | `NuBlox.Runtime.PostgreSql` composition root, concrete governed repository graph, restricted runtime role, durable PostgreSQL audit appender, combined migrations and real HTTP→application→PostgreSQL smoke flow | **Complete — implementation-head CI 36281993924; final documentation-head CI required before merge** |
+| `DEV-211` | P1 | Production WorkProducts runtime composition | `NuBlox.Runtime.PostgreSql` composition root, concrete governed repository graph, restricted runtime role, durable PostgreSQL audit appender, combined migrations and real HTTP→application→PostgreSQL smoke flow | **Complete — CI 36281993924 / final 36282295519; merged PR #32** |
 
 ## DEV-211 verification finding retained
 
@@ -105,7 +108,7 @@ This finding reinforces the backlog rule that component success does not replace
 
 ## Wave 3 — cross-enterprise capability expansion
 
-The first bounded slice is technically verified. Wave 3 should now be ordered from validated product/customer priorities rather than selected by implementation convenience.
+The first bounded slice is technically verified. Wave 3 remains evidence-gated. DEV-308 is a canonical business-subject prerequisite already supported by the accepted clean-slate enterprise model, not proof that customer discovery has approved a full commercial/workforce expansion sequence.
 
 | ID | Priority | Backlog item | Traceability | Status |
 |---|---|---|---|---|
@@ -114,8 +117,23 @@ The first bounded slice is technically verified. Wave 3 should now be ordered fr
 | `DEV-303` | P2 | Controlled notifications/communication context | FR-030/031 | Planned — priority not yet baselined |
 | `DEV-304` | P2 | External API/integration catalogue/reconciliation | FR-032–FR-035 | Planned — priority not yet baselined |
 | `DEV-305` | P2 | Operational reporting/export expansion | FR-028/029, FR-041/042; ADR-015 | Planned — priority not yet baselined |
-| `DEV-306` | P2 | Commercial/financial continuity slice | FR-023–FR-025 | Planned — priority not yet baselined |
+| `DEV-306` | P2 | Commercial/financial continuity slice | FR-023–FR-025; EP-008 | Planned — relationship/business outcome still requires product evidence |
 | `DEV-307` | P2 | Expand by validated functional-governance, functional-delivery and built-environment outcomes | Product/requirements roadmap | Planned — priority not yet baselined |
+| `DEV-308` | P2 | Governed Organisation Party foundation | EP-004; DATA-001–DATA-003; ADR-022; NBEOS-H-006/H-007 | **Complete — CI 36310775633; all 10 bounded acceptance criteria pass** |
+
+## DEV-308 verification finding retained
+
+The first DEV-308 PR-head run (`36310679572`) failed before runtime tests because analyzer rule `CA1822` rejected a computed `Organisation.Kind` getter with no instance state. Party kind was corrected to immutable stored instance state; the complete production verifier then passed in CI run `36310775633`.
+
+The passing run includes 3 Enterprise unit/application tests, 2 Enterprise PostgreSQL integration tests and 17 API tests including the real Organisation HTTP→application→PostgreSQL path. The PostgreSQL logs contain the expected restricted-role RLS rejection when a Tenant A session attempts to insert a Tenant B Party.
+
+Detailed evidence is recorded in NBEOS-H-007.
+
+## DEV-308 scope guard
+
+DEV-308 implements only canonical Organisation Party identity. It does not introduce Person, Work Relationship, Position, Organisational Unit, client/customer, supplier/vendor, legal-entity, commercial-engagement or billing semantics.
+
+Those later capabilities must reference the canonical Organisation identity instead of reintroducing role labels as Party types or creating module-local customer/supplier identities.
 
 ## Governed SQL package workstream
 
@@ -123,21 +141,19 @@ The separately governed `NuBlox/NuBloxSQL` repository is the authoritative NuBlo
 
 ## Immediate execution order
 
-The first production vertical slice has reached bounded technical acceptance. The next controlled sequence is:
+DEV-308 is technically verified. The next controlled sequence is:
 
 ```text
-final documentation-head production verifier
+merge DEV-308 after exact final documentation-head CI
         ↓
-merge DEV-211 + DEV-208 acceptance evidence
+select the next relationship-bearing business outcome from controlled product/customer evidence
         ↓
-baseline next product/customer priority from Wave 3 or a newly validated workflow
+model the relationship against canonical Organisation PartyId rather than a new customer/vendor identity
         ↓
 trace requirement → ADR/design → implementation → verification
-        ↓
-implement next end-to-end product increment
 ```
 
-NuBlox should not select the next business capability solely because its infrastructure is easiest to build. The next slice must be justified by controlled product/customer evidence and the requirements roadmap.
+Commercial/project continuity remains a strong candidate because it would connect delivery activity to commercial context, but no customer-priority claim is made until controlled product evidence supports that selection.
 
 ## References
 
@@ -145,9 +161,13 @@ NuBlox should not select the next business capability solely because its infrast
 - `Dependency_management_document.md`
 - `First_vertical_slice_definition.md`
 - `First_vertical_slice_verification.md`
+- `Second_vertical_slice_definition.md`
+- `Second_vertical_slice_verification.md`
 - `../F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md`
 - `../G_Architecture_Design/Architecture_decision_records_ADRs.md`
 - `../G_Architecture_Design/adr/ADR-003-durable-asynchronous-processing.md`
+- `../G_Architecture_Design/adr/ADR-022-canonical-party-organisation-identity.md`
+- `../../docs/01-enterprise-model.md`
 
 ## Change History
 
@@ -175,3 +195,5 @@ NuBlox should not select the next business capability solely because its infrast
 | 0.20 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-209 after WorkProducts HTTP verified-context composition, tenant/actor tamper protection, RFC 9457 failure mapping and OpenAPI verification passed in final-head CI run 36280622610 |
 | 0.21 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-210 after minimised authoritative audit and correlated telemetry composition; re-verification recorded DEV-211 real production runtime composition as the remaining first-slice blocker |
 | 0.22 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-211 and DEV-208 after real production composition verified the WorkProducts HTTP/application/PostgreSQL graph, corrected the governed-repository registration defect, proved tenant isolation and durable audit persistence, and completed all twelve first-slice acceptance criteria |
+| 0.23 | 2026-09-27 | NuBlox Product / Engineering | Opened DEV-308 as the bounded governed Organisation Party foundation under ADR-022/NBEOS-H-006 and corrected final first-slice CI/merge evidence |
+| 0.24 | 2026-09-27 | NuBlox Product / Engineering | Closed DEV-308 technical verification after CI 36310775633 passed domain/application, real HTTP runtime, PostgreSQL RLS/isolation and audit evidence acceptance; added NBEOS-H-007 |

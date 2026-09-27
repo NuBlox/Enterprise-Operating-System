@@ -13,6 +13,11 @@ audit_project="src/NuBlox.Audit/NuBlox.Audit.csproj"
 audit_test_project="tests/NuBlox.Audit.Tests/NuBlox.Audit.Tests.csproj"
 observability_project="src/NuBlox.Observability/NuBlox.Observability.csproj"
 observability_test_project="tests/NuBlox.Observability.Tests/NuBlox.Observability.Tests.csproj"
+enterprise_domain_project="src/NuBlox.Enterprise.Domain/NuBlox.Enterprise.Domain.csproj"
+enterprise_application_project="src/NuBlox.Enterprise.Application/NuBlox.Enterprise.Application.csproj"
+enterprise_postgres_project="src/NuBlox.Enterprise.Infrastructure.PostgreSql/NuBlox.Enterprise.Infrastructure.PostgreSql.csproj"
+enterprise_test_project="tests/NuBlox.Enterprise.Tests/NuBlox.Enterprise.Tests.csproj"
+enterprise_postgres_test_project="tests/NuBlox.Enterprise.PostgreSql.IntegrationTests/NuBlox.Enterprise.PostgreSql.IntegrationTests.csproj"
 api_project="src/NuBlox.Api/NuBlox.Api.csproj"
 api_test_project="tests/NuBlox.Api.Tests/NuBlox.Api.Tests.csproj"
 persistence_project="src/NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj"
@@ -32,6 +37,8 @@ dotnet restore "${kernel_test_project}" --nologo
 dotnet restore "${identity_test_project}" --nologo
 dotnet restore "${audit_test_project}" --nologo
 dotnet restore "${observability_test_project}" --nologo
+dotnet restore "${enterprise_test_project}" --nologo
+dotnet restore "${enterprise_postgres_test_project}" --nologo
 dotnet restore "${api_test_project}" --nologo
 dotnet restore "${persistence_test_project}" --nologo
 dotnet restore "${work_products_test_project}" --nologo
@@ -42,6 +49,9 @@ dotnet build "${identity_project}" --configuration Release --no-restore --nologo
 dotnet build "${authority_project}" --configuration Release --no-restore --nologo
 dotnet build "${audit_project}" --configuration Release --no-restore --nologo
 dotnet build "${observability_project}" --configuration Release --no-restore --nologo
+dotnet build "${enterprise_domain_project}" --configuration Release --no-restore --nologo
+dotnet build "${enterprise_application_project}" --configuration Release --no-restore --nologo
+dotnet build "${enterprise_postgres_project}" --configuration Release --no-restore --nologo
 dotnet build "${api_project}" --configuration Release --no-restore --nologo
 dotnet build "${persistence_project}" --configuration Release --no-restore --nologo
 dotnet build "${work_products_domain_project}" --configuration Release --no-restore --nologo
@@ -52,10 +62,12 @@ dotnet test "${kernel_test_project}" --configuration Release --no-restore --nolo
 dotnet test "${identity_test_project}" --configuration Release --no-restore --nologo
 dotnet test "${audit_test_project}" --configuration Release --no-restore --nologo
 dotnet test "${observability_test_project}" --configuration Release --no-restore --nologo
+dotnet test "${enterprise_test_project}" --configuration Release --no-restore --nologo
 dotnet test "${api_test_project}" --configuration Release --no-restore --nologo
 dotnet test "${work_products_test_project}" --configuration Release --no-restore --nologo
 
 if [[ -n "${NUBLOX_POSTGRES_CONNECTION_STRING:-}" ]]; then
+  dotnet test "${enterprise_postgres_test_project}" --configuration Release --no-restore --nologo
   dotnet test "${persistence_test_project}" --configuration Release --no-restore --nologo
   dotnet test "${work_products_postgres_test_project}" --configuration Release --no-restore --nologo
 else

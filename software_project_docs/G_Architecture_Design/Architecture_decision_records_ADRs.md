@@ -3,7 +3,7 @@
 **Section:** G_Architecture_Design  
 **Document ID:** NBEOS-G-005  
 **Document Type:** Architecture decision records (ADR register)  
-**Version:** 0.7  
+**Version:** 0.8  
 **Status:** Draft  
 **Author / Owner:** NuBlox Architecture  
 **Reviewer:** [TBD]  
@@ -17,7 +17,7 @@
 **Disposal Method:** [TBD]  
 **Distribution List:** NuBlox programme contributors  
 **Related Documents:** `Architecture_vision.md`, `Architecture_definition.md`, `Solution_architecture_document.md`  
-**Supersedes:** Version 0.6  
+**Supersedes:** Version 0.7  
 **Superseded By:** None  
 **Template Used:** `software_project_docs_templates/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
 **Storage Location:** `software_project_docs/G_Architecture_Design/Architecture_decision_records_ADRs.md`  
@@ -62,6 +62,7 @@ Maintain the authoritative register of material architecture decisions. Individu
 | `ADR-019` | Migration architecture | Treat migration as product/architecture capability with staging, mapping, validation and reconciliation | PROPOSED | BR-013, implementation repeatability |
 | [`ADR-020`](adr/ADR-020-release-schema-configuration-evolution.md) | Release/config/schema evolution | Expand/migrate/contract; ordered migration journal; separate migration execution; rollback only within compatibility/recovery rules | ACCEPTED | Operability, customer upgrades, integrity |
 | [`ADR-021`](adr/ADR-021-postgresql18-primary-provider.md) | Initial relational database provider | PostgreSQL 18 current supported minor as initial primary provider; Npgsql 10.0.3 for .NET; provider-specific features behind infrastructure boundaries | ACCEPTED | Proven spike evidence, tenant RLS, history constraints, support horizon |
+| [`ADR-022`](adr/ADR-022-canonical-party-organisation-identity.md) | Canonical enterprise Party identity | Tenant is separate from Party; canonical Party kinds are Person and Organisation; implement tenant-isolated Organisation identity first | ACCEPTED | Accepted enterprise model, DATA-001–003, EP-004, commercial/workforce prerequisites |
 
 ## Accepted production foundation
 
@@ -81,9 +82,12 @@ cohesive modular application
 + OpenTelemetry/OTLP observability boundary
 + append-oriented business audit/evidence
 + expand/migrate/contract release and schema evolution
++ canonical enterprise Party identity: Person / Organisation, separate from Tenant and contextual business roles
 ```
 
 These decisions deliberately do **not** select an identity-provider vendor, frontend framework, cloud provider, message-broker product, monitoring backend/vendor or final enterprise authority-source taxonomy.
+
+ADR-022 also deliberately does not implement Person, Work Relationship, Position or customer/supplier relationship-role lifecycles in DEV-308; those remain separately governed increments.
 
 ## ADR approval requirements
 
@@ -115,6 +119,7 @@ ADR-017 data modularity
 ADR-018 audit/evidence
 ADR-020 release/schema evolution
 ADR-021 PostgreSQL 18 provider
+ADR-022 canonical Party / Organisation identity
         ↓
 PRODUCTION IMPLEMENTATION:
 API host + Principal/Tenant context
@@ -123,6 +128,7 @@ OpenTelemetry telemetry
 business audit boundary
 contextual authority evaluation
 durable consequence/outbox processing
+canonical Organisation Party foundation
 complete CI quality gates
 ```
 
@@ -147,6 +153,8 @@ The register remains the authoritative index/status view.
 - `Technical_spikes.md`
 - `Proof_of_concept_report.md`
 - `../F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md`
+- `../../docs/01-enterprise-model.md`
+- `../../docs/07-wave-1-enterprise-identity-reconciliation.md`
 
 ## Change History
 
@@ -159,3 +167,4 @@ The register remains the authoritative index/status view.
 | 0.5 | 2026-09-26 | NuBlox Architecture | Accepted ADR-016 OpenTelemetry observability, ADR-018 business audit evidence, ADR-020 release/schema evolution and ADR-021 PostgreSQL 18 provider |
 | 0.6 | 2026-09-26 | NuBlox Architecture | Accepted ADR-009 contextual business authority with permission/authority separation and attributable authority references for governed decisions |
 | 0.7 | 2026-09-26 | NuBlox Architecture | Accepted ADR-003 transactional durable asynchronous intents with recoverable claims, at-least-once delivery, idempotency and reconciliation |
+| 0.8 | 2026-09-27 | NuBlox Architecture | Accepted ADR-022 to implement the canonical clean-slate Party/Organisation identity invariant and reject Tenant/employee/client/vendor Party-type shortcuts |

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Enterprise.Application</AssemblyName>
+    <RootNamespace>NuBlox.Enterprise.Application</RootNamespace>
+    <Description>Application services for governed enterprise Party and Organisation operations.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Enterprise.Domain/NuBlox.Enterprise.Domain.csproj" />
+    <ProjectReference Include="../NuBlox.Kernel/NuBlox.Kernel.csproj" />
+  </ItemGroup>
+</Project>

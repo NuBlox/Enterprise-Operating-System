@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Enterprise.Domain</AssemblyName>
+    <RootNamespace>NuBlox.Enterprise</RootNamespace>
+    <Description>Provider-neutral canonical enterprise Party and Organisation domain model.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Kernel/NuBlox.Kernel.csproj" />
+  </ItemGroup>
+</Project>

@@ -9,10 +9,12 @@ The corresponding reusable templates are maintained under [`../../software_proje
 | ID | Document | Status | Version |
 |---|---|---|---|
 | `NBEOS-H-001` | [Development plan](Development_plan.md) | Draft | 0.1 |
-| `NBEOS-H-002` | [Product backlog](Product_backlog.md) | Draft | 0.22 |
+| `NBEOS-H-002` | [Product backlog](Product_backlog.md) | Draft | 0.24 |
 | `NBEOS-H-003` | [Dependency management document](Dependency_management_document.md) | Draft | 0.4 |
 | `NBEOS-H-004` | [First vertical slice definition](First_vertical_slice_definition.md) | Draft | 0.1 |
 | `NBEOS-H-005` | [First vertical slice verification](First_vertical_slice_verification.md) | Draft | 0.3 |
+| `NBEOS-H-006` | [Second vertical slice definition](Second_vertical_slice_definition.md) | Draft | 0.1 |
+| `NBEOS-H-007` | [Second vertical slice verification](Second_vertical_slice_verification.md) | Draft | 0.1 |
 
 ## Production foundation status
 
@@ -30,6 +32,9 @@ src/NuBlox.Api/
 src/NuBlox.WorkProducts.Domain/
 src/NuBlox.WorkProducts.Application/
 src/NuBlox.WorkProducts.Infrastructure.PostgreSql/
+src/NuBlox.Enterprise.Domain/
+src/NuBlox.Enterprise.Application/
+src/NuBlox.Enterprise.Infrastructure.PostgreSql/
         ↓
 tests/*
         ↓
@@ -52,7 +57,7 @@ GitHub Actions runs the identical verifier with PostgreSQL 18.6 available for in
 
 `DEV-201` selected **Governed Work Product — Create, Review, Approve and Issue** as the first representative production workflow. Its controlled definition is [`First_vertical_slice_definition.md`](First_vertical_slice_definition.md).
 
-`DEV-202` through `DEV-211` now provide and verify:
+`DEV-202` through `DEV-211` provide and verify:
 
 ```text
 verified HTTP Principal/Tenant context
@@ -82,25 +87,42 @@ restricted-role PostgreSQL persistence + tenant RLS
 
 DEV-211 also demonstrated why real composition-root verification is mandatory: the first runtime registration selected the base Work Product repository, allowing create/submit but causing the real decision route to return `404`. The production graph now registers the governed repository and the complete real HTTP create → submit → approve → issue path passes against PostgreSQL.
 
+## Governed Organisation Party increment
+
+`DEV-308` establishes the bounded Wave-3 **Governed Organisation Party — Register and Retrieve** increment. Its controlled definition is [`Second_vertical_slice_definition.md`](Second_vertical_slice_definition.md), backed by accepted [`ADR-022`](../G_Architecture_Design/adr/ADR-022-canonical-party-organisation-identity.md).
+
+The invariant is:
+
+```text
+Tenant != Party
+
+Party
+├── Person
+└── Organisation
+
+Employee / Customer / Supplier / Partner / Contractor
+= relationship or contextual role, not Party kind
+```
+
+DEV-308 implements **Organisation only** and is technically complete. Production CI run `36310775633` passed all ten NBEOS-H-006 acceptance criteria with zero build warnings/errors, including Enterprise unit/application tests, Enterprise PostgreSQL/RLS tests and a real HTTP → application → PostgreSQL Organisation path. [`Second_vertical_slice_verification.md`](Second_vertical_slice_verification.md) version 0.1 records the evidence.
+
+The verified boundary includes stable `PartyId`, module-owned PostgreSQL persistence, forced tenant RLS, verified-context create/read HTTP operations, fail-closed configured administration access and payload-minimised authoritative audit evidence.
+
+Person, workforce structures and customer/supplier/commercial relationship semantics remain outside this increment.
+
 ## Current controlled direction
 
-The first bounded production slice is technically verified; this does not approve the complete product or convert Draft/Candidate requirements into an approved product baseline.
+The first Work Product slice and the canonical Organisation Party foundation are technically verified. This does not approve the complete product or convert Draft/Candidate requirements into an approved product baseline.
 
-The next capability should be selected from validated product/customer priorities. Wave 3 candidates remain controlled but intentionally unprioritised until that evidence is sufficient:
+DEV-308 establishes a canonical Organisation identity prerequisite already supported by the accepted enterprise-model evidence. It does **not** claim that primary customer discovery has selected commercial continuity or another Wave-3 capability as the market priority.
 
-- governed customer variation/configuration;
-- permitted search;
-- controlled notification/communication context;
-- external API/integration catalogue and reconciliation;
-- operational reporting/export expansion;
-- commercial/financial continuity;
-- further functional-governance, functional-delivery and built-environment outcomes.
+The next relationship-bearing business outcome must be selected from controlled product/customer evidence and must reference canonical Organisation `PartyId` rather than creating a competing customer/vendor identity. Commercial/project continuity remains a strong candidate because it tests NuBlox's end-to-end operating/delivery thesis, but that priority remains evidence-gated.
 
 ## Development rule
 
 Spike code remains disposable experimental code. It is not the production application and must not be copied into production by momentum. Proven patterns are reimplemented through accepted ADRs, controlled product requirements, module ownership, production tests and normal security/quality gates.
 
-The first vertical slice remains an implementation/validation baseline. Draft/Candidate requirements remain subject to controlled business/customer validation and refinement; implementation must not silently convert every candidate requirement into permanent product semantics.
+Draft/Candidate requirements remain subject to controlled business/customer validation and refinement; implementation must not silently convert every candidate requirement into permanent product semantics.
 
 ## References
 
@@ -111,3 +133,5 @@ The first vertical slice remains an implementation/validation baseline. Draft/Ca
 - [`Dependency_management_document.md`](Dependency_management_document.md)
 - [`First_vertical_slice_definition.md`](First_vertical_slice_definition.md)
 - [`First_vertical_slice_verification.md`](First_vertical_slice_verification.md)
+- [`Second_vertical_slice_definition.md`](Second_vertical_slice_definition.md)
+- [`Second_vertical_slice_verification.md`](Second_vertical_slice_verification.md)

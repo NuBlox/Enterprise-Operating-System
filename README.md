@@ -37,12 +37,14 @@ The Development & Implementation baseline is maintained at:
 
 [`software_project_docs/H_Development_Implementation/`](software_project_docs/H_Development_Implementation/)
 
-Its controlled first-slice evidence includes:
+Its controlled implementation evidence now includes:
 
 - [`Development_plan.md`](software_project_docs/H_Development_Implementation/Development_plan.md);
 - [`Product_backlog.md`](software_project_docs/H_Development_Implementation/Product_backlog.md);
 - [`First_vertical_slice_definition.md`](software_project_docs/H_Development_Implementation/First_vertical_slice_definition.md);
-- [`First_vertical_slice_verification.md`](software_project_docs/H_Development_Implementation/First_vertical_slice_verification.md).
+- [`First_vertical_slice_verification.md`](software_project_docs/H_Development_Implementation/First_vertical_slice_verification.md);
+- [`Second_vertical_slice_definition.md`](software_project_docs/H_Development_Implementation/Second_vertical_slice_definition.md);
+- [`Second_vertical_slice_verification.md`](software_project_docs/H_Development_Implementation/Second_vertical_slice_verification.md).
 
 ## Production architecture implemented so far
 
@@ -60,6 +62,9 @@ NuBlox.Api
 NuBlox.WorkProducts.Domain
 NuBlox.WorkProducts.Application
 NuBlox.WorkProducts.Infrastructure.PostgreSql
+NuBlox.Enterprise.Domain
+NuBlox.Enterprise.Application
+NuBlox.Enterprise.Infrastructure.PostgreSql
 ```
 
 The production verification entry point is:
@@ -98,6 +103,29 @@ real HTTP → application → PostgreSQL runtime graph
 
 `NBEOS-H-005` version 0.3 records all twelve controlled first-slice acceptance criteria as technically satisfied. This is bounded technical acceptance, not approval of the entire product or the full Draft/Candidate requirements catalogue.
 
+## Canonical Organisation Party foundation
+
+The next bounded production increment, `DEV-308`, establishes **Governed Organisation Party — Register and Retrieve** under accepted ADR-022.
+
+Its core clean-slate invariant is:
+
+```text
+Tenant != Party
+
+Party
+├── Person
+└── Organisation
+
+Employee / Customer / Supplier / Partner / Contractor
+= relationship or contextual role, not Party kind
+```
+
+DEV-308 implements the **Organisation** branch only. The verified production path includes stable `PartyId`, module-owned Enterprise PostgreSQL persistence, forced tenant RLS, fail-closed Organisation administration, verified-context HTTP create/read operations and attributable payload-minimised audit evidence.
+
+`NBEOS-H-007` version 0.1 records all ten NBEOS-H-006 acceptance criteria as technically satisfied on production CI run `36310775633`.
+
+Person, Work Relationship, Organisation Unit, Position/occupancy and customer/supplier/commercial relationship semantics remain separately governed future capabilities.
+
 ## Repository areas
 
 | Area | Purpose |
@@ -120,6 +148,7 @@ real HTTP → application → PostgreSQL runtime graph
 - Prefer complete business outcomes over disconnected feature/module lists.
 - Keep implementation decisions subordinate to controlled business, product and technical requirements.
 - Enforce tenant isolation, authority and audit server-side; UI behavior is never the sole enforcement boundary.
+- Maintain canonical enterprise identities separately from contextual business roles; do not encode Employee/Customer/Supplier as Party kinds.
 - Do not promote spike code into the product without an explicit ADR/design/review/verification path.
 - Do not treat component-test success as end-to-end acceptance when real runtime composition has not been exercised.
 
@@ -127,12 +156,14 @@ real HTTP → application → PostgreSQL runtime graph
 
 The programme is in **controlled production implementation and validation**.
 
-The production foundation and first bounded vertical slice are technically verified. The next sequence is intentionally product-evidence-led:
+The production foundation, first Work Product slice and canonical Organisation Party foundation are technically verified. The next sequence remains product-evidence-led:
 
 ```text
-verified first production slice
+verified production foundation + bounded slices
         ↓
-validate / baseline next customer or product priority
+validate / baseline next relationship-bearing customer or product outcome
+        ↓
+reference canonical Organisation PartyId
         ↓
 trace requirement → architecture/design → acceptance criteria
         ↓
@@ -143,7 +174,7 @@ verify real runtime composition + security/audit/operability
 controlled capability expansion
 ```
 
-The next business capability is not selected merely because it is technically convenient. Requirements, customer research and commercial evidence continue to determine downstream priority.
+Commercial/project continuity is a strong candidate because it would connect delivery activity to business/commercial context, but the next business capability is not selected merely because it is technically convenient. Requirements, customer research and commercial evidence continue to determine downstream priority.
 
 ## Brand assets
 
