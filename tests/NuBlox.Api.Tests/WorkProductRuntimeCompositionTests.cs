@@ -147,7 +147,7 @@ public sealed class WorkProductRuntimeCompositionTests
         Assert.AreEqual(0L, Convert.ToInt64(await payloadLeakCommand.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
     }
 
-    private WebApplicationFactory<Program> CreateRuntimeFactory(
+    private static WebApplicationFactory<Program> CreateRuntimeFactory(
         string runtimeConnectionString,
         PrincipalId approvalPrincipal,
         AuthenticatedRequestContext context) =>
