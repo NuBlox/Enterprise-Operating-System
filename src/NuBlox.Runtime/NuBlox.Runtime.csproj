@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>NuBlox.Runtime</AssemblyName>
+    <RootNamespace>NuBlox.Runtime</RootNamespace>
+    <Description>NuBlox production composition root for accepted runtime infrastructure.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../NuBlox.Audit/NuBlox.Audit.csproj" />
+    <ProjectReference Include="../NuBlox.Audit.Infrastructure.PostgreSql/NuBlox.Audit.Infrastructure.PostgreSql.csproj" />
+    <ProjectReference Include="../NuBlox.Authority/NuBlox.Authority.csproj" />
+    <ProjectReference Include="../NuBlox.WorkProducts.Application/NuBlox.WorkProducts.Application.csproj" />
+    <ProjectReference Include="../NuBlox.WorkProducts.Infrastructure.PostgreSql/NuBlox.WorkProducts.Infrastructure.PostgreSql.csproj" />
+  </ItemGroup>
+</Project>
