@@ -10,16 +10,7 @@ All controlled documents should follow the metadata requirements defined in:
 
 [`../software_project_docs_templates/00_Templates/Document_Control_Metadata_Template.md`](../software_project_docs_templates/00_Templates/Document_Control_Metadata_Template.md)
 
-Each working document records:
-
-- a stable NuBlox document ID;
-- document type and template used;
-- version and lifecycle status;
-- owner, reviewer and approver;
-- classification and retention fields;
-- related/superseded documents;
-- storage location and access permissions;
-- change history and Git audit trail.
+Each working document records a stable NuBlox document ID, document type/template, version/lifecycle state, ownership/approval metadata, classification/retention information, relationships, storage/access controls, change history and Git audit trail.
 
 ## Enterprise / Pre-Project baseline
 
@@ -72,6 +63,8 @@ Each working document records:
 
 ## Requirements & Analysis baseline
 
+The live Requirements & Analysis set includes the controlled business/stakeholder/software/functional/non-functional specifications and supporting analysis documents. The downstream traceability matrix is now:
+
 | ID | Document | Status | Version |
 |---|---|---|---|
 | `NBEOS-F-001` | [Business requirements document (BRD)](F_Requirements_Analysis/Business_requirements_document_BRD.md) | Draft | 0.1 |
@@ -79,54 +72,61 @@ Each working document records:
 | `NBEOS-F-003` | [Software requirements specification (SRS)](F_Requirements_Analysis/Software_requirements_specification_SRS.md) | Draft | 0.1 |
 | `NBEOS-F-004` | [Functional requirements specification](F_Requirements_Analysis/Functional_requirements_specification.md) | Draft | 0.1 |
 | `NBEOS-F-005` | [Non-functional requirements specification](F_Requirements_Analysis/Non-functional_requirements_specification.md) | Draft | 0.1 |
+| `NBEOS-F-015` | [Requirements traceability matrix (RTM)](F_Requirements_Analysis/Requirements_traceability_matrix_RTM.md) | Draft | 0.3 |
 
 ## Architecture & Design baseline
 
-The live architecture set is indexed at [`G_Architecture_Design/README.md`](G_Architecture_Design/README.md). It includes the architecture vision/definition, solution and data/integration/security designs, ADR register, technology evaluation matrix, nine-spike programme and proof-of-concept evidence.
+The live architecture set is indexed at [`G_Architecture_Design/README.md`](G_Architecture_Design/README.md). It includes the architecture vision/definition, solution and data/integration/security designs, accepted/proposed/deferred ADRs, technology evaluation, nine-spike programme and proof-of-concept evidence.
 
-The bounded architecture experiments `SPIKE-001` through `SPIKE-009` have completed. Their code remains experimental and is not automatically production code.
+The bounded architecture experiments `SPIKE-001` through `SPIKE-009` are complete. Their code remains experimental and is not automatically production code.
 
 ## Development & Implementation baseline
 
 | ID | Document | Status | Version |
 |---|---|---|---|
 | `NBEOS-H-001` | [Development plan](H_Development_Implementation/Development_plan.md) | Draft | 0.1 |
-| `NBEOS-H-002` | [Product backlog](H_Development_Implementation/Product_backlog.md) | Draft | 0.1 |
+| `NBEOS-H-002` | [Product backlog](H_Development_Implementation/Product_backlog.md) | Draft | 0.22 |
+| `NBEOS-H-003` | [Dependency management document](H_Development_Implementation/Dependency_management_document.md) | Draft | 0.4 |
+| `NBEOS-H-004` | [First vertical slice definition](H_Development_Implementation/First_vertical_slice_definition.md) | Draft | 0.1 |
+| `NBEOS-H-005` | [First vertical slice verification](H_Development_Implementation/First_vertical_slice_verification.md) | Draft | 0.3 |
 
 The H-section index is [`H_Development_Implementation/README.md`](H_Development_Implementation/README.md).
 
 ## Current programme position
 
-NuBlox now has controlled Draft baselines spanning strategy, project initiation, software requirements, architecture evidence and the entry into Development & Implementation.
+NuBlox has progressed beyond architecture-spike entry planning into verified production implementation.
 
 The programme has established:
 
-- product and market hypotheses;
-- investment, feasibility, risk and funding controls;
-- business and stakeholder requirements plus an initial software-requirements envelope;
-- candidate functional and non-functional requirements;
-- a controlled architecture/ADR framework;
-- nine bounded architecture spikes covering modular transactions, history, isolation, authority, durable asynchronous work, controlled configuration, migration, reporting and operability;
-- a NuBlox-mastered package area for governed third-party foundations;
-- a gated development plan and first controlled implementation backlog.
+- controlled Draft strategy, initiation, requirements and architecture baselines;
+- explicit accepted production decisions for the current server/runtime, persistence, tenant isolation, identity/API, observability, release/schema evolution and database provider;
+- a production .NET 10 source/test/toolchain foundation separate from `spikes/`;
+- PostgreSQL 18 persistence, migration, RLS and restricted-runtime-role controls;
+- verified Principal/Tenant request context, contextual business authority, authoritative audit and correlated telemetry boundaries;
+- the first governed vertical slice, **Governed Work Product — Create, Review, Approve and Issue**;
+- real HTTP → application → PostgreSQL runtime composition with durable audit evidence;
+- NBEOS-H-005 v0.3 technical verification of all twelve bounded first-slice acceptance criteria.
 
-No Draft document is an approved product, architecture or investment baseline merely because it exists. The current transition is from architecture evidence to explicit implementation decisions and then to the first verified production vertical slice.
+No Draft document becomes an approved product/investment baseline merely because implementation evidence exists. The first-slice result is a bounded technical acceptance and validation milestone.
 
 ## Immediate controlled work
 
-The next engineering sequence is:
+The production foundation and first bounded vertical slice are technically verified. The next business capability is intentionally **not** selected by engineering convenience.
 
-1. promote implementation-critical architecture decisions using the completed spike evidence;
-2. resolve runtime/framework, primary persistence, tenant isolation, identity, API, observability and release/schema-evolution decisions;
-3. create production source/test/toolchain boundaries separate from `spikes/`;
-4. select and validate the first representative end-to-end business workflow;
-5. implement and verify that vertical slice with requirement → decision/design → code → test traceability;
-6. expand functional-governance, functional-delivery and built-environment capabilities from validated product priorities rather than pre-creating disconnected modules.
+The next controlled sequence is:
 
-Requirements detail, customer research and commercial/product evidence continue in parallel and may change downstream priorities.
+1. use product/customer/requirements evidence to baseline the next priority workflow or Wave 3 capability;
+2. trace the selected outcome to requirements, architecture/design and objective acceptance criteria;
+3. implement it end to end through the established production boundaries;
+4. verify real composition, tenant/security negatives, audit/evidence and operational behavior in the production CI path;
+5. update the RTM/backlog/evidence before declaring the increment complete.
+
+Candidate expansion areas currently include governed customer variation/configuration, permitted search, notifications/communication context, external integration/reconciliation, operational reporting/export, commercial/financial continuity and further functional-governance/delivery/CBE outcomes.
+
+Requirements detail, customer research and commercial/product evidence continue in parallel and may change those priorities.
 
 ## Approval discipline
 
-A Draft document records current programme thinking; it is not an approved baseline.
+A Draft document records current programme thinking and evidence; it is not automatically an approved baseline.
 
 Documents should progress through review and approval only when their material assumptions are supported by sufficient evidence for the decision being made.
