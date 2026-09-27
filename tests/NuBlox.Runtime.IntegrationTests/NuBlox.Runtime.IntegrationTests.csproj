@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <AssemblyName>NuBlox.Runtime.IntegrationTests</AssemblyName>
+    <RootNamespace>NuBlox.Runtime.IntegrationTests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+    <PackageReference Include="Npgsql" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/NuBlox.Api/NuBlox.Api.csproj" />
+    <ProjectReference Include="../../src/NuBlox.Audit.Infrastructure.PostgreSql/NuBlox.Audit.Infrastructure.PostgreSql.csproj" />
+    <ProjectReference Include="../../src/NuBlox.Identity/NuBlox.Identity.csproj" />
+    <ProjectReference Include="../../src/NuBlox.Persistence.PostgreSql/NuBlox.Persistence.PostgreSql.csproj" />
+    <ProjectReference Include="../../src/NuBlox.WorkProducts.Infrastructure.PostgreSql/NuBlox.WorkProducts.Infrastructure.PostgreSql.csproj" />
+  </ItemGroup>
+</Project>
