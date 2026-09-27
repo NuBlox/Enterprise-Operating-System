@@ -34,7 +34,7 @@ public static class RuntimeServiceCollectionExtensions
             provider.GetRequiredService<ConfiguredWorkProductAuthorityEvaluator>());
 
         services.AddSingleton<ISystemClock, SystemClock>();
-        services.AddScoped<IWorkProductRepository, PostgresWorkProductRepository>();
+        services.AddScoped<IWorkProductRepository, PostgresGovernedWorkProductRepository>();
         services.AddScoped<IWorkProductIssueRepository, PostgresWorkProductIssueRepository>();
         services.AddScoped<WorkProductApplicationService>();
         services.AddScoped<WorkProductIssueService>();
