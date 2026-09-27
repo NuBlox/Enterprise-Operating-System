@@ -11,6 +11,7 @@
     <ProjectReference Include="../NuBlox.Audit/NuBlox.Audit.csproj" />
     <ProjectReference Include="../NuBlox.Identity/NuBlox.Identity.csproj" />
     <ProjectReference Include="../NuBlox.Observability/NuBlox.Observability.csproj" />
+    <ProjectReference Include="../NuBlox.Runtime/NuBlox.Runtime.csproj" />
     <ProjectReference Include="../NuBlox.WorkProducts.Application/NuBlox.WorkProducts.Application.csproj" />
   </ItemGroup>
 </Project>
